@@ -17,7 +17,7 @@ try {
         SELECT 
             p.*,
             c.name_en as category_name,
-            b.name as brand_name
+            b.name_en as brand_name
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.id 
         LEFT JOIN brands b ON p.brand_id = b.id 
