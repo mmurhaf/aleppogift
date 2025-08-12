@@ -57,7 +57,7 @@ try {
             'description_en' => $product['description_en'] ?? '',
             'description_ar' => $product['description_ar'] ?? '',
             'price' => $product['price'],
-            'main_image' => $product['main_image'] ?: 'assets/images/no-image.png',
+            'main_image' => $product['image'] ?? $product['picture'] ?? $product['main_image'] ?? 'assets/images/no-image.png',
             'category_name' => $product['category_name'] ?? '',
             'brand_name' => $product['brand_name'] ?? '',
             'stock_quantity' => $product['stock_quantity'] ?? 0,
