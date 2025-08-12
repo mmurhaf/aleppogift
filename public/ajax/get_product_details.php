@@ -17,7 +17,9 @@ try {
         SELECT 
             p.*,
             c.name_en as category_name,
-            b.name_en as brand_name
+            b.name_en as brand_name,
+            (SELECT image_path FROM product_images 
+             WHERE product_id = p.id AND is_main = 1 LIMIT 1) as main_image
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.id 
         LEFT JOIN brands b ON p.brand_id = b.id 
@@ -35,7 +37,7 @@ try {
     $images_query = "
         SELECT image_path 
         FROM product_images 
-        WHERE product_id = :product_id 
+        WHERE product_id = :product_id AND is_main = 0
         ORDER BY sort_order ASC
     ";
     
@@ -57,7 +59,7 @@ try {
             'description_en' => $product['description_en'] ?? '',
             'description_ar' => $product['description_ar'] ?? '',
             'price' => $product['price'],
-            'main_image' => $product['image'] ?? $product['picture'] ?? $product['main_image'] ?? 'assets/images/no-image.png',
+            'main_image' => $product['main_image'] ?: 'assets/images/no-image.png',
             'category_name' => $product['category_name'] ?? '',
             'brand_name' => $product['brand_name'] ?? '',
             'stock_quantity' => $product['stock_quantity'] ?? 0,
