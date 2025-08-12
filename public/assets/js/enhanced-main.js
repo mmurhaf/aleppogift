@@ -177,18 +177,43 @@ function openQuickView(productId) {
     setTimeout(() => modal.classList.add('show'), 10);
     
     // Load product data via AJAX
-    fetch(`ajax/get_product_details.php?id=${productId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayProductDetails(modal, data.product);
-            } else {
-                showError(modal, data.error || 'Failed to load product details');
+    console.log('Fetching product details for ID:', productId);
+    const fetchUrl = `ajax/get_product_details.php?id=${productId}`;
+    console.log('Fetch URL:', fetchUrl);
+    
+    fetch(fetchUrl)
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return response.text(); // Get text first to see raw response
+        })
+        .then(text => {
+            console.log('Raw response:', text);
+            try {
+                const data = JSON.parse(text);
+                console.log('Parsed data:', data);
+                
+                if (data.success) {
+                    displayProductDetails(modal, data.product);
+                } else {
+                    showError(modal, data.error || 'Failed to load product details');
+                }
+            } catch (parseError) {
+                console.error('JSON Parse Error:', parseError);
+                showError(modal, 'Invalid response format: ' + text.substring(0, 100));
             }
         })
         .catch(error => {
-            console.error('Error loading product:', error);
-            showError(modal, 'Network error. Please try again.');
+            console.error('Fetch Error:', error);
+            console.error('Error type:', error.constructor.name);
+            console.error('Error message:', error.message);
+            showError(modal, `Network error: ${error.message}`);
         });
 }
 
