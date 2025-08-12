@@ -1,16 +1,10 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-header('Content-Type: text/plain'); // show plain text instead of HTML
-// header('Content-Type: application/json');
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 session_start();
 
-require_once(__DIR__ . '/../../config/config.php');
+header('Content-Type: application/json');
+header('Cache-Control: no-cache, must-revalidate');
 
-require_once(__DIR__ . '/../../includes/Database.php');
+require_once(__DIR__ . '/../../includes/bootstrap.php');
 
 
 $db = new Database();
