@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Card - M Morhaf Abdulkarim</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #1F1F1F;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background-color: #2C2C2C;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            max-width: 450px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+            color: #ffffff;
+            position: relative;
+            border-top: 5px solid #00D1FF;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: url('https://img.icons8.com/ios/100/00D1FF/code.png') no-repeat center;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            width: 120px;
+            height: auto;
+        }
+
+        h2 {
+            margin: 10px 0;
+            font-size: 22px;
+            font-weight: 500;
+            color: #00D1FF;
+            z-index: 1;
+            position: relative;
+        }
+
+        p {
+            margin: 5px 0;
+            line-height: 1.5;
+            font-size: 16px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .strong-text {
+            color: #FFFFFF;
+            font-weight: bold;
+        }
+
+        a {
+            color: #00D1FF;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .info-block {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .info-block p {
+            font-size: 15px;
+            margin: 8px 0;
+        }
+
+        .qr-code {
+            margin-top: 25px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .social-icons {
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            margin: 0 10px;
+            color: #00D1FF;
+            font-size: 24px;
+        }
+
+        .center span {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <!-- Logo section -->
+	 <div class="logo">
+		<img src="RakChamber_dark.png" alt="RAK Chamber" style="weight:70%; height:70%" >
+	</div>
+    <h2>م. محمد مرهف عبدالكريم</h2>
+    <h2>Eng. M Morhaf Abdulkarim</h2>
+
+    <div class="info-block">
+        <p><span class="strong-text center">محلل و مطور أنظمة</span></p>
+        <p><span class="strong-text center">System Analyst & Developer</span></p>
+
+        <p>Office: +971 7 2070225</p>
+        <p>Mobile: +971 50 9686710</p>
+        <p>Email: <a href="mailto:m.murhaf@rakchamber.ae">m.murhaf@rakchamber.ae</a></p>
+        <p>Email2: <a href="mailto:mmurhaf@gmail.com">mmurhaf@gmail.com</a></p>
+        <p>Website: <a href="https://www.rakchamber.ae" target="_blank">www.rakchamber.ae</a></p>
+        <p>LinkedIn: <a href="https://www.linkedin.com/in/m-murhaf-moustafa-abdulkarim-93a14616/" target="_blank">m-murhaf-moustafa-abdulkarim</a>
+        </p>
+        <p>GitHub: <a href="https://github.com/mmurhaf" target="_blank">github.com/mmurhaf</a></p>
+        <p>Profile: <a href="https://saleto.me/mmurhaf" target="_blank">https://saleto.me/mmurhaf</a></p>
+    </div>
+
+    <!-- QR Code -->
+    <div class="qr-code">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://saleto.me/mmurhaf/vcard" alt="QR Code">
+        </div>
+
+        <!-- Social Icons -->
+        <div class="social-icons">
+            <a href="https://github.com/mmurhaf" target="_blank"><img
+                    src="https://img.icons8.com/ios-filled/50/00D1FF/github.png" alt="GitHub"></a>
+            <a href="https://www.linkedin.com/in/m-murhaf-moustafa-abdulkarim-93a14616/" target="_blank"><img
+                    src="https://img.icons8.com/ios-filled/50/00D1FF/linkedin.png" alt="LinkedIn"></a>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Card - M Morhaf Abdulkarim</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+            border-top: 5px solid #007BFF;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        h2 {
+            margin: 10px 0;
+            color: #2C3E50;
+            font-size: 22px;
+        }
+        p {
+            margin: 5px 0;
+            color: #7f8c8d;
+            line-height: 1.5;
+            font-size: 16px;
+        }
+        .strong-text {
+            color: #2C3E50;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .qr-code {
+            margin-top: 25px;
+        }
+        .info-block {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .info-block p {
+            font-size: 15px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>م. محمد مرهف مصطفى عبدالكريم</h2>
+    <h2>Eng. M Morhaf Moustafa Abdulkarim</h2>
+
+    <div class="info-block">
+        <p><span class="strong-text">محلل و مطور أنظمة</span></p>
+        <p><span class="strong-text">System Analyst & Developer</span></p>
+        <p>Office: +971 7 2070225</p>
+        <p>Mobile: +971 50 9686710</p>
+        <p>Email: <a href="mailto:m.murhaf@rakchamber.ae">m.murhaf@rakchamber.ae</a></p>
+        <p>Email: <a href="mailto:mmurhaf@gmail.com">mmurhaf@gmail.com</a></p>
+        <p>P.O. Box: 87, R.A.K, U.A.E</p>
+        <p>Website: <a href="https://www.rakchamber.ae" target="_blank">www.rakchamber.ae</a></p>
+        <p>LinkedIn: <a href="https://www.linkedin.com/in/m-murhaf-moustafa-abdulkarim-93a14616/" target="_blank">m-murhaf-moustafa-abdulkarim</a></p>
+        <p>Profile: <a href="https://saleto.me/mmurhaf" target="_blank">https://saleto.me/mmurhaf</a></p>
+    </div>
+
+    <div class="qr-code">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://saleto.me/mmurhaf/vcard" alt="QR Code">
+    </div>
+</div>
+
+</body>
+</html>

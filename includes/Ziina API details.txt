@@ -1,0 +1,103 @@
+Ziina API details: 
+Request URL
+https://docs.ziina.com/api/request
+Request Method
+POST
+Status Code
+200 OK
+Remote Address
+76.76.21.98:443
+
+https://api-v2.ziina.com/api/payment_intent
+
+Payload Request: {
+    "method": "post",
+    "url": "https://api-v2.ziina.com/api/payment_intent",
+    "header": {
+        "Authorization": "Bearer Cyhd+lvjI8qiXN50qklhMjtp4g7qQTEHE7w1vvJ5nU1MbO7nAmGzA30SvOi05/VI",
+        "content-type": "application/json"
+    },
+    "body": {
+        "amount": 13000,
+        "currency_code": "AED",
+        "message": "This is a test payment",
+        "success_url": "https://www.aleppogift.com/index.php?page=thank_you&order_id=173",
+        "cancel_url": "https://www.aleppogift.com/index.php?page=cancel_order&order_id=173",
+        "failure_url": "https://www.aleppogift.com/index.php?page=checkout&order_id=173",
+        "test": true,
+        "transaction_source": "directApi",
+        "expiry": "1846816000000",
+        "allow_tips": true
+    },
+    "cookie": {},
+    "query": {}
+}
+
+Preview, response:
+{
+    "error": false,
+    "response": {
+        "status": 201,
+        "statusText": "Created",
+        "headers": {
+            "date": "Tue, 24 Jun 2025 04:36:54 GMT",
+            "content-type": "application/json; charset=utf-8",
+            "content-length": "579",
+            "connection": "close",
+            "cf-ray": "954986db2e4b2418-IAD",
+            "x-powered-by": "Express",
+            "access-control-allow-origin": "*",
+            "etag": "W/\"243-LC3fHdlG/4kJ+Ut3RfECriG7aXM\"",
+            "cf-cache-status": "DYNAMIC",
+            "server": "cloudflare"
+        },
+        "data": "eyJpZCI6IjFkYzNmMjJiLTlkZmYtNDZjNy1iNGQzLTU5MDE1ZjM1OTU4NiIsImFjY291bnRfaWQiOiJmOTk2MWMxMy0zNDk5LTQ3ZWItOTQ5MS1iMGE0YWQwYjY5ZGEiLCJhbW91bnQiOjEzMDAwLCJ0aXBfYW1vdW50IjowLCJjdXJyZW5jeV9jb2RlIjoiQUVEIiwibWVzc2FnZSI6IlRoaXMgaXMgYSB0ZXN0IHBheW1lbnQiLCJjcmVhdGVkX2F0IjoiMTc1MDczOTgxNDE1NyIsInN0YXR1cyI6InJlcXVpcmVzX3BheW1lbnRfaW5zdHJ1bWVudCIsIm9wZXJhdGlvbl9pZCI6ImI5NjZjNWNkLWI1YzUtNGRmZS04Nzc3LTQwNGVlNTE2YzFmNyIsInJlZGlyZWN0X3VybCI6Imh0dHBzOi8vcGF5LnppaW5hLmNvbS9wYXltZW50X2ludGVudC8xZGMzZjIyYi05ZGZmLTQ2YzctYjRkMy01OTAxNWYzNTk1ODYiLCJzdWNjZXNzX3VybCI6Imh0dHBzOi8vd3d3LmFsZXBwb2dpZnQuY29tL2luZGV4LnBocD9wYWdlPXRoYW5rX3lvdSZvcmRlcl9pZD0xNzMiLCJjYW5jZWxfdXJsIjoiaHR0cHM6Ly93d3cuYWxlcHBvZ2lmdC5jb20vaW5kZXgucGhwP3BhZ2U9Y2FuY2VsX29yZGVyJm9yZGVyX2lkPTE3MyIsImFsbG93X3RpcHMiOnRydWV9"
+    }
+}
+CURL: 
+curl --request POST \
+  --url https://api-v2.ziina.com/api/payment_intent \
+  --header 'Authorization: Bearer Cyhd+lvjI8qiXN50qklhMjtp4g7qQTEHE7w1vvJ5nU1MbO7nAmGzA30SvOi05/VI' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "amount": 13000,
+  "currency_code": "AED",
+  "message": "This is a test payment",
+  "success_url": "https://www.aleppogift.com/index.php?page=thank_you&order_id=173",
+  "cancel_url": "https://www.aleppogift.com/index.php?page=cancel_order&order_id=173",
+  "failure_url": "https://www.aleppogift.com/index.php?page=checkout&order_id=173",
+  "test": true,
+  "transaction_source": "directApi",
+  "expiry": "1846816000000",
+  "allow_tips": true
+}'
+PHP CODE: 
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://api-v2.ziina.com/api/payment_intent",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_ENCODING => "",
+  CURLOPT_MAXREDIRS => 10,
+  CURLOPT_TIMEOUT => 30,
+  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+  CURLOPT_CUSTOMREQUEST => "POST",
+  CURLOPT_POSTFIELDS => "{\n  \"amount\": 13000,\n  \"currency_code\": \"AED\",\n  \"message\": \"This is a test payment\",\n  \"success_url\": \"https://www.aleppogift.com/index.php?page=thank_you&order_id=173\",\n  \"cancel_url\": \"https://www.aleppogift.com/index.php?page=cancel_order&order_id=173\",\n  \"failure_url\": \"https://www.aleppogift.com/index.php?page=checkout&order_id=173\",\n  \"test\": true,\n  \"transaction_source\": \"directApi\",\n  \"expiry\": \"1846816000000\",\n  \"allow_tips\": true\n}",
+  CURLOPT_HTTPHEADER => [
+    "Authorization: Bearer Cyhd+lvjI8qiXN50qklhMjtp4g7qQTEHE7w1vvJ5nU1MbO7nAmGzA30SvOi05/VI",
+    "Content-Type: application/json"
+  ],
+]);
+
+$response = curl_exec($curl);
+$err = curl_error($curl);
+
+curl_close($curl);
+
+if ($err) {
+  echo "cURL Error #:" . $err;
+} else {
+  echo $response;
+}
