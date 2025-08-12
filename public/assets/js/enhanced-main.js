@@ -176,8 +176,87 @@ function openQuickView(productId) {
     // Animate in
     setTimeout(() => modal.classList.add('show'), 10);
     
-    // Load product data (implement as needed)
-    console.log('Quick view for product:', productId);
+    // Load product data via AJAX
+    fetch(`ajax/get_product_details.php?id=${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayProductDetails(modal, data.product);
+            } else {
+                showError(modal, data.error || 'Failed to load product details');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading product:', error);
+            showError(modal, 'Network error. Please try again.');
+        });
+}
+
+function displayProductDetails(modal, product) {
+    const content = modal.querySelector('.quick-view-content');
+    const priceAED = parseFloat(product.price);
+    const priceUSD = (priceAED / 3.68).toFixed(2);
+    
+    content.innerHTML = `
+        <button class="close-modal" onclick="closeQuickView()">&times;</button>
+        <div class="quick-view-body">
+            <div class="product-image-section">
+                <img src="${product.main_image}" alt="${product.name_en}" class="quick-view-image">
+            </div>
+            <div class="product-details-section">
+                <h3 class="product-title">${product.name_en}</h3>
+                ${product.category_name ? `<p class="product-category"><strong>Category:</strong> ${product.category_name}</p>` : ''}
+                ${product.brand_name ? `<p class="product-brand"><strong>Brand:</strong> ${product.brand_name}</p>` : ''}
+                
+                <div class="product-price">
+                    <span class="price-aed">AED ${priceAED.toLocaleString()}</span>
+                    <span class="price-usd">($${priceUSD})</span>
+                </div>
+                
+                ${product.description_en ? `<div class="product-description">
+                    <h4>Description</h4>
+                    <p>${product.description_en}</p>
+                </div>` : ''}
+                
+                <div class="product-actions">
+                    <button class="btn btn-primary add-to-cart-modal" data-id="${product.id}" data-name="${product.name_en}">
+                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                    </button>
+                    <a href="product.php?id=${product.id}" class="btn btn-secondary">
+                        <i class="fas fa-eye me-2"></i>View Full Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add event listener for the add to cart button in modal
+    const addToCartBtn = content.querySelector('.add-to-cart-modal');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', function() {
+            const productId = this.dataset.id;
+            const productName = this.dataset.name;
+            
+            // Add loading state
+            this.classList.add('loading');
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            
+            addToCart(productId, productName, this);
+        });
+    }
+}
+
+function showError(modal, errorMessage) {
+    const content = modal.querySelector('.quick-view-content');
+    content.innerHTML = `
+        <button class="close-modal" onclick="closeQuickView()">&times;</button>
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error</h3>
+            <p>${errorMessage}</p>
+            <button class="btn btn-secondary" onclick="closeQuickView()">Close</button>
+        </div>
+    `;
 }
 
 function closeQuickView() {

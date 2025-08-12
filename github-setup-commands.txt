@@ -1,0 +1,43 @@
+GitHub Repository Setup Commands
+=====================================
+
+After creating a repository named 'aleppogift' on GitHub.com, run these commands:
+
+1. Add GitHub as remote origin:
+   git remote add origin https://github.com/mmurhaf/aleppogift.git
+
+2. Push to GitHub:
+   git branch -M main
+   git push -u origin main
+
+Alternative Commands if you named the repository differently:
+=============================================================
+
+If your repository has a different name, replace 'aleppogift' with your repo name:
+   git remote add origin https://github.com/mmurhaf/YOUR-REPO-NAME.git
+
+Repository Information:
+======================
+- Local repository: ✅ Initialized and committed
+- Files committed: 146 files, 21,611 lines
+- Commit message: "Initial commit: AleppoGift e-commerce website with enhanced design"
+- Git user: mmurhaf (mmurhaf@gmail.com)
+
+What's Included in This Commit:
+==============================
+✅ Complete PHP e-commerce platform
+✅ Fixed cart functionality (database column issues resolved)
+✅ Enhanced modern design with custom CSS
+✅ Admin panel for product/order management
+✅ Payment integration (Ziina)
+✅ Email notifications and invoice generation
+✅ Security implementations
+✅ Responsive Bootstrap 5 design
+✅ .gitignore file to protect sensitive data
+
+Next Steps:
+===========
+1. Create repository on https://github.com/new
+2. Run the remote add command above
+3. Push your code to GitHub
+4. Your enhanced AleppoGift website will be safely stored on GitHub!
