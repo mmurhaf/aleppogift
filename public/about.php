@@ -1,6 +1,11 @@
 <?php
-require_once('../config/config.php');
-require_once('../includes/Database.php');
+// Set proper headers and output buffering
+header('Content-Type: text/html; charset=UTF-8');
+ob_start();
+
+// Use the secure bootstrap instead of direct config loading
+require_once(__DIR__ . '/../includes/bootstrap.php');
+
 $db = new Database();
 ?>
 
@@ -10,104 +15,52 @@ $db = new Database();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - AleppoGift</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4a6b8a;
-            --secondary-color: #f8f9fa;
-            --accent-color: #e67e22;
-            --dark-color: #343a40;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        
-        .about-hero {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), url('../assets/images/about-bg.jpg');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            padding: 5rem 0;
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-        
-        .about-section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 3rem;
-            margin-bottom: 3rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        .mission-values {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
-        }
-        
-        .value-card {
-            background-color: var(--secondary-color);
-            padding: 2rem;
-            border-radius: 8px;
-            text-align: center;
-            transition: transform 0.3s;
-        }
-        
-        .value-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .value-icon {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-        
-        .team-section {
-            margin-top: 4rem;
-        }
-        
-        .team-member {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .team-img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 0 auto 1rem;
-            border: 3px solid var(--primary-color);
-        }
-        
-        @media (max-width: 768px) {
-            .about-hero {
-                padding: 3rem 0;
-            }
-            
-            .about-section {
-                padding: 2rem;
-            }
-        }
-    </style>
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
+     <!--<link rel="stylesheet" href="assets/css/style.css">-->
+	<link rel="stylesheet" href="assets/css/index.css">
+	<link rel="stylesheet" href="assets/css/enhanced-design.css">
+	<link rel="stylesheet" href="assets/css/components.css">
+	<link rel="stylesheet" href="assets/css/ui-components.css">
+	
+	<!-- Google Fonts for Enhanced Typography -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
 </head>
 <body>
-    <?php include('../includes/header.php'); ?>
-    
-    <div class="about-hero">
-        <div class="container">
-            <h1 class="display-4 fw-bold">Our Story</h1>
-            <p class="lead">Bringing the finest Syrian gifts to your doorstep</p>
-        </div>
-    </div>
+
+    <?php require_once(__DIR__ . '/../includes/header.php'); ?>
+    <div class="container">
+		<!-- Cart Preview -->
+		<div id="cartPreview" class="card shadow position-absolute end-0 mt-2 me-4 cart-preview" style="display: none;">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Your Cart</h5>
+					<button type="button" class="btn-close" aria-label="Close cart" onclick="toggleCart()"></button>
+				</div>
+				<div id="cart-items-preview">
+					<p class="text-muted text-center py-3">Your cart is empty</p>
+				</div>
+				<div class="d-grid gap-2 mt-3">
+					<a href="cart.php" class="btn btn-primary">View Full Cart</a>
+					<a href="checkout.php" class="btn btn-success">Proceed to Checkout</a>
+				</div>
+			</div>
+		</div>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        <!-- Hero Section -->
+        <section class="hero-section modern-hero text-center mb-5">
+            <div class="hero-content">
+                <div class="hero-badge">✨ About Us</div>
+                <h1 class="hero-title">Our Story</h1>
+                <p class="hero-subtitle">Bringing the finest Syrian gifts to your doorstep</p>
+            </div>
+        </section>
     
     <div class="container">
         <div class="about-section">
@@ -184,10 +137,18 @@ $db = new Database();
                 </div>
             </div>
         </div>
+    </main>
+
     </div>
     
-    <?php include('../includes/footer.php'); ?>
+    <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="assets/js/main.js"></script>
+	<script src="assets/js/enhanced-main.js"></script>
 </body>
 </html>
+<?php
+// Flush output buffer
+ob_end_flush();
+?>

@@ -105,12 +105,19 @@ function initializeProductCards() {
 
 // Enhanced add to cart functionality
 function addToCart(productId, productName, button) {
+    // Client-side validation
+    if (!productId || productId <= 0) {
+        showToast('Invalid product selected', 'error');
+        button.classList.remove('loading');
+        return;
+    }
+    
     fetch('ajax/add_to_cart.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `product_id=${productId}&quantity=1`
+        body: `product_id=${encodeURIComponent(productId)}&quantity=1`
     })
     .then(response => response.json())
     .then(data => {
@@ -135,10 +142,18 @@ function addToCart(productId, productName, button) {
             }, 2000);
             
         } else {
+            // Enhanced error handling
+            let errorMessage = data.message || 'Failed to add to cart';
+            if (data.error_code === 'INVALID_PRODUCT_ID') {
+                errorMessage = 'Please select a valid product';
+            } else if (data.error_code === 'INVALID_QUANTITY') {
+                errorMessage = 'Please select a valid quantity';
+            }
+            
             // Error state
             button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error';
             button.classList.add('error');
-            showToast(data.message || 'Failed to add to cart', 'error');
+            showToast(errorMessage, 'error');
             
             // Reset button after 3 seconds
             setTimeout(() => {

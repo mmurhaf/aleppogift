@@ -1,8 +1,5 @@
 <?php
-session_start();
-require_once('../config/config.php');
-require_once('../includes/Database.php');
-require_once('../includes/helpers/cart.php');
+require_once('../includes/bootstrap.php');
 
 $db = new Database();
 
@@ -93,14 +90,23 @@ if (!empty($invalid_items)) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="assets/css/style.css">
+     <!--<link rel="stylesheet" href="assets/css/style.css">-->
+	<link rel="stylesheet" href="assets/css/index.css">
+	<link rel="stylesheet" href="assets/css/enhanced-design.css">
+	<link rel="stylesheet" href="assets/css/components.css">
+	<link rel="stylesheet" href="assets/css/ui-components.css">
+	<link rel="stylesheet" href="assets/css/cart.css">
+	
+	<!-- Google Fonts for Enhanced Typography -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
 </head>
 <body>
 
-
+    <?php require_once(__DIR__ . '/../includes/header.php'); ?>
     <div class="container">
-        
- <?php require_once(__DIR__ . '/../includes/header.php'); ?>
  
 		<!-- Cart Preview -->
 		<div id="cartPreview" class="card shadow position-absolute end-0 mt-2 me-4 cart-preview" style="display: none;">
@@ -118,13 +124,22 @@ if (!empty($invalid_items)) {
 				</div>
 			</div>
 		</div>
-        
 
-        <div class="cart-container">
-            <h2 class="cart-title">Your Shopping Cart</h2>
+    <!-- Main Content -->
+    <main class="container my-4">        
+        <!-- Hero Section -->
+        <section class="hero-section modern-hero text-center mb-5">
+            <div class="hero-content">
+                <div class="hero-badge">🛒 Shopping Cart</div>
+                <h1 class="hero-title">Your Cart</h1>
+                <p class="hero-subtitle">Review your items before checkout</p>
+            </div>
+        </section>
 
+        <div class="modern-cart-container">
             <?php if (isset($_SESSION['cart_message'])): ?>
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
                     <?php echo htmlspecialchars($_SESSION['cart_message']); ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -132,103 +147,159 @@ if (!empty($invalid_items)) {
             <?php endif; ?>
 
             <?php if (empty($_SESSION['cart'])): ?>
-                <div class="empty-cart">
-                    <p>Your cart is empty</p>
-                    <a href="index.php" class="shop-btn">Browse Products</a>
+                <div class="empty-cart-modern">
+                    <div class="empty-cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Your cart is empty</h3>
+                    <p class="text-muted">Start shopping to add items to your cart</p>
+                    <a href="index.php" class="btn btn-primary btn-hero">
+                        <i class="fas fa-shopping-bag me-2"></i>Browse Products
+                    </a>
                 </div>
             <?php else: ?>
-                <div class="cart-items">
-                    <div class="cart-header">
-                        <div class="header-product">Product</div>
-                        <div class="header-variation">Variation</div>
-                        <div class="header-qty">Quantity</div>
-                        <div class="header-price">Price</div>
-                        <div class="header-total">Total</div>
-                        <div class="header-remove"></div>
-                    </div>
-
-                    <?php
-                    $grandTotal = 0;
-                    foreach ($_SESSION['cart'] as $key => $item):
-                        $product = $db->query("SELECT * 
-                         , (SELECT image_path FROM product_images 
-                                WHERE product_images.product_id = products.id AND is_main = 1 LIMIT 1) as main_image 
-                            FROM products WHERE id = :id AND status = 1", ['id' => $item['product_id']])->fetch(PDO::FETCH_ASSOC);
-                        
-                        if (!$product) {
-                            // Skip invalid products - they were already removed above
-                            continue;
-                        }
-                        
-                        $price = $product['price'];
-                        $variationText = "";
-                        
-                        if (!empty($item['variation_id'])) {
-                            $variation = $db->query("SELECT * FROM product_variations WHERE id = :id", ['id' => $item['variation_id']])->fetch(PDO::FETCH_ASSOC);
-
-                            if ($variation) {
-                                $variationText = "Size: {$variation['size']} / Color: {$variation['color']}";
-                                $price += $variation['additional_price'];
-                            } else {
-                                $variationText = "Variation not found";
-                            }
-                        }
-
-                        $total = $price * $item['quantity'];
-                        $grandTotal += $total;
-                    ?>
-                    <div class="cart-item">
-                        <div class="item-product">
-                            <div class="product-image">
-                                <img src="<?php echo str_replace("../", "", $product['main_image']); ?>" alt="<?php echo $product['name_en']; ?>">
+                <div class="row">
+                    <!-- Cart Items Column -->
+                    <div class="col-lg-8">
+                        <div class="cart-items-modern">
+                            <div class="cart-header-modern">
+                                <h4><i class="fas fa-shopping-cart me-2"></i>Cart Items (<?= array_sum(array_column($_SESSION['cart'], 'quantity')) ?> items)</h4>
                             </div>
-                            <div class="product-name"><?php echo $product['name_en']; ?></div>
-                        </div>
-                        <div class="item-variation"><?php echo $variationText; ?></div>
-                        <div class="item-qty"><?php echo $item['quantity']; ?></div>
-                        <div class="item-price"><?php echo number_format($price, 2); ?> AED</div>
-                        <div class="item-total"><?php echo number_format($total, 2); ?> AED</div>
-                        <div class="item-remove">
-                            <a href="?remove=<?php echo $key; ?>" class="remove-btn">×</a>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
 
-                <div class="cart-summary">
-                    <div class="summary-row">
-                        <span class="summary-label">Subtotal:</span>
-                        <span class="summary-value"><?php echo number_format($grandTotal, 2); ?> AED</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="summary-label">Shipping:</span>
-                        <span class="summary-value">Calculated at checkout</span>
-                    </div>
-                    <div class="summary-row grand-total">
-                        <span class="summary-label">Total:</span>
-                        <span class="summary-value"><?php echo number_format($grandTotal, 2); ?> AED</span>
+                            <?php
+                            $grandTotal = 0;
+                            foreach ($_SESSION['cart'] as $key => $item):
+                                $product = $db->query("SELECT * 
+                                 , (SELECT image_path FROM product_images 
+                                        WHERE product_images.product_id = products.id AND is_main = 1 LIMIT 1) as main_image 
+                                    FROM products WHERE id = :id AND status = 1", ['id' => $item['product_id']])->fetch(PDO::FETCH_ASSOC);
+                                
+                                if (!$product) {
+                                    // Skip invalid products - they were already removed above
+                                    continue;
+                                }
+                                
+                                $price = $product['price'];
+                                $variationText = "";
+                                
+                                if (!empty($item['variation_id'])) {
+                                    $variation = $db->query("SELECT * FROM product_variations WHERE id = :id", ['id' => $item['variation_id']])->fetch(PDO::FETCH_ASSOC);
+
+                                    if ($variation) {
+                                        $variationText = "Size: {$variation['size']} / Color: {$variation['color']}";
+                                        $price += $variation['additional_price'];
+                                    } else {
+                                        $variationText = "Variation not found";
+                                    }
+                                }
+
+                                $total = $price * $item['quantity'];
+                                $grandTotal += $total;
+                            ?>
+                            <div class="cart-item-modern" data-product-id="<?= $product['id'] ?>">
+                                <div class="item-image">
+                                    <img src="<?php echo str_replace("../", "", $product['main_image'] ?: 'uploads/default-product.jpg'); ?>" 
+                                         alt="<?php echo htmlspecialchars($product['name_en']); ?>" 
+                                         class="product-image">
+                                </div>
+                                <div class="item-details">
+                                    <h5 class="item-title">
+                                        <a href="product.php?id=<?= $product['id'] ?>">
+                                            <?php echo htmlspecialchars($product['name_en']); ?>
+                                        </a>
+                                    </h5>
+                                    <?php if ($variationText): ?>
+                                        <p class="item-variation"><i class="fas fa-tags me-1"></i><?php echo $variationText; ?></p>
+                                    <?php endif; ?>
+                                    <div class="item-price">
+                                        <span class="current-price">AED <?php echo number_format($price, 2); ?></span>
+                                        <span class="text-muted"> × <?php echo $item['quantity']; ?></span>
+                                    </div>
+                                </div>
+                                <div class="item-controls">
+                                    <div class="quantity-controls">
+                                        <button class="btn btn-outline-secondary btn-sm update-qty" 
+                                                data-id="<?= $product['id'] ?>" 
+                                                data-action="decrease">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <span class="quantity-display"><?= $item['quantity'] ?></span>
+                                        <button class="btn btn-outline-secondary btn-sm update-qty" 
+                                                data-id="<?= $product['id'] ?>" 
+                                                data-action="increase">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="item-total-price">
+                                        <strong>AED <?php echo number_format($total, 2); ?></strong>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm remove-item" 
+                                            data-id="<?= $product['id'] ?>" 
+                                            title="Remove from cart">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
 
-                    <div class="cart-actions">
-                        <a href="index.php" class="continue-btn">Continue Shopping</a>
-                        <a href="checkout.php" class="checkout-btn">Proceed to Checkout</a>
+                    <!-- Cart Summary Column -->
+                    <div class="col-lg-4">
+                        <div class="cart-summary-modern">
+                            <h4><i class="fas fa-receipt me-2"></i>Order Summary</h4>
+                            
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span class="fw-bold">AED <?php echo number_format($grandTotal, 2); ?></span>
+                            </div>
+                            
+                            <div class="summary-row">
+                                <span>Shipping:</span>
+                                <span class="text-muted">Calculated at checkout</span>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="summary-row grand-total">
+                                <span class="fw-bold">Total:</span>
+                                <span class="fw-bold text-success">AED <?php echo number_format($grandTotal, 2); ?></span>
+                            </div>
+
+                            <div class="cart-actions-modern">
+                                <a href="checkout.php" class="btn btn-success btn-lg w-100 mb-3">
+                                    <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                                </a>
+                                <a href="index.php" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                                </a>
+                            </div>
+
+                            <!-- Shipping Info -->
+                            <div class="shipping-info">
+                                <h6><i class="fas fa-truck me-2"></i>Shipping Information</h6>
+                                <ul class="shipping-list">
+                                    <li><i class="fas fa-check text-success me-2"></i>Free shipping to UAE</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Express delivery available</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Cash on delivery (UAE only)</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
         </div>
+        </div>
+    </main>
 
-        <footer class="footer">
-            <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
-        </footer>
-       
-</div>  
-
-
-
+    </div>
+    
+    <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
 
     <!-- JavaScript -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="assets/js/main.js"></script>
+	<script src="assets/js/enhanced-main.js"></script>
 </body>
 </html>

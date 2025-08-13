@@ -1,53 +1,58 @@
+<?php
+// Set proper headers and output buffering
+header('Content-Type: text/html; charset=UTF-8');
+ob_start();
+
+// Use the secure bootstrap instead of direct config loading
+require_once(__DIR__ . '/../includes/bootstrap.php');
+
+$db = new Database();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Contact Us - AleppoGift</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-vhXpM9L+O7XN5I/dkD7eC/rJk0XLM8xQp7y8fC9KtDzfdU9J+XZPldOZDjQ+oZOG6ZlODb3WyzlsVQF7b0Vmmw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        :root {
-            --primary-color: #e67e22; /* AleppoGift orange */
-            --secondary-color: #2c3e50;
-            --light-color: #f9f9f9;
-            --dark-color: #333;
-            --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: var(--dark-color);
-            background-color: var(--light-color);
-            padding: 0;
-            margin: 0;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .contact-header {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding: 2rem 0;
-            background: linear-gradient(135deg, var(--primary-color), #d35400);
-            color: white;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-        }
-        
-        .contact-header h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .contact-content {
-            display: flex;
-            flex-wrap: wrap;
+    <title>Contact Us - AleppoGift</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
+     <!--<link rel="stylesheet" href="assets/css/style.css">-->
+	<link rel="stylesheet" href="assets/css/index.css">
+	<link rel="stylesheet" href="assets/css/enhanced-design.css">
+	<link rel="stylesheet" href="assets/css/components.css">
+	<link rel="stylesheet" href="assets/css/ui-components.css">
+	
+	<!-- Google Fonts for Enhanced Typography -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+    <?php require_once(__DIR__ . '/../includes/header.php'); ?>
+    <div class="container">
+		<!-- Cart Preview -->
+		<div id="cartPreview" class="card shadow position-absolute end-0 mt-2 me-4 cart-preview" style="display: none;">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Your Cart</h5>
+					<button type="button" class="btn-close" aria-label="Close cart" onclick="toggleCart()"></button>
+				</div>
+				<div id="cart-items-preview">
+					<p class="text-muted text-center py-3">Your cart is empty</p>
+				</div>
+				<div class="d-grid gap-2 mt-3">
+					<a href="cart.php" class="btn btn-primary">View Full Cart</a>
+					<a href="checkout.php" class="btn btn-success">Proceed to Checkout</a>
+				</div>
+			</div>
+		</div>
+
+    <!-- Main Content -->
+    <main class="container my-4">
             gap: 2rem;
             margin-bottom: 3rem;
         }
@@ -286,8 +291,19 @@
     </div>
 </div>
 
-        
         <p><a href="index.php" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a></p>
+    </main>
+
     </div>
+    
+    <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="assets/js/main.js"></script>
+	<script src="assets/js/enhanced-main.js"></script>
 </body>
 </html>
+<?php
+// Flush output buffer
+ob_end_flush();
+?>

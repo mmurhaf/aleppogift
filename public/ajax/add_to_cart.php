@@ -8,15 +8,32 @@ header('Content-Type: application/json');
 try {
     $db = new Database();
     
-    $product_id = isset($_POST['product_id']) ? (int) $_POST['product_id'] : 0;
-    $quantity = isset($_POST['quantity']) ? (int) $_POST['quantity'] : 1;
-    $variation_id = isset($_POST['variation_id']) ? (int) $_POST['variation_id'] : null;
+    // Get and validate input with comprehensive error handling
+    $product_id = isset($_POST['product_id']) ? filter_var($_POST['product_id'], FILTER_VALIDATE_INT) : 0;
+    $quantity = isset($_POST['quantity']) ? filter_var($_POST['quantity'], FILTER_VALIDATE_INT) : 1;
+    $variation_id = isset($_POST['variation_id']) ? filter_var($_POST['variation_id'], FILTER_VALIDATE_INT) : null;
 
-    // Validate input
-    if ($product_id < 1 || $quantity < 1) {
+    // Ensure minimum values
+    $product_id = ($product_id === false) ? 0 : $product_id;
+    $quantity = ($quantity === false) ? 0 : $quantity;
+    
+    // Enhanced validation
+    if ($product_id < 1) {
         echo json_encode([
             'success' => false, 
-            'message' => 'Invalid product ID or quantity'
+            'message' => 'Invalid product ID or quantity',
+            'error_code' => 'INVALID_PRODUCT_ID',
+            'details' => 'Product ID must be a positive integer'
+        ]);
+        exit;
+    }
+    
+    if ($quantity < 1) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Invalid product ID or quantity',
+            'error_code' => 'INVALID_QUANTITY',
+            'details' => 'Quantity must be a positive integer'
         ]);
         exit;
     }

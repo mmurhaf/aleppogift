@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->query(
             "INSERT INTO orders 
                 (customer_id, total_amount, total_weight, shipping_aed, payment_status, payment_method, note, remarks, 
-                 coupon_code, discount_type, discount_value, discount_amount, created_at)
+                 coupon_code, discount_type, discount_value, discount_amount, order_date)
             VALUES 
                 (:customer_id, :total, :total_weight, :shipping_aed, :payment_status, :payment_method, :note, :remarks,
                  :coupon_code, :discount_type, :discount_value, :discount_amount, NOW())",
@@ -229,16 +229,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Insert order item
             $db->query(
-                "INSERT INTO order_items (order_id, product_id, variation_id, quantity, price, total, variation_details) 
-                VALUES (:order_id, :product_id, :variation_id, :qty, :price, :total, :variation_details)", 
+                "INSERT INTO order_items (order_id, product_id, variation_id, quantity, price) 
+                VALUES (:order_id, :product_id, :variation_id, :qty, :price)", 
                 [
                     'order_id' => $order_id,
                     'product_id' => $item['product_id'],
                     'variation_id' => $item['variation_id'] ?? null,
                     'qty' => $item['quantity'],
-                    'price' => $price,
-                    'total' => $price * $item['quantity'],
-                    'variation_details' => $variation_details
+                    'price' => $price
                 ]
             );
 
@@ -377,14 +375,45 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - AleppoGift</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
+     <!--<link rel="stylesheet" href="assets/css/style.css">-->
+	<link rel="stylesheet" href="assets/css/index.css">
+	<link rel="stylesheet" href="assets/css/enhanced-design.css">
+	<link rel="stylesheet" href="assets/css/components.css">
+	<link rel="stylesheet" href="assets/css/ui-components.css">
     <link rel="stylesheet" href="assets/css/checkout.css">
+	
+	<!-- Google Fonts for Enhanced Typography -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+</head>
 <body>
 
+    <?php require_once(__DIR__ . '/../includes/header.php'); ?>
+    <div class="container">
+		<!-- Cart Preview -->
+		<div id="cartPreview" class="card shadow position-absolute end-0 mt-2 me-4 cart-preview" style="display: none;">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Your Cart</h5>
+					<button type="button" class="btn-close" aria-label="Close cart" onclick="toggleCart()"></button>
+				</div>
+				<div id="cart-items-preview">
+					<p class="text-muted text-center py-3">Your cart is empty</p>
+				</div>
+				<div class="d-grid gap-2 mt-3">
+					<a href="cart.php" class="btn btn-primary">View Full Cart</a>
+					<a href="checkout.php" class="btn btn-success">Proceed to Checkout</a>
+				</div>
+			</div>
+		</div>
+
+    <!-- Main Content -->
+    <main class="container my-4">
 <div class="checkout-container">
         <div class="checkout-header">
             <h2><i class="fas fa-shopping-cart me-2"></i>Checkout</h2>
@@ -778,6 +807,14 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     }
 
 </script>
+
+    </div>
+    
+    <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="assets/js/main.js"></script>
+	<script src="assets/js/enhanced-main.js"></script>
 
 </body>
 </html>

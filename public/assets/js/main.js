@@ -129,9 +129,22 @@ console.log("AleppoGift JS loaded.");
             const id = $(this).data('id');
             const action = $(this).data('action');
             const button = $(this);
+            const quantityDisplay = button.siblings('.quantity-display').length 
+                ? button.siblings('.quantity-display') 
+                : button.closest('.quantity-controls, .quantity-controls-small').find('.quantity-display');
+            
+            const currentQuantity = parseInt(quantityDisplay.text()) || 1;
+            
+            // Don't allow decrease below 1
+            if (action === 'decrease' && currentQuantity <= 1) {
+                showToast('Info', 'Minimum quantity is 1. Use remove button to delete item.', 'info');
+                return;
+            }
             
             // Show loading state
             button.prop('disabled', true);
+            const originalIcon = button.find('i').attr('class');
+            button.find('i').attr('class', 'fas fa-spinner fa-spin');
             
             $.post('ajax/update_cart_qty.php', { product_id: id, action: action }, function (res) {
                 if (res.success) {
@@ -139,20 +152,190 @@ console.log("AleppoGift JS loaded.");
                     $('#cart-count-toggle').text(res.count);
                     $('#cartPreview').load('ajax/cart_preview.php');
                     
-                    // Update quantity display if it exists
-                    const quantityDisplay = button.siblings('.quantity-display');
-                    if (quantityDisplay.length && res.new_quantity !== undefined) {
-                        quantityDisplay.text(res.new_quantity);
+                    // Update quantity display with animation
+                    if (res.new_quantity !== undefined) {
+                        quantityDisplay.fadeOut(150, function() {
+                            $(this).text(res.new_quantity).fadeIn(150);
+                        });
+                        
+                        // Update total price if on cart page
+                        const cartItem = button.closest('.cart-item-modern');
+                        if (cartItem.length) {
+                            updateCartItemTotal(cartItem, res.new_quantity);
+                        }
                     }
                 } else {
                     showToast('Warning', res.message || 'Cannot update quantity', 'warning');
                 }
+                
+                // Reset button
                 button.prop('disabled', false);
+                button.find('i').attr('class', originalIcon);
             }, 'json').fail(function() {
                 showToast('Error', 'Network error. Please try again.', 'error');
                 button.prop('disabled', false);
+                button.find('i').attr('class', originalIcon);
             });
         });
+
+        // Function to update cart item total on cart page
+        function updateCartItemTotal(cartItem, newQuantity) {
+            const priceText = cartItem.find('.current-price').text();
+            const price = parseFloat(priceText.replace(/[^\d.]/g, ''));
+            const newTotal = price * newQuantity;
+            
+            cartItem.find('.item-total-price').fadeOut(150, function() {
+                $(this).html('<strong>AED ' + newTotal.toFixed(2) + '</strong>').fadeIn(150);
+            });
+            
+            // Update cart summary totals
+            updateCartSummary();
+        }
+
+        // Function to recalculate cart summary
+        function updateCartSummary() {
+            let subtotal = 0;
+            $('.cart-item-modern').each(function() {
+                const totalText = $(this).find('.item-total-price strong').text();
+                const total = parseFloat(totalText.replace(/[^\d.]/g, ''));
+                if (!isNaN(total)) {
+                    subtotal += total;
+                }
+            });
+            
+            $('.summary-row:first .fw-bold').text('AED ' + subtotal.toFixed(2));
+            $('.grand-total .text-success').text('AED ' + subtotal.toFixed(2));
+        }
+
+        // Enhanced remove from cart with confirmation for cart page
+        $(document).on('click', '.remove-item', function (e) {
+            e.preventDefault();
+            
+            const id = $(this).data('id');
+            const button = $(this);
+            const cartItem = button.closest('.cart-item-modern, .cart-item-preview');
+            
+            // Show confirmation for cart page (not preview)
+            if (cartItem.hasClass('cart-item-modern')) {
+                if (!confirm('Are you sure you want to remove this item from your cart?')) {
+                    return;
+                }
+            }
+            
+            // Show loading state
+            const originalHtml = button.html();
+            button.html('<i class="fas fa-spinner fa-spin"></i>');
+            button.prop('disabled', true);
+            
+            $.post('ajax/remove_from_cart.php', { product_id: id }, function (res) {
+                if (res.success) {
+                    $('#cart-count').text(res.count);
+                    $('#cart-count-toggle').text(res.count);
+                    
+                    // Animate item removal
+                    cartItem.fadeOut(300, function() {
+                        $(this).remove();
+                        
+                        // Reload cart preview
+                        $('#cartPreview').load('ajax/cart_preview.php');
+                        
+                        // If on cart page and no items left, reload page
+                        if (window.location.pathname.includes('cart.php') && res.count === 0) {
+                            location.reload();
+                        } else if (cartItem.hasClass('cart-item-modern')) {
+                            // Update cart summary
+                            updateCartSummary();
+                        }
+                    });
+                    
+                    showToast('Success', res.message || 'Item removed from cart', 'success');
+                } else {
+                    showToast('Error', res.message || 'Failed to remove item', 'error');
+                    button.html(originalHtml);
+                    button.prop('disabled', false);
+                }
+            }, 'json').fail(function() {
+                showToast('Error', 'Network error. Please try again.', 'error');
+                button.html(originalHtml);
+                button.prop('disabled', false);
+            });
+        });
+
+        // Enhanced addToCart function for button clicks (not forms)
+        window.addToCart = function(productId, quantity = 1) {
+            // Client-side validation
+            if (!productId || productId <= 0) {
+                showToast('Error', 'Invalid product selected', 'error');
+                return;
+            }
+            
+            if (!quantity || quantity <= 0) {
+                showToast('Error', 'Invalid quantity', 'error');
+                return;
+            }
+            
+            const button = event && event.target ? $(event.target.closest('button')) : null;
+            const originalText = button ? button.html() : '';
+            
+            // Show loading state if button exists
+            if (button) {
+                button.html('<i class="fas fa-spinner fa-spin me-2"></i>Adding...');
+                button.prop('disabled', true);
+            }
+            
+            $.post('ajax/add_to_cart.php', { 
+                product_id: productId, 
+                quantity: quantity 
+            }, function (res) {
+                if (res.success) {
+                    // Update cart counters
+                    $('#cart-count').text(res.count);
+                    $('#cart-count-toggle').text(res.count);
+                    
+                    // Reload cart preview
+                    $('#cartPreview').load('ajax/cart_preview.php');
+                    
+                    // Show success message
+                    showToast('Success', res.message || 'Item added to cart!', 'success');
+                    
+                    // Animate cart button
+                    const cartButton = $('[onclick="toggleCart()"]');
+                    cartButton.addClass('animate__animated animate__pulse');
+                    setTimeout(() => cartButton.removeClass('animate__animated animate__pulse'), 1000);
+                    
+                } else {
+                    // Enhanced error handling
+                    let errorMessage = res.message || 'Failed to add item to cart';
+                    if (res.error_code === 'INVALID_PRODUCT_ID') {
+                        errorMessage = 'Please select a valid product';
+                    } else if (res.error_code === 'INVALID_QUANTITY') {
+                        errorMessage = 'Please select a valid quantity';
+                    }
+                    showToast('Error', errorMessage, 'error');
+                }
+                
+                // Reset button
+                if (button) {
+                    button.html(originalText);
+                    button.prop('disabled', false);
+                }
+            }, 'json').fail(function(xhr) {
+                let errorMsg = 'Network error. Please try again.';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response && response.message) {
+                        errorMsg = response.message;
+                    }
+                } catch(e) {
+                    // Keep default error message
+                }
+                showToast('Error', errorMsg, 'error');
+                if (button) {
+                    button.html(originalText);
+                    button.prop('disabled', false);
+                }
+            });
+        };
 
    // Reset button functionality
     $('.btn-reset').on('click', function(e) {
@@ -271,3 +454,55 @@ function shareToTikTok(text) {
     // TikTok sharing implementation
     alert('Copy this link to share on TikTok: ' + text);
 }
+
+// Enhanced cart functionality
+window.toggleCart = function() {
+    const cartOffcanvas = document.getElementById('cartOffcanvas');
+    if (cartOffcanvas) {
+        const bsOffcanvas = new bootstrap.Offcanvas(cartOffcanvas);
+        bsOffcanvas.toggle();
+        
+        // Refresh cart preview when opened
+        $('#cartPreview').load('ajax/cart_preview.php');
+    }
+};
+
+// Proceed to checkout with validation
+window.proceedToCheckout = function() {
+    // Check if cart has items
+    const cartCount = parseInt($('#cart-count').text()) || 0;
+    
+    if (cartCount === 0) {
+        showToast('Info', 'Your cart is empty. Add some items first!', 'info');
+        return;
+    }
+    
+    // Show loading state
+    const checkoutBtn = event.target;
+    const originalText = checkoutBtn.innerHTML;
+    checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    checkoutBtn.disabled = true;
+    
+    // Small delay for better UX
+    setTimeout(() => {
+        window.location.href = 'checkout.php';
+    }, 500);
+};
+
+// Initialize enhanced cart functionality on page load
+$(document).ready(function() {
+    // Load cart count on page load
+    $.get('ajax/get_cart_count.php', function(res) {
+        if (res.count !== undefined) {
+            $('#cart-count').text(res.count);
+            $('#cart-count-toggle').text(res.count);
+        }
+    }, 'json').fail(function() {
+        console.log('Cart count load failed - using session fallback');
+    });
+    
+    // Auto-update cart summary if on cart page
+    if (window.location.pathname.includes('cart.php')) {
+        setTimeout(updateCartSummary, 500);
+    }
+});

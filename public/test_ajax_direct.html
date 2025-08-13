@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct AJAX Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Direct AJAX Add to Cart Test</h1>
+    
+    <div>
+        <h3>Test Cases:</h3>
+        <button onclick="testCase('valid', 166, 1)">Valid Product (ID: 166, Qty: 1)</button><br><br>
+        <button onclick="testCase('invalid_id', 0, 1)">Invalid Product ID (ID: 0, Qty: 1)</button><br><br>
+        <button onclick="testCase('invalid_qty', 166, 0)">Invalid Quantity (ID: 166, Qty: 0)</button><br><br>
+        <button onclick="testCase('missing_id', null, 1)">Missing Product ID</button><br><br>
+        <button onclick="testCase('string_id', 'abc', 1)">String Product ID (ID: 'abc', Qty: 1)</button><br><br>
+    </div>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9;">
+        Results will appear here...
+    </div>
+
+    <script>
+    function testCase(testName, productId, quantity) {
+        console.log(`Testing ${testName}:`, {productId, quantity});
+        
+        const postData = {};
+        if (productId !== null) postData.product_id = productId;
+        if (quantity !== null) postData.quantity = quantity;
+        
+        $.ajax({
+            url: 'ajax/add_to_cart.php',
+            method: 'POST',
+            data: postData,
+            dataType: 'json',
+            success: function(response) {
+                displayResult(testName, 'SUCCESS', response);
+            },
+            error: function(xhr, status, error) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    displayResult(testName, 'ERROR (JSON)', response);
+                } catch(e) {
+                    displayResult(testName, 'ERROR (TEXT)', {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseText: xhr.responseText
+                    });
+                }
+            }
+        });
+    }
+    
+    function displayResult(testName, type, data) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = `
+            <h4>Test: ${testName} (${type})</h4>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+    }
+    </script>
+</body>
+</html>

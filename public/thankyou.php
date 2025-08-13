@@ -59,14 +59,13 @@ if (isset($_SESSION['temp_order_id'])) {
 $_SESSION['valid_invoice_' . $order_id] = true;
 
 // --- Ziina payment ---
-$payment_method = $_SESSION['payment_method'] ;
-$order_id = $_SESSION['order_id'];
-$grandTotal = $_SESSION['grandTotal'];
-$fullname = $_SESSION['$fullname'];
-$email = $_SESSION['$email'];
+$payment_method = $order['payment_method'] ?? '';
+$grandTotal = $order['total_amount'] ?? 0;
+$fullname = $order['customer_name'] ?? '';
+$email = $order['customer_email'] ?? '';
 
 if ($payment_method === 'Ziina') {
-send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email);
+    send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email);
 }
 
 // Clear session data
@@ -76,8 +75,8 @@ unset($_SESSION['discount_amount']);
 unset($_SESSION['payment_method']);
 unset($_SESSION['order_id']); 
 unset($_SESSION['grandTotal']); 
-unset($_SESSION['$fullname']);
-unset($_SESSION['$email']); 
+unset($_SESSION['fullname']);
+unset($_SESSION['email']); 
 
 // Clear any temporary order session data
 if (isset($_SESSION['temp_order'])) {
@@ -117,28 +116,42 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     <title>Thank You - AleppoGift</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        :root {
-            --primary-color: #4e6bff;
-            --secondary-color: #f8f9fa;
-            --success-color: #28a745;
-            --text-color: #333;
-            --light-text: #6c757d;
-            --border-radius: 8px;
-            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        body {
-            background-color: #f5f7ff;
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .thank-you-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 3rem;
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
+     <!--<link rel="stylesheet" href="assets/css/style.css">-->
+	<link rel="stylesheet" href="assets/css/index.css">
+	<link rel="stylesheet" href="assets/css/enhanced-design.css">
+	<link rel="stylesheet" href="assets/css/components.css">
+	<link rel="stylesheet" href="assets/css/ui-components.css">
+	
+	<!-- Google Fonts for Enhanced Typography -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+    <?php require_once(__DIR__ . '/../includes/header.php'); ?>
+    <div class="container">
+		<!-- Cart Preview -->
+		<div id="cartPreview" class="card shadow position-absolute end-0 mt-2 me-4 cart-preview" style="display: none;">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Your Cart</h5>
+					<button type="button" class="btn-close" aria-label="Close cart" onclick="toggleCart()"></button>
+				</div>
+				<div id="cart-items-preview">
+					<p class="text-muted text-center py-3">Your cart is empty</p>
+				</div>
+				<div class="d-grid gap-2 mt-3">
+					<a href="cart.php" class="btn btn-primary">View Full Cart</a>
+					<a href="checkout.php" class="btn btn-success">Proceed to Checkout</a>
+				</div>
+			</div>
+		</div>
+
+    <!-- Main Content -->
+    <main class="container my-4">
             background: white;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
@@ -402,8 +415,12 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
         </div>
     </main>
 
-    <?php include('../includes/footer.php'); ?>
-
+    </div>
+    
+    <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="assets/js/main.js"></script>
+	<script src="assets/js/enhanced-main.js"></script>
 </body>
 </html>
