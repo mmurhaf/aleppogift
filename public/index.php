@@ -364,12 +364,16 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
                             
                             <!-- Product Actions -->
                             <div class="product-actions">
-                                <button class="btn-add-cart add-to-cart" 
-                                        data-id="<?= $p['id']; ?>" 
-                                        data-name="<?= htmlspecialchars($p['name_en']); ?>">
-                                    <i class="fas fa-shopping-cart me-2"></i>
-                                    <span>Add to Cart</span>
-                                </button>
+                                <form class="add-to-cart-form" method="post" action="ajax/add_to_cart.php">
+                                    <input type="hidden" name="product_id" value="<?= $p['id']; ?>">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn-add-cart add-to-cart" 
+                                            data-id="<?= $p['id']; ?>" 
+                                            data-name="<?= htmlspecialchars($p['name_en']); ?>">
+                                        <i class="fas fa-shopping-cart me-2"></i>
+                                        <span>Add to Cart</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

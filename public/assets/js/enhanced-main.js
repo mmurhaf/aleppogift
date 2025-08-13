@@ -56,23 +56,23 @@ function initializeProductCards() {
             }
         });
         
-        // Enhanced add to cart button
-        const addToCartBtn = card.querySelector('.add-to-cart');
-        if (addToCartBtn) {
-            addToCartBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                const productId = this.dataset.id;
-                const productName = this.dataset.name;
-                
-                // Add loading state
-                this.classList.add('loading');
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
-                
-                // Simulate cart addition (replace with actual AJAX call)
-                addToCart(productId, productName, this);
-            });
-        }
+        // Enhanced add to cart button - DISABLED to prevent conflicts with main.js
+        // const addToCartBtn = card.querySelector('.add-to-cart');
+        // if (addToCartBtn) {
+        //     addToCartBtn.addEventListener('click', function(e) {
+        //         e.preventDefault();
+        //         
+        //         const productId = this.dataset.id;
+        //         const productName = this.dataset.name;
+        //         
+        //         // Add loading state
+        //         this.classList.add('loading');
+        //         this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        //         
+        //         // Simulate cart addition (replace with actual AJAX call)
+        //         addToCart(productId, productName, this);
+        //     });
+        // }
         
         // Quick view functionality
         const quickViewBtn = card.querySelector('.btn-quick-view');
