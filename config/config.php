@@ -24,8 +24,8 @@ define('CURRENCY_SYMBOL', 'د.إ');
 define('APP_NAME', 'AleppoGift');
 
 // Email Configuration
-define('EMAIL_FROM', env('EMAIL_FROM', 'orders@aleppogift.com'));
-define('EMAIL_FROM_NAME', env('EMAIL_FROM_NAME', 'AleppoGift Orders'));
+define('EMAIL_FROM', env('EMAIL_FROM', 'sales@aleppogift.com'));
+define('EMAIL_FROM_NAME', env('EMAIL_FROM_NAME', 'AleppoGift Sales'));
 define('SMTP_HOST', env('SMTP_HOST', 'smtp.gmail.com'));
 define('SMTP_PORT', env('SMTP_PORT', 587));
 define('SMTP_USER', env('SMTP_USER'));
