@@ -1,9 +1,11 @@
 # AleppoGift - Git Ignore File
 
 # Sensitive Configuration Files
-config/config.php
 .env
+.env.local
+.env.production
 *.env
+!.env.example
 
 # Database Files
 *.sql
