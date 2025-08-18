@@ -44,10 +44,12 @@ define('UPLOAD_PATH', __DIR__ . '/../public/uploads/');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 
 // Session Configuration (secure settings)
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', !$is_local);
-ini_set('session.use_strict_mode', 1);
-ini_set('session.cookie_samesite', 'Strict');
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_secure', 0); // Set to 1 for HTTPS
+    session_start();
+}
 
 // Error Reporting
 if ($is_local) {

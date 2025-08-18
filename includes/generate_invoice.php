@@ -1,6 +1,7 @@
 <?php
 // File: public/generate_invoice.php
-require_once __DIR__ . '/../vendor/fpdf/fpdf.php';
+// Download FPDF manually and place it in includes/fpdf/
+require_once(__DIR__ . '/fpdf/fpdf.php');
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/Database.php';
 
