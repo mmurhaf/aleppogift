@@ -16,10 +16,25 @@ $message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_category'])) {
     $name_ar = trim($_POST['name_ar']);
     $name_en = trim($_POST['name_en']);
+    
+    // Handle image upload
+    $picture_path = null;
+    if (!empty($_FILES['picture']['name'])) {
+        $target_dir = "../../uploads/categories/";
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0755, true);
+        }
+        $file_name = time() . '_' . basename($_FILES["picture"]["name"]);
+        $target_file = $target_dir . $file_name;
+        if (move_uploaded_file($_FILES["picture"]["tmp_name"], $target_file)) {
+            $picture_path = 'uploads/categories/' . $file_name;
+        }
+    }
 
-    $db->query("INSERT INTO categories (name_ar, name_en, status) VALUES (:name_ar, :name_en, 1)", [
+    $db->query("INSERT INTO categories (name_ar, name_en, picture, status) VALUES (:name_ar, :name_en, :picture, 1)", [
         'name_ar' => $name_ar,
-        'name_en' => $name_en
+        'name_en' => $name_en,
+        'picture' => $picture_path
     ]);
 
     $message = "Category added successfully!";
@@ -144,7 +159,7 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
         <!-- Add Category Form -->
         <div class="category-card">
             <h3 class="h5 mb-4 text-primary"><i class="fas fa-plus-circle me-2"></i>Add New Category</h3>
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="name_en" class="form-label">Category Name (English)</label>
@@ -153,6 +168,10 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
                     <div class="col-md-6">
                         <label for="name_ar" class="form-label">اسم الفئة (Arabic)</label>
                         <input type="text" class="form-control rtl-text" id="name_ar" name="name_ar" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="picture" class="form-label">Category Image</label>
+                        <input type="file" class="form-control" id="picture" name="picture" accept="image/*">
                     </div>
                     <div class="col-12">
                         <button type="submit" name="add_category" class="btn btn-primary">
@@ -174,9 +193,10 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
                         <thead>
                             <tr>
                                 <th width="80">ID</th>
+                                <th>Image</th>
                                 <th>Name (English)</th>
                                 <th>اسم (Arabic)</th>
-                                <th>Products</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -184,13 +204,19 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
                             <?php foreach ($categories as $cat): ?>
                             <tr>
                                 <td>#<?php echo $cat['id']; ?></td>
+                                <td>
+                                    <?php if (!empty($cat['picture'])): ?>
+                                        <img src="../../<?php echo $cat['picture']; ?>" alt="Category" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                    <?php else: ?>
+                                        <span class="text-muted">No image</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($cat['name_en']); ?></td>
                                 <td class="rtl-text"><?php echo htmlspecialchars($cat['name_ar']); ?></td>
                                 <td>
-                                    <?php 
-                                    // In a real app, you would show product count
-                                    echo '<span class="badge bg-primary">'.rand(5, 50).'</span>'; 
-                                    ?>
+                                    <span class="badge <?php echo $cat['status'] ? 'bg-success' : 'bg-secondary'; ?>">
+                                        <?php echo $cat['status'] ? 'Active' : 'Inactive'; ?>
+                                    </span>
                                 </td>
                                 <td>
                                     <a href="edit_category.php?id=<?php echo $cat['id']; ?>" 

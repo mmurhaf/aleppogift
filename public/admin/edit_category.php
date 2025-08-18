@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
 
     // Handle image upload
     if (!empty($_FILES['picture']['name'])) {
-        $target_dir = "../../uploads/category/";
+        $target_dir = "../../uploads/categories/";
         $file_name = time() . '_' . basename($_FILES["picture"]["name"]);
         $target_file = $target_dir . $file_name;
 
@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
         }
 
         if (move_uploaded_file($_FILES["picture"]["tmp_name"], $target_file)) {
-            $picture_path = 'uploads/category/' . $file_name;
+            $picture_path = 'uploads/categories/' . $file_name;
         }
     }
 

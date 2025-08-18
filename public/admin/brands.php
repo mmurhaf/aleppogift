@@ -14,12 +14,27 @@ $message = "";
 
 // Handle Add Brand
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_brand'])) {
-    $name_ar = trim($_POST['name_ar']);
     $name_en = trim($_POST['name_en']);
+    $name_ar = trim($_POST['name_ar']);
+    
+    // Handle logo upload
+    $logo_path = null;
+    if (!empty($_FILES['logo']['name'])) {
+        $target_dir = "../../uploads/brands/";
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0755, true);
+        }
+        $file_name = time() . '_' . basename($_FILES["logo"]["name"]);
+        $target_file = $target_dir . $file_name;
+        if (move_uploaded_file($_FILES["logo"]["tmp_name"], $target_file)) {
+            $logo_path = 'uploads/brands/' . $file_name;
+        }
+    }
 
-    $db->query("INSERT INTO brands (name_ar, name_en, status) VALUES (:name_ar, :name_en, 1)", [
+    $db->query("INSERT INTO brands (name_en, name_ar, logo, status) VALUES (:name_en, :name_ar, :logo, 1)", [
+        'name_en' => $name_en,
         'name_ar' => $name_ar,
-        'name_en' => $name_en
+        'logo' => $logo_path
     ]);
 
     $message = "Brand added successfully!";
@@ -162,9 +177,9 @@ $brands = $db->query("SELECT * FROM brands ORDER BY id DESC")->fetchAll(PDO::FET
                         <label for="name_ar" class="form-label">اسم العلامة التجارية (Arabic)</label>
                         <input type="text" class="form-control rtl-text" id="name_ar" name="name_ar" required>
                     </div>
-                    <div class="col-md-12">
-                        <label for="brand_logo" class="form-label">Brand Logo</label>
-                        <input type="file" class="form-control" id="brand_logo" name="brand_logo" accept="image/*">
+                    <div class="col-12">
+                        <label for="logo" class="form-label">Brand Logo</label>
+                        <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
                         <div class="form-text">Upload a high-quality logo (PNG, JPG, SVG)</div>
                     </div>
                     <div class="col-12">
@@ -204,9 +219,13 @@ $brands = $db->query("SELECT * FROM brands ORDER BY id DESC")->fetchAll(PDO::FET
                             <?php foreach ($brands as $brand): ?>
                             <tr>
                                 <td>
-                                    <img src="<?php echo isset($brand['logo']) ? '../uploads/brands/'.$brand['logo'] : '../assets/img/default-brand.png'; ?>" 
-                                         alt="<?php echo htmlspecialchars($brand['name_en']); ?>" 
-                                         class="brand-logo">
+                                    <?php if (!empty($brand['logo'])): ?>
+                                        <img src="../../<?= $brand['logo'] ?>" alt="<?= htmlspecialchars($brand['name_en']) ?>" class="brand-logo">
+                                    <?php else: ?>
+                                        <div class="brand-logo d-flex align-items-center justify-content-center bg-light">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                 <td>#<?php echo $brand['id']; ?></td>
                                 <td><?php echo htmlspecialchars($brand['name_en']); ?></td>
