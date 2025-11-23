@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add to Cart Button Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        body {
+            padding: 2rem;
+            background: var(--bg-secondary);
+        }
+        .test-card {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+        .test-title {
+            color: var(--primary-600);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-5">Add to Cart Button Design Test</h1>
+        
+        <!-- Enhanced Button Test -->
+        <div class="test-card">
+            <h3 class="test-title">Enhanced Add to Cart Button</h3>
+            <div class="product-actions" style="max-width: 300px;">
+                <form class="add-to-cart-form" method="post" action="ajax/add_to_cart.php">
+                    <input type="hidden" name="product_id" value="1">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn-add-cart add-to-cart" 
+                            data-id="1" 
+                            data-name="Test Product">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        <span>Add to Cart</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Standalone Button Test -->
+        <div class="test-card">
+            <h3 class="test-title">Standalone Button (No Form)</h3>
+            <div class="product-actions" style="max-width: 300px;">
+                <button type="button" class="btn-add-cart" 
+                        data-id="2" 
+                        data-name="Test Product 2"
+                        data-quantity="1">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    <span>Add to Cart</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Responsive Test -->
+        <div class="test-card">
+            <h3 class="test-title">Mobile Responsive (Resize window to test)</h3>
+            <div class="row">
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="product-card modern-product-card">
+                        <div class="product-image">
+                            <img src="https://via.placeholder.com/300x200" alt="Test Product" style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--radius);">
+                        </div>
+                        <div class="product-content">
+                            <h4 class="product-title">Test Product</h4>
+                            <div class="product-price">
+                                <span class="price-current">AED 150</span>
+                            </div>
+                            <div class="product-actions">
+                                <button type="button" class="btn-add-cart" 
+                                        data-id="3" 
+                                        data-name="Test Product 3">
+                                    <i class="fas fa-shopping-cart me-2"></i>
+                                    <span>Add to Cart</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Button States Test -->
+        <div class="test-card">
+            <h3 class="test-title">Button States</h3>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>Normal State</h5>
+                    <button type="button" class="btn-add-cart">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Loading State</h5>
+                    <button type="button" class="btn-add-cart loading">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        <span>Adding...</span>
+                    </button>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Success State</h5>
+                    <button type="button" class="btn-add-cart success">
+                        <i class="fas fa-check me-2"></i>
+                        <span>Added!</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparison with Bootstrap Button -->
+        <div class="test-card">
+            <h3 class="test-title">Comparison</h3>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h5>Enhanced Button</h5>
+                    <button type="button" class="btn-add-cart">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h5>Standard Bootstrap Button</h5>
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    
+    <script>
+        // Mock AJAX for testing
+        $(document).ready(function() {
+            // Override the AJAX call for testing
+            const originalPost = $.post;
+            $.post = function(url, data, callback, dataType) {
+                if (url === 'ajax/add_to_cart.php') {
+                    // Simulate network delay
+                    setTimeout(() => {
+                        const mockResponse = {
+                            success: true,
+                            message: 'Product added to cart',
+                            product_name: 'Test Product',
+                            count: Math.floor(Math.random() * 10) + 1
+                        };
+                        
+                        if (typeof callback === 'function') {
+                            callback(mockResponse);
+                        }
+                    }, 1000);
+                    
+                    return {
+                        fail: function(callback) {
+                            // This won't be called in our mock
+                            return this;
+                        }
+                    };
+                }
+                
+                return originalPost.apply(this, arguments);
+            };
+            
+            // Add some visual feedback for hover states
+            $('.btn-add-cart').on('mouseenter', function() {
+                console.log('Button hover effect triggered');
+            });
+            
+            console.log('Button test page loaded successfully!');
+        });
+    </script>
+</body>
+</html>

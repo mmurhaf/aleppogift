@@ -1,0 +1,77 @@
+# AleppoGift - Git Ignore File
+
+# Sensitive Configuration Files
+config/config.php
+.env
+*.env
+
+# Database Files
+*.sql
+*.db
+*.sqlite
+
+# Log Files
+logs/
+*.log
+error.log
+access.log
+
+# Cache and Temporary Files
+cache/
+temp/
+tmp/
+*.tmp
+*.cache
+
+# Upload Directories (keep structure but ignore content)
+public/uploads/*
+!public/uploads/.gitkeep
+public/quotations/*
+!public/quotations/.gitkeep
+public/invoice/*
+!public/invoice/.gitkeep
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Composer
+vendor/
+composer.lock
+
+# Node.js (if using)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Backup Files
+*.backup
+*.bak
+*.old
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archive Files
+*.zip
+*.rar
+*.tar.gz
+
+# Development Files
+test_*.php
+debug_*.php
+*.test
+
+# htaccess backup
+.htaccess.backup

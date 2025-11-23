@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset 
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+                      http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+  <!-- Static Pages -->
+  <url>
+    <loc>https://aleppogift.com/</loc>
+    <priority>1.0</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://aleppogift.com/about</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://aleppogift.com/contact</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://aleppogift.com/terms_of_service.html</loc>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Product Listing Pages -->
+  <url>
+    <loc>https://aleppogift.com/products</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <!-- Categories (example) -->
+  <url>
+    <loc>https://aleppogift.com/products?category=1</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aleppogift.com/products?category=2</loc>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Brands (example) -->
+  <url>
+    <loc>https://aleppogift.com/products?brand=1</loc>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Example Product URLs -->
+  <url>
+    <loc>https://aleppogift.com/product/123/elegant-vase</loc>
+    <priority>0.9</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://aleppogift.com/product/124/classic-dinner-set</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Cart & Checkout (non-indexed but listed optionally) -->
+  <url>
+    <loc>https://aleppogift.com/cart</loc>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://aleppogift.com/checkout</loc>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>

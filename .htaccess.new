@@ -1,0 +1,73 @@
+# AleppoGift .htaccess Configuration
+
+# Enable rewrite engine
+RewriteEngine On
+
+# Redirect to public folder for main site
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/$1 [L,QSA]
+
+# Custom error pages
+ErrorDocument 404 /public/404.php
+ErrorDocument 500 /public/404.php
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # CORS headers for AJAX endpoints
+    # Only apply to ajax directory
+    <Files "ajax/*">
+        Header always set Access-Control-Allow-Methods "POST, GET, OPTIONS"
+        Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With"
+        Header always set Access-Control-Allow-Credentials "true"
+        
+        # Set allowed origins
+        SetEnvIf Origin "^https?://(www\.)?(aleppogift|aleppogift)\.com$" ORIGIN_ALLOWED=$0
+        Header always set Access-Control-Allow-Origin "%{ORIGIN_ALLOWED}e" env=ORIGIN_ALLOWED
+    </Files>
+</IfModule>
+
+# Handle OPTIONS requests for CORS preflight in ajax directory
+<Directory "public/ajax">
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</Directory>
+
+# Prevent access to sensitive files
+<FilesMatch "\.(log|sql|env|ini|bak)$">
+    Require all denied
+</FilesMatch>
+
+# Prevent access to git directory
+<DirectoryMatch "\.git">
+    Require all denied
+</DirectoryMatch>
+
+# Prevent access to logs directory
+<Directory "logs">
+    Require all denied
+</Directory>
+
+# Prevent access to config directory (if accessed directly)
+<Directory "config">
+    Require all denied
+</Directory>
+
+# Enable gzip compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Add to Cart</title>
+</head>
+<body>
+    <h1>Test Add to Cart</h1>
+    <form id="testForm" method="post" action="public/ajax/add_to_cart.php">
+        <input type="hidden" name="product_id" value="166">
+        <input type="hidden" name="quantity" value="1">
+        <button type="submit">Add to Cart</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            fetch('public/ajax/add_to_cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'product_id=166&quantity=1'
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('result').innerHTML = '<pre>' + data + '</pre>';
+                console.log('Response:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            });
+        });
+    </script>
+</body>
+</html>

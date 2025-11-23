@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart System Test Suite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-case {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .test-pass { background-color: #d4edda; color: #155724; }
+        .test-fail { background-color: #f8d7da; color: #721c24; }
+        .test-pending { background-color: #fff3cd; color: #856404; }
+        .metrics-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid my-4">
+        <div class="row">
+            <div class="col-md-8">
+                <h1><i class="fas fa-vials me-2"></i>Cart System Test Suite</h1>
+                <p class="text-muted">Comprehensive testing of cart functionality and performance</p>
+
+                <!-- Quick Test Panel -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-rocket me-2"></i>Quick Tests</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary me-2" onclick="runAllTests()">
+                            <i class="fas fa-play me-2"></i>Run All Tests
+                        </button>
+                        <button class="btn btn-success me-2" onclick="testAddToCart()">
+                            <i class="fas fa-shopping-cart me-2"></i>Test Add to Cart
+                        </button>
+                        <button class="btn btn-warning me-2" onclick="testCartOperations()">
+                            <i class="fas fa-cogs me-2"></i>Test Operations
+                        </button>
+                        <button class="btn btn-info me-2" onclick="testPerformance()">
+                            <i class="fas fa-tachometer-alt me-2"></i>Test Performance
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearTests()">
+                            <i class="fas fa-broom me-2"></i>Clear Results
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div id="test-container">
+                    <!-- Individual test case: Add to Cart -->
+                    <div class="test-case">
+                        <h5><i class="fas fa-plus-circle me-2"></i>Test 1: Add to Cart Functionality</h5>
+                        <p>Tests basic add to cart operation with valid product</p>
+                        <button class="btn btn-sm btn-outline-primary" onclick="runTest('add-to-cart')">Run Test</button>
+                        <div id="test-add-to-cart" class="test-result test-pending" style="display: none;">
+                            <strong>Status:</strong> <span class="status">Pending...</span>
+                        </div>
+                    </div>
+
+                    <!-- Test case: Invalid Product -->
+                    <div class="test-case">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Test 2: Invalid Product Handling</h5>
+                        <p>Tests error handling for invalid product IDs</p>
+                        <button class="btn btn-sm btn-outline-primary" onclick="runTest('invalid-product')">Run Test</button>
+                        <div id="test-invalid-product" class="test-result test-pending" style="display: none;">
+                            <strong>Status:</strong> <span class="status">Pending...</span>
+                        </div>
+                    </div>
+
+                    <!-- Test case: Quantity Updates -->
+                    <div class="test-case">
+                        <h5><i class="fas fa-sort-numeric-up me-2"></i>Test 3: Quantity Operations</h5>
+                        <p>Tests increase, decrease, and remove operations</p>
+                        <button class="btn btn-sm btn-outline-primary" onclick="runTest('quantity-ops')">Run Test</button>
+                        <div id="test-quantity-ops" class="test-result test-pending" style="display: none;">
+                            <strong>Status:</strong> <span class="status">Pending...</span>
+                        </div>
+                    </div>
+
+                    <!-- Test case: Cart Preview -->
+                    <div class="test-case">
+                        <h5><i class="fas fa-eye me-2"></i>Test 4: Cart Preview Loading</h5>
+                        <p>Tests cart preview generation and rendering</p>
+                        <button class="btn btn-sm btn-outline-primary" onclick="runTest('cart-preview')">Run Test</button>
+                        <div id="test-cart-preview" class="test-result test-pending" style="display: none;">
+                            <strong>Status:</strong> <span class="status">Pending...</span>
+                        </div>
+                    </div>
+
+                    <!-- Test case: Session Persistence -->
+                    <div class="test-case">
+                        <h5><i class="fas fa-save me-2"></i>Test 5: Session Persistence</h5>
+                        <p>Tests if cart data persists across page reloads</p>
+                        <button class="btn btn-sm btn-outline-primary" onclick="runTest('session-persistence')">Run Test</button>
+                        <div id="test-session-persistence" class="test-result test-pending" style="display: none;">
+                            <strong>Status:</strong> <span class="status">Pending...</span>
+                        </div>
+                    </div>
+
+                    <!-- Test case: Performance Benchmark -->
+                    <div class="test-case">
+                        <h5><i class="fas fa-stopwatch me-2"></i>Test 6: Performance Benchmark</h5>
+                        <p>Measures response times for cart operations</p>
+                        <button class="btn btn-sm btn-outline-primary" onclick="runTest('performance')">Run Test</button>
+                        <div id="test-performance" class="test-result test-pending" style="display: none;">
+                            <strong>Status:</strong> <span class="status">Pending...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Panel -->
+            <div class="col-md-4">
+                <div class="sticky-top" style="top: 20px;">
+                    <!-- Test Summary -->
+                    <div class="metrics-card mb-4">
+                        <h5><i class="fas fa-chart-pie me-2"></i>Test Summary</h5>
+                        <div class="row text-center mt-3">
+                            <div class="col-4">
+                                <div class="fs-2" id="tests-passed">0</div>
+                                <small>Passed</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-2" id="tests-failed">0</div>
+                                <small>Failed</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-2" id="tests-total">6</div>
+                                <small>Total</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6><i class="fas fa-tachometer-alt me-2"></i>Performance Metrics</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Avg Response:</strong><br>
+                                    <span id="avg-response">-</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Operations/sec:</strong><br>
+                                    <span id="ops-per-sec">-</span>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6">
+                                    <strong>Min Time:</strong><br>
+                                    <span id="min-time">-</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Max Time:</strong><br>
+                                    <span id="max-time">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Status -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6><i class="fas fa-shopping-cart me-2"></i>Current Cart Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-0">
+                                <strong>Items:</strong> <span id="current-cart-count">0</span><br>
+                                <strong>Last Operation:</strong> <span id="last-operation">None</span><br>
+                                <strong>Status:</strong> <span id="cart-status">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Log -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-list me-2"></i>Test Log</h6>
+                        </div>
+                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                            <div id="test-log" class="small text-muted">
+                                Ready to run tests...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Test tracking variables
+        let testResults = {};
+        let performanceData = [];
+        let testsRun = 0;
+        
+        // Utility functions
+        function log(message) {
+            const logElement = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `<div>${timestamp}: ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateMetrics() {
+            const passed = Object.values(testResults).filter(r => r.status === 'pass').length;
+            const failed = Object.values(testResults).filter(r => r.status === 'fail').length;
+            
+            document.getElementById('tests-passed').textContent = passed;
+            document.getElementById('tests-failed').textContent = failed;
+            
+            if (performanceData.length > 0) {
+                const times = performanceData.map(d => d.time);
+                const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+                const minTime = Math.min(...times);
+                const maxTime = Math.max(...times);
+                
+                document.getElementById('avg-response').textContent = avgTime.toFixed(2) + 'ms';
+                document.getElementById('min-time').textContent = minTime.toFixed(2) + 'ms';
+                document.getElementById('max-time').textContent = maxTime.toFixed(2) + 'ms';
+                
+                if (avgTime > 0) {
+                    document.getElementById('ops-per-sec').textContent = (1000 / avgTime).toFixed(1);
+                }
+            }
+        }
+
+        function showTestResult(testId, status, message, time = null) {
+            const resultElement = document.getElementById(`test-${testId}`);
+            resultElement.style.display = 'block';
+            resultElement.className = `test-result test-${status}`;
+            
+            let content = `<strong>Status:</strong> ${status.toUpperCase()}`;
+            if (message) content += `<br><strong>Message:</strong> ${message}`;
+            if (time) content += `<br><strong>Response Time:</strong> ${time.toFixed(2)}ms`;
+            
+            resultElement.innerHTML = content;
+            
+            testResults[testId] = { status, message, time };
+            if (time) performanceData.push({ test: testId, time });
+            
+            updateMetrics();
+            log(`Test ${testId}: ${status} - ${message || 'No message'}`);
+        }
+
+        // Individual test functions
+        async function runTest(testId) {
+            log(`Starting test: ${testId}`);
+            
+            switch (testId) {
+                case 'add-to-cart':
+                    await testAddToCartFunction();
+                    break;
+                case 'invalid-product':
+                    await testInvalidProduct();
+                    break;
+                case 'quantity-ops':
+                    await testQuantityOperations();
+                    break;
+                case 'cart-preview':
+                    await testCartPreviewFunction();
+                    break;
+                case 'session-persistence':
+                    await testSessionPersistence();
+                    break;
+                case 'performance':
+                    await testPerformanceFunction();
+                    break;
+            }
+        }
+
+        async function testAddToCartFunction() {
+            const startTime = performance.now();
+            
+            try {
+                const response = await fetch('ajax/add_to_cart_simple.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'product_id=1&quantity=1'
+                });
+                
+                const data = await response.json();
+                const responseTime = performance.now() - startTime;
+                
+                if (data.success) {
+                    document.getElementById('current-cart-count').textContent = data.count;
+                    document.getElementById('last-operation').textContent = 'Add to Cart';
+                    showTestResult('add-to-cart', 'pass', `Added product successfully. Cart count: ${data.count}`, responseTime);
+                } else {
+                    showTestResult('add-to-cart', 'fail', data.message, responseTime);
+                }
+            } catch (error) {
+                const responseTime = performance.now() - startTime;
+                showTestResult('add-to-cart', 'fail', `Network error: ${error.message}`, responseTime);
+            }
+        }
+
+        async function testInvalidProduct() {
+            const startTime = performance.now();
+            
+            try {
+                const response = await fetch('ajax/add_to_cart_simple.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'product_id=99999&quantity=1'
+                });
+                
+                const data = await response.json();
+                const responseTime = performance.now() - startTime;
+                
+                if (!data.success) {
+                    showTestResult('invalid-product', 'pass', `Correctly rejected invalid product: ${data.message}`, responseTime);
+                } else {
+                    showTestResult('invalid-product', 'fail', 'Should have rejected invalid product', responseTime);
+                }
+            } catch (error) {
+                const responseTime = performance.now() - startTime;
+                showTestResult('invalid-product', 'fail', `Network error: ${error.message}`, responseTime);
+            }
+        }
+
+        async function testQuantityOperations() {
+            try {
+                // First add an item
+                await fetch('ajax/add_to_cart_simple.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'product_id=1&quantity=1'
+                });
+
+                const startTime = performance.now();
+                
+                // Test increase
+                const response = await fetch('ajax/cart_operations.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=increase&product_id=1'
+                });
+                
+                const data = await response.json();
+                const responseTime = performance.now() - startTime;
+                
+                if (data.success && data.new_quantity > 1) {
+                    document.getElementById('current-cart-count').textContent = data.count;
+                    document.getElementById('last-operation').textContent = 'Increase Quantity';
+                    showTestResult('quantity-ops', 'pass', `Quantity operations working. New qty: ${data.new_quantity}`, responseTime);
+                } else {
+                    showTestResult('quantity-ops', 'fail', data.message || 'Quantity operation failed', responseTime);
+                }
+            } catch (error) {
+                showTestResult('quantity-ops', 'fail', `Error: ${error.message}`);
+            }
+        }
+
+        async function testCartPreviewFunction() {
+            const startTime = performance.now();
+            
+            try {
+                const response = await fetch('ajax/cart_preview_simple.php');
+                const html = await response.text();
+                const responseTime = performance.now() - startTime;
+                
+                if (html && html.length > 10) {
+                    showTestResult('cart-preview', 'pass', `Cart preview loaded successfully (${html.length} chars)`, responseTime);
+                } else {
+                    showTestResult('cart-preview', 'fail', 'Cart preview returned empty or invalid content', responseTime);
+                }
+            } catch (error) {
+                const responseTime = performance.now() - startTime;
+                showTestResult('cart-preview', 'fail', `Network error: ${error.message}`, responseTime);
+            }
+        }
+
+        async function testSessionPersistence() {
+            try {
+                // Get current cart count
+                const response1 = await fetch('ajax/cart_operations.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=get_count'
+                });
+                
+                const data1 = await response1.json();
+                const initialCount = data1.count || 0;
+                
+                // Add an item
+                await fetch('ajax/add_to_cart_simple.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'product_id=1&quantity=1'
+                });
+                
+                // Check count again
+                const startTime = performance.now();
+                const response2 = await fetch('ajax/cart_operations.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=get_count'
+                });
+                
+                const data2 = await response2.json();
+                const responseTime = performance.now() - startTime;
+                
+                if (data2.count > initialCount) {
+                    showTestResult('session-persistence', 'pass', `Session persisted. Count changed from ${initialCount} to ${data2.count}`, responseTime);
+                } else {
+                    showTestResult('session-persistence', 'fail', 'Session data not persisted correctly', responseTime);
+                }
+            } catch (error) {
+                showTestResult('session-persistence', 'fail', `Error: ${error.message}`);
+            }
+        }
+
+        async function testPerformanceFunction() {
+            const iterations = 5;
+            const times = [];
+            
+            for (let i = 0; i < iterations; i++) {
+                const startTime = performance.now();
+                
+                try {
+                    await fetch('ajax/cart_operations.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'action=get_count'
+                    });
+                    
+                    times.push(performance.now() - startTime);
+                } catch (error) {
+                    showTestResult('performance', 'fail', `Performance test failed: ${error.message}`);
+                    return;
+                }
+            }
+            
+            const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+            const minTime = Math.min(...times);
+            const maxTime = Math.max(...times);
+            
+            showTestResult('performance', 'pass', 
+                `Avg: ${avgTime.toFixed(2)}ms, Min: ${minTime.toFixed(2)}ms, Max: ${maxTime.toFixed(2)}ms`, 
+                avgTime);
+        }
+
+        // Main test functions
+        async function runAllTests() {
+            log('Starting comprehensive test suite...');
+            document.getElementById('cart-status').textContent = 'Running Tests';
+            
+            const tests = ['add-to-cart', 'invalid-product', 'quantity-ops', 'cart-preview', 'session-persistence', 'performance'];
+            
+            for (const test of tests) {
+                await runTest(test);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between tests
+            }
+            
+            document.getElementById('cart-status').textContent = 'Tests Complete';
+            log('All tests completed!');
+        }
+
+        function clearTests() {
+            testResults = {};
+            performanceData = [];
+            
+            // Clear all test results
+            document.querySelectorAll('.test-result').forEach(el => {
+                el.style.display = 'none';
+                el.className = 'test-result test-pending';
+            });
+            
+            // Reset metrics
+            document.getElementById('tests-passed').textContent = '0';
+            document.getElementById('tests-failed').textContent = '0';
+            document.getElementById('avg-response').textContent = '-';
+            document.getElementById('min-time').textContent = '-';
+            document.getElementById('max-time').textContent = '-';
+            document.getElementById('ops-per-sec').textContent = '-';
+            document.getElementById('test-log').innerHTML = 'Tests cleared...';
+            document.getElementById('cart-status').textContent = 'Ready';
+            
+            log('Tests cleared and ready for new run');
+        }
+
+        // Quick test functions for buttons
+        function testAddToCart() {
+            runTest('add-to-cart');
+        }
+
+        function testCartOperations() {
+            runTest('quantity-ops');
+        }
+
+        function testPerformance() {
+            runTest('performance');
+        }
+
+        // Initialize
+        log('Cart Test Suite ready. Click "Run All Tests" to begin comprehensive testing.');
+    </script>
+</body>
+</html>

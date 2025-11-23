@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test - AleppoGift</title>
+</head>
+<body>
+    <h1>CORS Test - AleppoGift</h1>
+    <div id="results"></div>
+    <button onclick="testCORS()">Test CORS</button>
+    <button onclick="testDatabase()">Test Database Connection</button>
+    
+    <script>
+    function testCORS() {
+        const results = document.getElementById('results');
+        results.innerHTML = 'Testing CORS...';
+        
+        fetch('./ajax/cors_test.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'product_id=164&quantity=1'
+        })
+        .then(response => response.text())
+        .then(data => {
+            results.innerHTML = '<h3>CORS Test Result:</h3><pre>' + data + '</pre>';
+        })
+        .catch(error => {
+            results.innerHTML = '<h3>CORS Test Error:</h3><pre>' + error + '</pre>';
+        });
+    }
+    
+    function testDatabase() {
+        const results = document.getElementById('results');
+        results.innerHTML = 'Testing Database...';
+        
+        fetch('./ajax/add_to_cart_fixed.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'product_id=164&quantity=1'
+        })
+        .then(response => response.text())
+        .then(data => {
+            results.innerHTML = '<h3>Database Test Result:</h3><pre>' + data + '</pre>';
+        })
+        .catch(error => {
+            results.innerHTML = '<h3>Database Test Error:</h3><pre>' + error + '</pre>';
+        });
+    }
+    </script>
+</body>
+</html>

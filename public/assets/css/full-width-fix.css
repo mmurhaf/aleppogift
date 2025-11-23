@@ -1,0 +1,111 @@
+/* ==========================================================================
+   FULL WIDTH LAYOUT FIX
+   Ensures header, body, and all content sections take full screen width
+   ========================================================================== */
+
+/* Override any Bootstrap container limitations */
+.container,
+.container-fluid,
+.container-sm,
+.container-md, 
+.container-lg,
+.container-xl,
+.container-xxl {
+  width: 100% !important;
+  max-width: 1600px !important;
+  margin: 0 auto !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+/* Ensure body and html take full width */
+html,
+body {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+/* Header full width */
+header,
+.navbar,
+.modern-header {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+/* Main content full width */
+main {
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+/* Footer full width */
+footer {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+/* All sections full width */
+section {
+  width: 100% !important;
+}
+
+/* Hero sections */
+.hero-section,
+.modern-hero {
+  width: 100% !important;
+}
+
+/* Product sections */
+.products-section,
+.product-grid,
+.modern-product-card {
+  width: 100% !important;
+}
+
+/* Cart specific */
+.cart-container {
+  width: 100% !important;
+  max-width: 1600px !important;
+  margin: 0 auto !important;
+}
+
+/* Responsive padding adjustments */
+@media (min-width: 1400px) {
+  .container,
+  .container-fluid {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .container,
+  .container-fluid {
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+  }
+}
+
+@media (min-width: 1920px) {
+  .container,
+  .container-fluid {
+    max-width: 1800px !important;
+    padding-left: 4rem !important;
+    padding-right: 4rem !important;
+  }
+}
+
+/* Fix any row overflow issues */
+.row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Ensure cards don't break layout */
+.card,
+.modern-product-card {
+  max-width: 100% !important;
+}

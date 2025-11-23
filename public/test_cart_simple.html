@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Cart Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Simple Cart Test</h1>
+    
+    <div>
+        <h3>Test Add to Cart Form</h3>
+        <form class="add-to-cart-form" method="post" action="ajax/add_to_cart.php">
+            <input type="hidden" name="product_id" value="1">
+            <label>Quantity: <input type="number" name="quantity" value="1" min="1"></label>
+            <button type="submit">Add to Cart</button>
+        </form>
+    </div>
+    
+    <div>
+        <h3>Test Direct JavaScript Call</h3>
+        <button onclick="testDirectCall()">Test Direct Call</button>
+    </div>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; background: #f0f0f0; white-space: pre-wrap;"></div>
+
+    <script>
+        function log(message) {
+            $('#output').append(new Date().toLocaleTimeString() + ': ' + message + '\n');
+        }
+        
+        function testDirectCall() {
+            log('Testing direct AJAX call...');
+            
+            $.ajax({
+                url: 'ajax/add_to_cart.php',
+                method: 'POST',
+                data: {
+                    product_id: 1,
+                    quantity: 1
+                },
+                dataType: 'json',
+                success: function(res) {
+                    log('Success response: ' + JSON.stringify(res, null, 2));
+                },
+                error: function(xhr, status, error) {
+                    log('Error response: ' + status + ' - ' + error);
+                    log('Response text: ' + xhr.responseText);
+                }
+            });
+        }
+        
+        $(document).on('submit', '.add-to-cart-form', function(e) {
+            e.preventDefault();
+            log('Form submitted, testing...');
+            
+            const form = $(this);
+            const formData = form.serialize();
+            log('Form data: ' + formData);
+            
+            $.ajax({
+                url: 'ajax/add_to_cart.php',
+                method: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(res) {
+                    log('Form success response: ' + JSON.stringify(res, null, 2));
+                },
+                error: function(xhr, status, error) {
+                    log('Form error response: ' + status + ' - ' + error);
+                    log('Response text: ' + xhr.responseText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Test Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <h1>Checkout Test Form</h1>
+        <p>Use this form to test checkout functionality with debugging enabled.</p>
+        
+        <div class="alert alert-info">
+            <strong>Instructions:</strong>
+            <ol>
+                <li>Add some items to your cart first</li>
+                <li>Fill out this form</li>
+                <li>Submit to test checkout process</li>
+                <li>Check the error logs for detailed debugging information</li>
+            </ol>
+        </div>
+        
+        <form method="post" action="checkout.php" class="row g-3">
+            <input type="hidden" name="csrf_token" value="<?php 
+                session_start();
+                if (empty($_SESSION['csrf_token'])) {
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                }
+                echo $_SESSION['csrf_token'];
+            ?>">
+            
+            <div class="col-md-6">
+                <label for="fullname" class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="fullname" name="fullname" value="Test User" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="test@example.com" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="tel" class="form-control" id="phone" name="phone" value="+971501234567" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="city" class="form-label">City</label>
+                <input type="text" class="form-control" id="city" name="city" value="Dubai" required>
+            </div>
+            
+            <div class="col-12">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" name="address" rows="3" required>Test Address, Building 123, Street 456, Area 789</textarea>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="country" class="form-label">Country</label>
+                <select class="form-select" id="country" name="country" required>
+                    <option value="United Arab Emirates" selected>United Arab Emirates</option>
+                    <option value="Oman">Oman</option>
+                    <option value="Saudi Arabia">Saudi Arabia</option>
+                </select>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="payment_method" class="form-label">Payment Method</label>
+                <select class="form-select" id="payment_method" name="payment_method" required>
+                    <option value="COD" selected>Cash on Delivery</option>
+                    <option value="Ziina">Ziina Payment</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <label for="note" class="form-label">Order Note (Optional)</label>
+                <textarea class="form-control" id="note" name="note" rows="2">Test order note</textarea>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Test Checkout</button>
+                <a href="debug_checkout_simple.php" class="btn btn-secondary">Run Debug Test</a>
+            </div>
+        </form>
+        
+        <hr class="my-5">
+        
+        <h3>Quick Cart Test</h3>
+        <p>Add a test item to your cart:</p>
+        <form method="post" action="ajax/add_to_cart.php" class="d-inline">
+            <input type="hidden" name="product_id" value="1">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="btn btn-success">Add Test Item to Cart</button>
+        </form>
+        
+        <a href="cart.php" class="btn btn-info">View Cart</a>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

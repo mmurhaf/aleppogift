@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Preview Test - AleppoGift</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="public/assets/css/main.css">
+    <style>
+        body { 
+            padding: 20px; 
+            font-family: 'Inter', sans-serif;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .test-btn {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Cart Preview Test</h1>
+        
+        <div class="test-section">
+            <h3>Test Cart Button</h3>
+            <p>Click the button below to test the cart preview functionality:</p>
+            
+            <!-- Test Cart Button -->
+            <button class="btn btn-outline-primary position-relative test-btn" 
+                    onclick="toggleCart()"
+                    title="Open Cart">
+                <i class="fas fa-shopping-cart me-1"></i>
+                <span>Test Cart Preview</span>
+                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">3</span>
+            </button>
+            
+            <!-- Mobile Test Button -->
+            <button class="btn btn-success test-btn d-md-none" 
+                    data-bs-toggle="offcanvas" 
+                    data-bs-target="#cartOffcanvas" 
+                    aria-controls="cartOffcanvas"
+                    title="Open Mobile Cart">
+                <i class="fas fa-mobile-alt me-1"></i>
+                Test Mobile Cart
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Functions</h3>
+            <button class="btn btn-info test-btn" onclick="testLoadCartPreview()">
+                <i class="fas fa-sync me-1"></i>Test Load Cart Preview
+            </button>
+            <button class="btn btn-info test-btn" onclick="testLoadCartOffcanvas()">
+                <i class="fas fa-sync me-1"></i>Test Load Cart Offcanvas
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Debug Info</h3>
+            <div id="debug-info">
+                <p>Window width: <span id="window-width"></span></p>
+                <p>Cart preview element exists: <span id="cart-preview-exists"></span></p>
+                <p>Cart offcanvas element exists: <span id="cart-offcanvas-exists"></span></p>
+                <p>toggleCart function exists: <span id="toggle-cart-exists"></span></p>
+                <p>loadCartPreview function exists: <span id="load-preview-exists"></span></p>
+                <p>loadCartOffcanvas function exists: <span id="load-offcanvas-exists"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Cart Preview (copied from header.php) -->
+    <div id="cartPreview" class="card shadow position-absolute end-0 mt-2 me-4 cart-preview" style="display: none; z-index: 1050;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Your Cart</h5>
+                <button type="button" class="btn-close" aria-label="Close cart" onclick="toggleCart()"></button>
+            </div>
+            <div id="cart-items-preview">
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading cart...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Offcanvas for Mobile (copied from header.php) -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title" id="cartOffcanvasLabel">
+                <i class="fas fa-shopping-cart me-2"></i>Your Cart
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div id="cart-items-offcanvas">
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading cart...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="public/assets/js/enhanced-ui.js"></script>
+    
+    <script>
+        // Test functions
+        function testLoadCartPreview() {
+            console.log('Testing loadCartPreview...');
+            if (window.loadCartPreview) {
+                loadCartPreview();
+                console.log('loadCartPreview called');
+            } else {
+                console.error('loadCartPreview function not found');
+            }
+        }
+        
+        function testLoadCartOffcanvas() {
+            console.log('Testing loadCartOffcanvas...');
+            if (window.loadCartOffcanvas) {
+                loadCartOffcanvas();
+                console.log('loadCartOffcanvas called');
+            } else {
+                console.error('loadCartOffcanvas function not found');
+            }
+        }
+        
+        // Update debug info
+        function updateDebugInfo() {
+            document.getElementById('window-width').textContent = window.innerWidth + 'px';
+            document.getElementById('cart-preview-exists').textContent = document.getElementById('cartPreview') ? 'Yes' : 'No';
+            document.getElementById('cart-offcanvas-exists').textContent = document.getElementById('cartOffcanvas') ? 'Yes' : 'No';
+            document.getElementById('toggle-cart-exists').textContent = typeof window.toggleCart === 'function' ? 'Yes' : 'No';
+            document.getElementById('load-preview-exists').textContent = typeof window.loadCartPreview === 'function' ? 'Yes' : 'No';
+            document.getElementById('load-offcanvas-exists').textContent = typeof window.loadCartOffcanvas === 'function' ? 'Yes' : 'No';
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDebugInfo();
+            
+            // Update on window resize
+            window.addEventListener('resize', updateDebugInfo);
+        });
+        
+        // Test console logs
+        console.log('Cart Preview Test Page Loaded');
+        console.log('Available functions:', {
+            toggleCart: typeof window.toggleCart,
+            loadCartPreview: typeof window.loadCartPreview,
+            loadCartOffcanvas: typeof window.loadCartOffcanvas
+        });
+    </script>
+</body>
+</html>

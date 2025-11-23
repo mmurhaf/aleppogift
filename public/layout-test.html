@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Test - Full Width</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/width-improvements.css">
+    <link rel="stylesheet" href="assets/css/full-width-fix.css">
+    <style>
+        .test-section {
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            border: 2px solid #ccc;
+            margin: 10px 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .debug-info {
+            background: #ff0;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Test Header -->
+    <header class="navbar navbar-expand-lg navbar-light bg-primary text-white py-3 px-4">
+        <div class="container-fluid" style="max-width: 1600px;">
+            <div class="test-section">
+                <h2>Header Section - Should be Full Width</h2>
+                <div class="debug-info">Container width: <span id="header-width"></span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Test Main Content -->
+    <main class="container-fluid my-4" style="max-width: 1600px;">
+        <div class="test-section">
+            <h2>Main Content Section - Should be Full Width</h2>
+            <div class="debug-info">Container width: <span id="main-width"></span></div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="test-section">
+                    <h3>Column 1</h3>
+                    <p>This should take 1/3 width</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="test-section">
+                    <h3>Column 2</h3>
+                    <p>This should take 1/3 width</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="test-section">
+                    <h3>Column 3</h3>
+                    <p>This should take 1/3 width</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Test Footer -->
+    <footer class="bg-secondary text-white py-5">
+        <div class="container-fluid" style="max-width: 1600px;">
+            <div class="test-section">
+                <h2>Footer Section - Should be Full Width</h2>
+                <div class="debug-info">Container width: <span id="footer-width"></span></div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Display actual widths
+            document.getElementById('header-width').textContent = 
+                document.querySelector('header .container-fluid').offsetWidth + 'px';
+            document.getElementById('main-width').textContent = 
+                document.querySelector('main').offsetWidth + 'px';
+            document.getElementById('footer-width').textContent = 
+                document.querySelector('footer .container-fluid').offsetWidth + 'px';
+                
+            // Display viewport width
+            console.log('Viewport width:', window.innerWidth);
+            console.log('Header container width:', document.querySelector('header .container-fluid').offsetWidth);
+            console.log('Main container width:', document.querySelector('main').offsetWidth);
+            console.log('Footer container width:', document.querySelector('footer .container-fluid').offsetWidth);
+        });
+    </script>
+</body>
+</html>

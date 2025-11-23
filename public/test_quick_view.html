@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick View Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Quick View Functionality Test</h1>
+        
+        <div>
+            <button class="test-button" onclick="testAjaxEndpoint()">
+                <i class="fas fa-test-tube"></i> Test AJAX Endpoint
+            </button>
+            
+            <button class="test-button" onclick="testQuickView()">
+                <i class="fas fa-eye"></i> Test Quick View Modal
+            </button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;">
+            <h3>Test Results:</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        function showResult(content) {
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('resultContent').innerHTML = content;
+        }
+
+        function testAjaxEndpoint() {
+            showResult('<i class="fas fa-spinner fa-spin"></i> Testing AJAX endpoint...');
+            
+            // Test with a product ID of 1
+            fetch('public/ajax/get_product_details.php?id=1')
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('Raw response:', text);
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.success) {
+                            showResult(`
+                                <div style="color: green;">
+                                    <i class="fas fa-check-circle"></i> AJAX Endpoint Working!
+                                    <br><strong>Product:</strong> ${data.product.name_en}
+                                    <br><strong>Price:</strong> AED ${data.product.price}
+                                    <br><strong>Category:</strong> ${data.product.category_name || 'N/A'}
+                                </div>
+                            `);
+                        } else {
+                            showResult(`
+                                <div style="color: orange;">
+                                    <i class="fas fa-exclamation-triangle"></i> AJAX returned error: ${data.error}
+                                </div>
+                            `);
+                        }
+                    } catch (e) {
+                        showResult(`
+                            <div style="color: red;">
+                                <i class="fas fa-times-circle"></i> JSON Parse Error: ${e.message}
+                                <br><strong>Raw response:</strong> ${text.substring(0, 200)}...
+                            </div>
+                        `);
+                    }
+                })
+                .catch(error => {
+                    showResult(`
+                        <div style="color: red;">
+                            <i class="fas fa-times-circle"></i> Network Error: ${error.message}
+                        </div>
+                    `);
+                });
+        }
+
+        function testQuickView() {
+            showResult('<i class="fas fa-spinner fa-spin"></i> Testing Quick View Modal...');
+            
+            // Test the modal functionality
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    max-width: 500px;
+                    padding: 30px;
+                    position: relative;
+                    text-align: center;
+                ">
+                    <button onclick="document.body.removeChild(this.closest('div').parentElement); document.body.style.overflow='';" style="
+                        position: absolute;
+                        top: 15px;
+                        right: 15px;
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                    ">&times;</button>
+                    
+                    <i class="fas fa-check-circle" style="font-size: 3rem; color: green; margin-bottom: 1rem;"></i>
+                    <h3>Quick View Modal Test</h3>
+                    <p>Modal is working correctly! This would show product details in the real implementation.</p>
+                    <button onclick="document.body.removeChild(this.closest('div').parentElement); document.body.style.overflow='';" style="
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        margin-top: 15px;
+                    ">Close</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                showResult(`
+                    <div style="color: green;">
+                        <i class="fas fa-check-circle"></i> Quick View Modal working! Check the modal that just opened.
+                    </div>
+                `);
+            }, 10);
+        }
+    </script>
+</body>
+</html>

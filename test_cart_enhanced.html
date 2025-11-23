@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enhanced Test Add to Cart</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; white-space: pre-wrap; }
+        .error { background: #ffe6e6; }
+        .success { background: #e6ffe6; }
+        button { margin: 5px; padding: 10px 15px; }
+    </style>
+</head>
+<body>
+    <h1>Enhanced Add to Cart Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Direct AJAX Call (Debug Version)</h2>
+        <button onclick="testDirectAjax()">Test Add to Cart (Debug)</button>
+        <div id="result1" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Form Submission Like Main Page</h2>
+        <form id="testForm" method="post" action="ajax/add_to_cart.php">
+            <input type="hidden" name="product_id" value="166">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit">Add to Cart (Form Submit)</button>
+        </form>
+        <div id="result2" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Test with Invalid Data</h2>
+        <button onclick="testInvalidData()">Test with Invalid Quantity</button>
+        <div id="result3" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Exact Main.js Simulation</h2>
+        <form class="add-to-cart-form" method="post" action="ajax/add_to_cart.php">
+            <input type="hidden" name="product_id" value="166">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit">Add to Cart (Main.js Style)</button>
+        </form>
+        <div id="result4" class="result"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function testDirectAjax() {
+            document.getElementById('result1').innerHTML = 'Testing...';
+            
+            fetch('ajax/add_to_cart_debug.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'product_id=166&quantity=1'
+            })
+            .then(response => response.text())
+            .then(data => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    document.getElementById('result1').innerHTML = JSON.stringify(jsonData, null, 2);
+                    document.getElementById('result1').className = 'result ' + (jsonData.success ? 'success' : 'error');
+                } catch(e) {
+                    document.getElementById('result1').innerHTML = 'Raw response: ' + data;
+                    document.getElementById('result1').className = 'result error';
+                }
+            })
+            .catch(error => {
+                document.getElementById('result1').innerHTML = 'Error: ' + error.message;
+                document.getElementById('result1').className = 'result error';
+            });
+        }
+
+        function testInvalidData() {
+            document.getElementById('result3').innerHTML = 'Testing...';
+            
+            fetch('ajax/add_to_cart_debug.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'product_id=166&quantity='
+            })
+            .then(response => response.text())
+            .then(data => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    document.getElementById('result3').innerHTML = JSON.stringify(jsonData, null, 2);
+                    document.getElementById('result3').className = 'result ' + (jsonData.success ? 'success' : 'error');
+                } catch(e) {
+                    document.getElementById('result3').innerHTML = 'Raw response: ' + data;
+                    document.getElementById('result3').className = 'result error';
+                }
+            })
+            .catch(error => {
+                document.getElementById('result3').innerHTML = 'Error: ' + error.message;
+                document.getElementById('result3').className = 'result error';
+            });
+        }
+
+        // Test 2: Regular form submission
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('result2').innerHTML = 'Testing...';
+            
+            fetch('ajax/add_to_cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'product_id=166&quantity=1'
+            })
+            .then(response => response.text())
+            .then(data => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    document.getElementById('result2').innerHTML = JSON.stringify(jsonData, null, 2);
+                    document.getElementById('result2').className = 'result ' + (jsonData.success ? 'success' : 'error');
+                } catch(e) {
+                    document.getElementById('result2').innerHTML = 'Raw response: ' + data;
+                    document.getElementById('result2').className = 'result error';
+                }
+            })
+            .catch(error => {
+                document.getElementById('result2').innerHTML = 'Error: ' + error.message;
+                document.getElementById('result2').className = 'result error';
+            });
+        });
+
+        // Test 4: Simulate main.js exactly
+        $(document).on('submit', '.add-to-cart-form', function (e) {
+            e.preventDefault();
+            const form = $(this);
+            document.getElementById('result4').innerHTML = 'Testing with jQuery...';
+            
+            $.post('ajax/add_to_cart.php', form.serialize(), function (res) {
+                document.getElementById('result4').innerHTML = JSON.stringify(res, null, 2);
+                document.getElementById('result4').className = 'result ' + (res.success ? 'success' : 'error');
+            }, 'json').fail(function(xhr) {
+                document.getElementById('result4').innerHTML = 'Failed: ' + xhr.responseText;
+                document.getElementById('result4').className = 'result error';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Button Fix Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Cart Button Fix Test</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Test Actions</h3>
+                <div class="mb-3">
+                    <button id="addItemBtn" class="btn btn-success">Add Test Item to Cart</button>
+                    <button id="clearCartBtn" class="btn btn-warning">Clear Cart</button>
+                </div>
+                
+                <div class="mb-3">
+                    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas" aria-controls="cartOffcanvas">
+                        <i class="fas fa-shopping-cart me-2"></i>Open Cart (Test Multiple Times)
+                    </button>
+                </div>
+                
+                <div class="mb-3">
+                    <h4>Test Instructions:</h4>
+                    <ol>
+                        <li>Click "Add Test Item to Cart" to add an item</li>
+                        <li>Click "Open Cart" to see the cart content</li>
+                        <li>Close the cart</li>
+                        <li>Click "Open Cart" again (second time)</li>
+                        <li>Verify the cart still shows the items</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <h3>Debug Info</h3>
+                <div id="debugInfo" class="bg-light p-3 rounded">
+                    <p>Click buttons to see debug information...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>Test Results Log</h3>
+                <div id="testLog" class="bg-dark text-light p-3 rounded" style="height: 300px; overflow-y: scroll;">
+                    <p>Test log will appear here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title" id="cartOffcanvasLabel">
+                <i class="fas fa-shopping-cart me-2"></i>Your Cart
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div id="cartPreview">
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading cart...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let openCount = 0;
+        let testResults = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testResults.push(logEntry);
+            
+            const logDiv = $('#testLog');
+            const color = type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-light';
+            logDiv.append(`<div class="${color}">${logEntry}</div>`);
+            logDiv.scrollTop(logDiv[0].scrollHeight);
+            
+            console.log(logEntry);
+        }
+        
+        $(document).ready(function() {
+            log('Page loaded, initializing cart test...');
+            
+            // Initialize cart offcanvas event listener
+            const cartOffcanvas = document.getElementById('cartOffcanvas');
+            if (cartOffcanvas) {
+                cartOffcanvas.addEventListener('show.bs.offcanvas', function () {
+                    openCount++;
+                    log(`🛒 Cart opening attempt #${openCount}`, 'info');
+                    
+                    // Show loading state
+                    $('#cartPreview').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading cart... (Attempt #' + openCount + ')</p></div>');
+                    
+                    // Add timestamp to prevent caching
+                    const timestamp = new Date().getTime();
+                    const url = 'ajax/cart_preview.php?t=' + timestamp;
+                    
+                    // Load cart preview
+                    $('#cartPreview').load(url, function(response, status, xhr) {
+                        if (status === "error") {
+                            log(`❌ Cart load failed (attempt #${openCount}): ${xhr.statusText}`, 'error');
+                            $('#cartPreview').html('<p class="text-danger p-3">Error loading cart: ' + xhr.statusText + '</p>');
+                        } else {
+                            const hasItems = response.includes('cart-item-preview');
+                            const isEmpty = response.includes('Your cart is empty');
+                            log(`✅ Cart loaded successfully (attempt #${openCount}) - Has items: ${hasItems}, Is empty: ${isEmpty}`, 'success');
+                            
+                            if (response.trim().length === 0) {
+                                log(`⚠️ Empty response from cart preview (attempt #${openCount})`, 'error');
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Add test item button
+            $('#addItemBtn').click(function() {
+                log('Adding test item to cart...');
+                $.post('ajax/add_to_cart.php', {
+                    product_id: 1,
+                    quantity: 1
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        log('✅ Test item added successfully', 'success');
+                        updateDebugInfo();
+                    } else {
+                        log('❌ Failed to add test item: ' + response.message, 'error');
+                    }
+                })
+                .fail(function(xhr) {
+                    log('❌ AJAX error adding test item: ' + xhr.statusText, 'error');
+                });
+            });
+            
+            // Clear cart button
+            $('#clearCartBtn').click(function() {
+                log('Clearing cart...');
+                $.post('ajax/clear_cart.php')
+                .done(function(response) {
+                    log('✅ Cart cleared', 'success');
+                    updateDebugInfo();
+                })
+                .fail(function(xhr) {
+                    log('❌ Error clearing cart: ' + xhr.statusText, 'error');
+                });
+            });
+            
+            // Initial debug info load
+            updateDebugInfo();
+        });
+        
+        function updateDebugInfo() {
+            $.get('ajax/get_cart_count.php')
+            .done(function(response) {
+                $('#debugInfo').html(`
+                    <h5>Current Cart Status:</h5>
+                    <p><strong>Items in cart:</strong> ${response.count || 0}</p>
+                    <p><strong>Session ID:</strong> ${response.session_id || 'Unknown'}</p>
+                    <p><strong>Last updated:</strong> ${new Date().toLocaleTimeString()}</p>
+                `);
+            })
+            .fail(function() {
+                $('#debugInfo').html('<p class="text-danger">Failed to load debug info</p>');
+            });
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</body>
+</html>

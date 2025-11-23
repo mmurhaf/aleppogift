@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Mobile Cart Preview Test - AleppoGift</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="public/assets/css/main.css">
+    <link rel="stylesheet" href="public/assets/css/header.css">
+    <link rel="stylesheet" href="public/assets/css/style.css">
+    <link rel="stylesheet" href="public/assets/css/cart.css">
+    <style>
+        body { 
+            padding: 20px; 
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f5;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+        }
+        .test-btn {
+            margin: 10px 0;
+            width: 100%;
+        }
+        .device-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-warning { background: #fff3cd; color: #856404; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 15px;
+            z-index: 1040;
+        }
+        .content-wrapper {
+            margin-top: 80px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Header with Cart Button -->
+    <div class="fixed-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Mobile Cart Test</h5>
+            <button class="btn btn-outline-primary position-relative" 
+                    onclick="toggleCartPreview()"
+                    title="View Cart">
+                <i class="fas fa-shopping-cart me-1"></i>
+                <span class="d-none d-md-inline">Cart</span>
+                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="cart-count">3</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container content-wrapper">
+        <h1 class="mb-4">Mobile Cart Preview Test</h1>
+        
+        <!-- Device Info -->
+        <div class="device-info">
+            <h5><i class="fas fa-mobile-alt me-2"></i>Device Information</h5>
+            <p class="mb-1"><strong>Screen Width:</strong> <span id="screen-width"></span>px</p>
+            <p class="mb-1"><strong>Screen Height:</strong> <span id="screen-height"></span>px</p>
+            <p class="mb-1"><strong>Device Type:</strong> <span id="device-type"></span></p>
+            <p class="mb-0"><strong>Orientation:</strong> <span id="orientation"></span></p>
+        </div>
+        
+        <!-- Test Buttons -->
+        <div class="test-section">
+            <h3>Cart Preview Tests</h3>
+            <p>Test the cart preview functionality on different screen sizes:</p>
+            
+            <button class="btn btn-primary test-btn" 
+                    onclick="toggleCartPreview()">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Toggle Cart Preview
+            </button>
+            
+            <button class="btn btn-success test-btn" 
+                    onclick="testCartLoad()">
+                <i class="fas fa-sync me-2"></i>
+                Test Cart Load
+            </button>
+            
+            <button class="btn btn-info test-btn text-white" 
+                    onclick="testResponsiveness()">
+                <i class="fas fa-ruler me-2"></i>
+                Test Responsiveness
+            </button>
+            
+            <button class="btn btn-warning test-btn" 
+                    data-bs-toggle="offcanvas" 
+                    data-bs-target="#cartOffcanvas">
+                <i class="fas fa-sidebar me-2"></i>
+                Test Offcanvas (Mobile Alternative)
+            </button>
+        </div>
+        
+        <!-- Test Results -->
+        <div class="test-section">
+            <h3>Test Results</h3>
+            <div id="test-results">
+                <p class="text-muted">Run tests to see results here...</p>
+            </div>
+        </div>
+        
+        <!-- Function Status -->
+        <div class="test-section">
+            <h3>Function Availability</h3>
+            <div id="function-status">
+                <p>Checking functions...</p>
+            </div>
+        </div>
+
+        <!-- Usage Instructions -->
+        <div class="test-section">
+            <h3><i class="fas fa-info-circle me-2"></i>Instructions</h3>
+            <ol>
+                <li>Use Chrome DevTools Device Toolbar to simulate different devices</li>
+                <li>Try different screen sizes: iPhone SE (375px), iPhone 12 (390px), Pixel 5 (393px)</li>
+                <li>Test in both portrait and landscape orientations</li>
+                <li>Check that cart preview appears correctly positioned</li>
+                <li>Verify cart preview is readable and scrollable</li>
+                <li>Ensure close button works properly</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Desktop Cart Preview -->
+    <div id="cartPreview" class="card shadow position-absolute end-0 mt-2 me-4" style="display: none; z-index: 1050; width: 350px; max-height: 500px; overflow-y: auto;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Cart Preview</h6>
+            <button type="button" class="btn-close btn-sm" onclick="toggleCartPreview()"></button>
+        </div>
+        <div class="card-body p-0">
+            <div id="cart-items-container">
+                <div class="text-center p-3">
+                    <i class="fas fa-shopping-cart text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mt-2 mb-0">Your cart is empty</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Offcanvas for Mobile -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title" id="cartOffcanvasLabel">
+                <i class="fas fa-shopping-cart me-2"></i>Your Cart
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div id="cart-items-offcanvas">
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading cart...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="public/assets/js/enhanced-ui.js"></script>
+    
+    <script>
+        // Update device info
+        function updateDeviceInfo() {
+            document.getElementById('screen-width').textContent = window.innerWidth;
+            document.getElementById('screen-height').textContent = window.innerHeight;
+            
+            const deviceType = window.innerWidth <= 480 ? 'Small Mobile' : 
+                             window.innerWidth <= 768 ? 'Mobile/Tablet' : 
+                             window.innerWidth <= 1024 ? 'Tablet' : 'Desktop';
+            document.getElementById('device-type').textContent = deviceType;
+            
+            const orientation = window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait';
+            document.getElementById('orientation').textContent = orientation;
+        }
+        
+        // Check function availability
+        function checkFunctions() {
+            const functions = [
+                'toggleCartPreview',
+                'toggleCart',
+                'loadCartPreview',
+                'loadCartOffcanvas'
+            ];
+            
+            let html = '<div class="row">';
+            functions.forEach(func => {
+                const exists = typeof window[func] === 'function';
+                const badge = exists ? 'status-success' : 'status-error';
+                const icon = exists ? 'check-circle' : 'times-circle';
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <span class="status-badge ${badge}">
+                            <i class="fas fa-${icon} me-1"></i>
+                            ${func}: ${exists ? 'Available' : 'Missing'}
+                        </span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('function-status').innerHTML = html;
+        }
+        
+        // Test cart load
+        function testCartLoad() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+            
+            if (typeof loadCartPreview === 'function') {
+                loadCartPreview();
+                setTimeout(() => {
+                    results.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Cart preview loaded successfully!
+                        </div>
+                    `;
+                }, 1000);
+            } else {
+                results.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>
+                        loadCartPreview function not found
+                    </div>
+                `;
+            }
+        }
+        
+        // Test responsiveness
+        function testResponsiveness() {
+            const cartPreview = document.getElementById('cartPreview');
+            const results = document.getElementById('test-results');
+            
+            if (!cartPreview) {
+                results.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>
+                        Cart preview element not found
+                    </div>
+                `;
+                return;
+            }
+            
+            // Show the cart preview
+            if (typeof toggleCartPreview === 'function') {
+                toggleCartPreview();
+            } else {
+                cartPreview.style.display = 'block';
+            }
+            
+            // Get computed styles
+            const rect = cartPreview.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(cartPreview);
+            
+            let html = `
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Cart Preview Dimensions</h6>
+                    <ul class="mb-0">
+                        <li><strong>Width:</strong> ${computedStyle.width} (${rect.width}px)</li>
+                        <li><strong>Height:</strong> ${computedStyle.height} (${rect.height}px)</li>
+                        <li><strong>Position:</strong> ${computedStyle.position}</li>
+                        <li><strong>Top:</strong> ${computedStyle.top}</li>
+                        <li><strong>Right:</strong> ${computedStyle.right}</li>
+                        <li><strong>Left:</strong> ${computedStyle.left}</li>
+                        <li><strong>Z-Index:</strong> ${computedStyle.zIndex}</li>
+                        <li><strong>Visible:</strong> ${rect.width > 0 && rect.height > 0 ? 'Yes' : 'No'}</li>
+                    </ul>
+                </div>
+            `;
+            
+            // Check if it's properly positioned on mobile
+            if (window.innerWidth <= 768) {
+                const isProperlyPositioned = rect.left >= 10 && rect.right <= window.innerWidth - 10;
+                html += `
+                    <div class="alert alert-${isProperlyPositioned ? 'success' : 'warning'}">
+                        <i class="fas fa-${isProperlyPositioned ? 'check' : 'exclamation-triangle'}-circle me-2"></i>
+                        Mobile positioning: ${isProperlyPositioned ? 'Good' : 'Needs adjustment'}
+                    </div>
+                `;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        // Fallback toggleCartPreview if not loaded from enhanced-ui.js
+        if (!window.toggleCartPreview) {
+            window.toggleCartPreview = function() {
+                const preview = document.getElementById('cartPreview');
+                const cartOffcanvas = document.getElementById('cartOffcanvas');
+                
+                // On mobile, prefer offcanvas
+                if (window.innerWidth <= 768 && cartOffcanvas) {
+                    const bsOffcanvas = new bootstrap.Offcanvas(cartOffcanvas);
+                    bsOffcanvas.show();
+                } else if (preview) {
+                    if (preview.style.display === 'none' || !preview.style.display) {
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                }
+            };
+        }
+        
+        // Initialize
+        updateDeviceInfo();
+        checkFunctions();
+        
+        // Update on resize
+        window.addEventListener('resize', () => {
+            updateDeviceInfo();
+            
+            // Auto-close cart preview if switching from mobile to desktop or vice versa
+            const cartPreview = document.getElementById('cartPreview');
+            if (cartPreview && cartPreview.style.display === 'block') {
+                testResponsiveness();
+            }
+        });
+        
+        // Close cart preview when clicking outside
+        document.addEventListener('click', function(event) {
+            const preview = document.getElementById('cartPreview');
+            const cartButton = document.querySelector('button[onclick*="toggleCartPreview"]');
+            
+            if (preview && preview.style.display === 'block' && 
+                !preview.contains(event.target) && 
+                !cartButton.contains(event.target)) {
+                preview.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

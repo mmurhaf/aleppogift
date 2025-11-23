@@ -1,0 +1,139 @@
+/* ==========================================================================
+   WIDTH IMPROVEMENTS - Making the site more spacious and modern
+   ========================================================================== */
+
+/* Main container improvements */
+.container {
+  max-width: 1600px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+.container-fluid {
+  max-width: 1600px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+/* Product grid improvements for better space utilization */
+.products-grid {
+  gap: 1.5rem;
+}
+
+.product-card {
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive improvements */
+@media (min-width: 1400px) {
+  .container,
+  .container-fluid {
+    max-width: 1600px !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .container,
+  .container-fluid {
+    max-width: 1700px !important;
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+  }
+}
+
+@media (min-width: 1920px) {
+  .container,
+  .container-fluid {
+    max-width: 1800px !important;
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+  }
+}
+
+/* Hero section improvements */
+.hero-section {
+  max-width: 100% !important;
+}
+
+/* Header improvements */
+.navbar .container-fluid {
+  max-width: 1600px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+.navbar {
+  width: 100% !important;
+}
+
+.modern-header {
+  width: 100% !important;
+}
+
+/* Better spacing for product listings */
+.row.g-4 {
+  --bs-gutter-x: 2rem;
+  --bs-gutter-y: 2rem;
+}
+
+/* Ensure body and html take full width */
+html, body {
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Main content area improvements */
+main {
+  width: 100% !important;
+}
+
+/* Footer improvements */
+footer {
+  width: 100% !important;
+}
+
+footer .container-fluid {
+  max-width: 1600px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+/* Category and brand filter improvements */
+.filter-section {
+  margin-bottom: 2rem;
+}
+
+.filter-section .container {
+  max-width: 1600px !important;
+}
+
+/* Bootstrap override for consistent full-width layout */
+@media (min-width: 1200px) {
+  .container-xl, .container-lg, .container-md, .container-sm, .container {
+    max-width: 1600px !important;
+  }
+}
+
+/* Ensure all sections maintain full width */
+section {
+  width: 100% !important;
+}
+
+/* Product grid full width */
+.products-section,
+.product-grid {
+  width: 100% !important;
+}
+
+/* Cart specific improvements */
+.cart-container {
+  width: 100% !important;
+  max-width: 1600px !important;
+  margin: 0 auto !important;
+}

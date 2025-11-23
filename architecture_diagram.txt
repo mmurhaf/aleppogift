@@ -1,0 +1,59 @@
+AleppoGift Full System Architecture
+
++-----------------------------+
+|         PUBLIC SITE         |
++-----------------------------+
+| index.php                   |
+| product.php                 |
+| cart.php                    |
+| checkout.php                |
+| thankyou.php                |
+| contact.php                 |
++-----------------------------+
+
++-----------------------------+
+|        ADMIN PANEL          |
++-----------------------------+
+| admin/login.php             |
+| admin/dashboard.php         |
+| admin/products.php          |
+| admin/add_product.php       |
+| admin/edit_product.php      |
+| admin/categories.php        |
+| admin/brands.php            |
+| admin/orders.php            |
+| admin/customers.php         |
+| admin/logout.php            |
++-----------------------------+
+
++-----------------------------+
+|        CORE SYSTEM          |
++-----------------------------+
+| includes/Database.php       |
+| config/config.php           |
+| uploads/ (product images)   |
+| invoice/ (pdf invoices)     |
+| assets/css/style.css        |
+| assets/js/main.js           |
++-----------------------------+
+
++-----------------------------+
+|        DATABASE (MySQL)     |
++-----------------------------+
+| admin                       |
+| customers                   |
+| categories                  |
+| brands                      |
+| products                    |
+| product_images              |
+| product_variations          |
+| orders                      |
+| order_items                 |
++-----------------------------+
+
++-----------------------------+
+|  PAYMENT: Ziina API ready   |
++-----------------------------+
+| Payment Intent Integration  |
+| Payment Status Update       |
++-----------------------------+

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Performance Test - AleppoGift</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .performance-metrics {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .cart-preview-demo {
+            max-width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-4">
+        <h1 class="text-center mb-4">Cart Performance Test</h1>
+        
+        <!-- Performance Metrics -->
+        <div class="performance-metrics">
+            <h5><i class="fas fa-tachometer-alt me-2"></i>Performance Metrics</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Page Load Time:</strong>
+                    <div id="pageLoadTime">Calculating...</div>
+                </div>
+                <div class="col-md-3">
+                    <strong>AJAX Response Time:</strong>
+                    <div id="ajaxResponseTime">-</div>
+                </div>
+                <div class="col-md-3">
+                    <strong>Cart Operations:</strong>
+                    <div id="operationCount">0</div>
+                </div>
+                <div class="col-md-3">
+                    <strong>JS Errors:</strong>
+                    <div id="errorCount" class="text-danger">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Original Cart System Test -->
+        <div class="test-section">
+            <h3><i class="fas fa-shopping-cart me-2"></i>Original Cart System</h3>
+            <p class="text-muted">Test the current complex cart implementation</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-primary btn-add-cart" data-id="1" onclick="testOriginalAddToCart(1)">
+                        <i class="fas fa-shopping-cart me-2"></i>Add Product 1 (Original)
+                    </button>
+                    <button class="btn btn-secondary ms-2" onclick="loadOriginalCartPreview()">
+                        <i class="fas fa-eye me-2"></i>Load Cart Preview
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="originalCartPreview" class="cart-preview-demo">
+                        <div class="text-center text-muted">Click "Load Cart Preview" to test</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simplified Cart System Test -->
+        <div class="test-section">
+            <h3><i class="fas fa-rocket me-2"></i>Simplified Cart System</h3>
+            <p class="text-muted">Test the new optimized cart implementation</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-success" data-id="1" onclick="testSimpleAddToCart(1)">
+                        <i class="fas fa-shopping-cart me-2"></i>Add Product 1 (Simple)
+                    </button>
+                    <button class="btn btn-outline-success ms-2" onclick="loadSimpleCartPreview()">
+                        <i class="fas fa-eye me-2"></i>Load Cart Preview
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="simpleCartPreview" class="cart-preview-demo">
+                        <div class="text-center text-muted">Click "Load Cart Preview" to test</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Operations Test -->
+        <div class="test-section">
+            <h3><i class="fas fa-cogs me-2"></i>Cart Operations Test</h3>
+            <p class="text-muted">Test cart quantity updates and removal</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Simplified Operations</h5>
+                    <div class="btn-group me-2" role="group">
+                        <button class="btn btn-outline-primary" onclick="testCartOperation('increase', 1)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" disabled>Qty: <span id="qty-display">1</span></button>
+                        <button class="btn btn-outline-primary" onclick="testCartOperation('decrease', 1)">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-outline-danger" onclick="testCartOperation('remove', 1)">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <h5>Current Cart Status</h5>
+                    <div class="alert alert-info">
+                        <strong>Cart Count:</strong> <span id="cart-count-display">0</span> items<br>
+                        <strong>Last Operation:</strong> <span id="last-operation">None</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Comparison -->
+        <div class="test-section">
+            <h3><i class="fas fa-chart-line me-2"></i>Performance Comparison</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Original System</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between">
+                            File Size (JS): <span class="badge bg-warning">~25KB</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            AJAX Endpoints: <span class="badge bg-warning">4+</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            Code Complexity: <span class="badge bg-danger">High</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            Dependencies: <span class="badge bg-warning">jQuery + Bootstrap</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Simplified System</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between">
+                            File Size (JS): <span class="badge bg-success">~8KB</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            AJAX Endpoints: <span class="badge bg-success">2</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            Code Complexity: <span class="badge bg-success">Low</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            Dependencies: <span class="badge bg-success">Bootstrap only</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Count Display -->
+        <div class="position-fixed top-0 end-0 m-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6>Cart Count</h6>
+                    <span id="cart-count" class="badge bg-primary fs-5">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="assets/js/cart-simple.js"></script>
+    
+    <script>
+        // Performance tracking
+        let operationCount = 0;
+        let errorCount = 0;
+        const startTime = performance.now();
+
+        // Track page load time
+        window.addEventListener('load', function() {
+            const loadTime = performance.now() - startTime;
+            document.getElementById('pageLoadTime').textContent = loadTime.toFixed(2) + 'ms';
+        });
+
+        // Track JavaScript errors
+        window.addEventListener('error', function() {
+            errorCount++;
+            document.getElementById('errorCount').textContent = errorCount;
+        });
+
+        // Test functions for original cart system
+        function testOriginalAddToCart(productId) {
+            const startTime = performance.now();
+            operationCount++;
+            
+            // Use jQuery for original system
+            $.post('ajax/add_to_cart.php', { 
+                product_id: productId, 
+                quantity: 1 
+            }, function(data) {
+                const responseTime = performance.now() - startTime;
+                document.getElementById('ajaxResponseTime').textContent = responseTime.toFixed(2) + 'ms';
+                document.getElementById('operationCount').textContent = operationCount;
+                
+                if (data.success) {
+                    showToast('Original: ' + data.message, 'info');
+                    updateCartCount(data.count);
+                } else {
+                    showToast('Error: ' + data.message, 'error');
+                }
+            }, 'json').fail(function() {
+                showToast('Original system failed', 'error');
+                errorCount++;
+                document.getElementById('errorCount').textContent = errorCount;
+            });
+        }
+
+        function loadOriginalCartPreview() {
+            $('#originalCartPreview').load('ajax/cart_preview.php');
+        }
+
+        // Test functions for simplified cart system
+        function testSimpleAddToCart(productId) {
+            const startTime = performance.now();
+            operationCount++;
+            
+            fetch('ajax/add_to_cart_simple.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `product_id=${productId}&quantity=1`
+            })
+            .then(response => response.json())
+            .then(data => {
+                const responseTime = performance.now() - startTime;
+                document.getElementById('ajaxResponseTime').textContent = responseTime.toFixed(2) + 'ms';
+                document.getElementById('operationCount').textContent = operationCount;
+                
+                if (data.success) {
+                    showToast('Simple: ' + data.message, 'success');
+                    updateCartCount(data.count);
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                showToast('Simple system error: ' + error.message, 'error');
+                errorCount++;
+                document.getElementById('errorCount').textContent = errorCount;
+            });
+        }
+
+        function loadSimpleCartPreview() {
+            fetch('ajax/cart_preview_simple.php')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('simpleCartPreview').innerHTML = html;
+                });
+        }
+
+        function testCartOperation(action, productId) {
+            operationCount++;
+            
+            fetch('ajax/cart_operations.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=${action}&product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('operationCount').textContent = operationCount;
+                
+                if (data.success) {
+                    updateCartCount(data.count);
+                    document.getElementById('last-operation').textContent = action;
+                    
+                    if (action === 'increase' || action === 'decrease') {
+                        document.getElementById('qty-display').textContent = data.new_quantity;
+                    }
+                    
+                    showToast(data.message, 'success');
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                showToast('Operation error: ' + error.message, 'error');
+                errorCount++;
+                document.getElementById('errorCount').textContent = errorCount;
+            });
+        }
+
+        function updateCartCount(count) {
+            document.getElementById('cart-count').textContent = count;
+            document.getElementById('cart-count-display').textContent = count;
+        }
+    </script>
+</body>
+</html>

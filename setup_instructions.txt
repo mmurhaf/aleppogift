@@ -1,0 +1,44 @@
+AleppoGift Full E-Commerce System - Local Setup Guide
+
+----------------------------------------
+REQUIREMENTS:
+- XAMPP / WAMP / MAMP (PHP 7.4+)
+- MySQL Server (phpMyAdmin)
+
+----------------------------------------
+INSTALLATION STEPS:
+
+1️⃣ Extract your full folder to: C:\xampp\htdocs\aleppogift
+
+2️⃣ Import Database:
+- Open phpMyAdmin.
+- Create new database: aleppogift
+- Paste full aleppogift_db.sql contents and run.
+
+3️⃣ Check Database Login:
+- Open: aleppogift/config/config.php
+- Set your database username/password.
+
+(Default for XAMPP: user=root, password="")
+
+4️⃣ Visit Website:
+- http://localhost/aleppogift/public/
+
+5️⃣ Admin Panel:
+- http://localhost/aleppogift/admin/login.php
+- Username: admin
+- Password: admin123
+
+----------------------------------------
+LIVE SERVER:
+- Upload full folder to public_html (or subdirectory).
+- Change config.php SITE_URL accordingly.
+
+----------------------------------------
+SMTP EMAIL:
+- Edit config/config.php and enter your SMTP credentials.
+
+----------------------------------------
+PAYMENT:
+- Ziina integration is fully integrated.
+- You only need to activate your production Ziina API key.
