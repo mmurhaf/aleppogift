@@ -216,6 +216,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make functions globally available
     window.loadCartPreview = loadCartPreview;
     window.loadCartOffcanvas = loadCartOffcanvas;
+    window.hideCartPreview = hideCartPreview;
+    window.showCartPreview = showCartPreview;
+    
+    // Create alias for toggleCartPreview to match header.php onclick
+    window.toggleCartPreview = window.toggleCart;
     
     // Load cart preview on page load if cart has items
     document.addEventListener('DOMContentLoaded', function() {

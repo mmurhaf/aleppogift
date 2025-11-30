@@ -118,56 +118,62 @@ class PDFInvoiceGenerator {
         $pdf->Cell(95, 6, 'Email: ' . ($order['customer_email'] ?: ''), 0, 1);
         $pdf->Ln(15);
 
-        // Payment Information
+        // Payment Information (left column) and Shipping Information (right column)
         $pdf->SetFont('Arial', 'B', 10);
         $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
-        $pdf->Cell(0, 6, 'PAYMENT INFORMATION', 0, 1);
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(60);
-        $pdf->Cell(0, 5, 'Payment Method: ' . ($order['payment_method'] ?: 'N/A'), 0, 1);
-        $pdf->Cell(0, 5, 'Payment Status: ' . ucfirst($order['payment_status'] ?: 'pending'), 0, 1);
-        $pdf->Ln(5);
-
-        // Shipping Information
-        $pdf->SetFont('Arial', 'B', 10);
-        $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
-        $pdf->Cell(0, 6, 'SHIPPING INFORMATION', 0, 1);
+        $pdf->Cell(95, 6, 'PAYMENT INFORMATION', 0, 0);
+        $pdf->Cell(95, 6, 'SHIPPING INFORMATION', 0, 1);
+        
         $pdf->SetFont('Arial', '', 9);
         $pdf->SetTextColor(60);
         
+        // Payment Method | Shipping Method
+        $pdf->Cell(95, 5, 'Payment Method: ' . ($order['payment_method'] ?: 'N/A'), 0, 0);
         if (!empty($order['shipping_method'])) {
-            $pdf->Cell(0, 5, 'Shipping Method: ' . $order['shipping_method'], 0, 1);
-        }
-        
-        // Display shipping cost
-        $shipping_cost = $order['shipping_aed'] ?? $order['shipping_amount'] ?? 0;
-        if ($shipping_cost > 0) {
-            $pdf->Cell(0, 5, 'Shipping Cost: AED ' . number_format($shipping_cost, 2), 0, 1);
+            $pdf->Cell(95, 5, 'Shipping Method: ' . $order['shipping_method'], 0, 1);
         } else {
-            $pdf->Cell(0, 5, 'Shipping Cost: Free Shipping', 0, 1);
+            $pdf->Cell(95, 5, '', 0, 1);
         }
         
-        // Display total weight
+        // Payment Status | Shipping Cost
+        $shipping_cost = $order['shipping_aed'] ?? $order['shipping_amount'] ?? 0;
+        $pdf->Cell(95, 5, 'Payment Status: ' . ucfirst($order['payment_status'] ?: 'pending'), 0, 0);
+        if ($shipping_cost > 0) {
+            $pdf->Cell(95, 5, 'Shipping Cost: AED ' . number_format($shipping_cost, 2), 0, 1);
+        } else {
+            $pdf->Cell(95, 5, 'Shipping Cost: Free Shipping', 0, 1);
+        }
+        
+        // Empty | Total Weight
         if (!empty($order['total_weight']) && $order['total_weight'] > 0) {
-            $pdf->Cell(0, 5, 'Total Weight: ' . number_format($order['total_weight'], 2) . ' kg', 0, 1);
+            $pdf->Cell(95, 5, '', 0, 0);
+            $pdf->Cell(95, 5, 'Total Weight: ' . number_format($order['total_weight'], 2) . ' kg', 0, 1);
         }
         
+        // Empty | Tracking Number
         if (!empty($order['tracking_number'])) {
-            $pdf->Cell(0, 5, 'Tracking Number: ' . $order['tracking_number'], 0, 1);
+            $pdf->Cell(95, 5, '', 0, 0);
+            $pdf->Cell(95, 5, 'Tracking Number: ' . $order['tracking_number'], 0, 1);
         }
         
+        // Empty | Carrier
         if (!empty($order['carrier_name'])) {
-            $pdf->Cell(0, 5, 'Carrier: ' . $order['carrier_name'], 0, 1);
+            $pdf->Cell(95, 5, '', 0, 0);
+            $pdf->Cell(95, 5, 'Carrier: ' . $order['carrier_name'], 0, 1);
         }
         
+        // Empty | Shipment Status
         if (!empty($order['shipment_status'])) {
             $status_display = ucfirst($order['shipment_status']);
-            $pdf->Cell(0, 5, 'Shipment Status: ' . $status_display, 0, 1);
+            $pdf->Cell(95, 5, '', 0, 0);
+            $pdf->Cell(95, 5, 'Shipment Status: ' . $status_display, 0, 1);
         }
         
+        // Empty | Shipped Date
         if (!empty($order['shipped_date'])) {
             $shipped_date = date('F j, Y', strtotime($order['shipped_date']));
-            $pdf->Cell(0, 5, 'Shipped Date: ' . $shipped_date, 0, 1);
+            $pdf->Cell(95, 5, '', 0, 0);
+            $pdf->Cell(95, 5, 'Shipped Date: ' . $shipped_date, 0, 1);
         }
         
         $pdf->Ln(10);
@@ -233,31 +239,33 @@ class PDFInvoiceGenerator {
         $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
 
         // Subtotal
-        $pdf->Cell(145, 8, 'Subtotal:', 0, 0, 'R');
-        $pdf->Cell(25, 8, 'AED ' . number_format($subtotal, 2), 1, 1, 'C');
+        $pdf->Cell(130, 8, 'Subtotal:', 0, 0, 'R');
+        $pdf->Cell(40, 8, 'AED ' . number_format($subtotal, 2), 1, 1, 'C');
 
-        // Shipping
-        $shipping_amount = $order['shipping_amount'] ?? 0;
+        // Shipping - Always display
+        $shipping_amount = $order['shipping_aed'] ?? $order['shipping_amount'] ?? 0;
+        $pdf->Cell(130, 8, 'Shipping:', 0, 0, 'R');
         if ($shipping_amount > 0) {
-            $pdf->Cell(145, 8, 'Shipping:', 0, 0, 'R');
-            $pdf->Cell(25, 8, 'AED ' . number_format($shipping_amount, 2), 1, 1, 'C');
+            $pdf->Cell(40, 8, 'AED ' . number_format($shipping_amount, 2), 1, 1, 'C');
+        } else {
+            $pdf->Cell(40, 8, 'FREE', 1, 1, 'C');
         }
 
         // Discount
         $discount_amount = $order['discount_amount'] ?? 0;
         if ($discount_amount > 0) {
             $pdf->SetTextColor(220, 53, 69); // Red color for discount
-            $pdf->Cell(145, 8, 'Discount:', 0, 0, 'R');
-            $pdf->Cell(25, 8, '-AED ' . number_format($discount_amount, 2), 1, 1, 'C');
+            $pdf->Cell(130, 8, 'Discount:', 0, 0, 'R');
+            $pdf->Cell(40, 8, '-AED ' . number_format($discount_amount, 2), 1, 1, 'C');
             $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
         }
 
-        // Total
+        // Grand Total
         $pdf->SetFont('Arial', 'B', 12);
         $pdf->SetFillColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
         $pdf->SetTextColor(255);
-        $pdf->Cell(145, 10, 'TOTAL:', 0, 0, 'R');
-        $pdf->Cell(25, 10, 'AED ' . number_format($order['total_amount'], 2), 1, 1, 'C', true);
+        $pdf->Cell(130, 10, 'GRAND TOTAL:', 0, 0, 'R');
+        $pdf->Cell(40, 10, 'AED ' . number_format($order['total_amount'], 2), 1, 1, 'C', true);
 
         // Notes section
         if (!empty($order['notes'])) {

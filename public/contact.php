@@ -23,6 +23,7 @@ $db = new Database();
 	<link rel="stylesheet" href="assets/css/enhanced-design.css">
 	<link rel="stylesheet" href="assets/css/components.css">
 	<link rel="stylesheet" href="assets/css/ui-components.css">
+	<link rel="stylesheet" href="assets/css/header-fixes.css">
 	
 	<!-- Google Fonts for Enhanced Typography -->
 	<link rel="preconnect" href="https://fonts.googleapis.com">

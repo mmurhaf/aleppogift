@@ -28,35 +28,38 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             
             <!-- Mobile Cart Button (visible only on small screens) -->
             <button class="btn btn-outline-primary position-relative cart-button-mobile d-md-none ms-2" 
+                    type="button"
                     data-bs-toggle="offcanvas" 
                     data-bs-target="#cartOffcanvas" 
                     aria-controls="cartOffcanvas"
-                    aria-label="Open shopping cart"
+                    aria-label="Open shopping cart with <?php echo $cart_count; ?> items"
                     title="Open Cart">
-                <a class="nav-link" href="cart.php" aria-label="View cart"><i class="fas fa-shopping-cart" aria-hidden="true"></i></a>
-                   
+                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
                 <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" 
                       id="cart-count-mobile"
                       aria-label="<?php echo $cart_count; ?> items in cart">
-                    <?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0; ?>
+                    <?php echo $cart_count; ?>
                 </span>
             </button>
-                      
-                        <!-- Expanding Search Form (initially hidden) -->
-            <div id="search-bar" class="position-absolute top-0 start-0 w-100 bg-white shadow p-2 d-none">
-                <form class="d-flex" action="index.php" method="get">
-                    <input class="form-control me-2" type="search" 
-                        name="search" 
-                        placeholder="Search products..." 
-                        value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"
-                        aria-label="Search">
-                    <button class="btn btn-primary" type="submit">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button type="button" class="btn btn-light ms-2" id="search-close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </form>
+            
+            <!-- Expanding Search Form (initially hidden) -->
+            <div id="search-bar" class="position-absolute top-0 start-0 w-100 bg-white shadow-sm p-3 d-none" style="z-index: 1060;">
+                <div class="container-fluid" style="max-width: 1600px;">
+                    <form class="d-flex align-items-center" action="index.php" method="get">
+                        <input class="form-control me-2" type="search" 
+                            name="search" 
+                            placeholder="Search products..." 
+                            value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"
+                            aria-label="Search products"
+                            autocomplete="off">
+                        <button class="btn btn-primary px-4" type="submit" aria-label="Search">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary ms-2" id="search-close" aria-label="Close search">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <nav role="navigation" aria-label="Main navigation">
@@ -78,26 +81,28 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                         </li>
 
                         <!-- Search Icon -->
-                        <li class="nav-item mx-2">
-                            <button class="btn btn-outline-secondary" 
+                        <li class="nav-item">
+                            <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
                                     type="button" 
                                     id="search-toggle"
-                                    aria-label="Open search">
+                                    aria-label="Open search"
+                                    style="width: 40px; height: 40px; border-radius: 8px;">
                                 <i class="fas fa-search" aria-hidden="true"></i>
                             </button>
                         </li>
 
-                        <!-- Simplified Cart Button -->
+                        <!-- Desktop Cart Button -->
                         <li class="nav-item ms-2">
-                            <button class="btn btn-outline-primary position-relative" 
+                            <button class="btn btn-outline-primary position-relative cart-button-header" 
+                                    type="button"
                                     onclick="toggleCartPreview()"
                                     aria-label="View shopping cart with <?php echo $cart_count; ?> items"
                                     aria-expanded="false"
                                     aria-controls="cartPreview"
                                     title="View Cart">
                                 <i class="fas fa-shopping-cart me-1" aria-hidden="true"></i>
-                                <span class="d-none d-md-inline">Cart</span>
-                                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" 
+                                <span class="d-none d-lg-inline">Cart</span>
+                                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle cart-count-badge" 
                                       id="cart-count"
                                       aria-label="<?php echo $cart_count; ?> items in cart">
                                     <?php echo $cart_count; ?>
@@ -114,24 +119,24 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
         </div>
     </header>
 
-    <!-- Simplified Desktop Cart Preview -->
+    <!-- Desktop Cart Preview -->
     <div id="cartPreview" 
-         class="card shadow position-absolute end-0 mt-2 me-4" 
-         style="display: none; z-index: 1050; width: 350px; max-height: 500px; overflow-y: auto;"
+         class="card shadow-lg position-fixed end-0 mt-1" 
+         style="display: none; z-index: 1050; width: 380px; max-height: 80vh; top: 70px; right: 20px; border-radius: 12px; overflow: hidden;"
          role="dialog"
          aria-label="Shopping cart preview">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="fas fa-shopping-cart me-2" aria-hidden="true"></i>Cart Preview</h6>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom" style="padding: 1rem 1.25rem;">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-shopping-cart me-2 text-primary" aria-hidden="true"></i>Cart Preview</h6>
             <button type="button" 
-                    class="btn-close btn-sm" 
+                    class="btn-close" 
                     onclick="hideCartPreview()"
                     aria-label="Close cart preview"></button>
         </div>
-        <div class="card-body p-0">
-            <div id="cart-items-container">
-                <div class="text-center p-3">
-                    <i class="fas fa-shopping-cart text-muted" style="font-size: 2rem;"></i>
-                    <p class="text-muted mt-2 mb-0">Your cart is empty</p>
+        <div class="card-body p-0" style="max-height: calc(80vh - 70px); overflow-y: auto;">
+            <div id="cart-items-preview">
+                <div class="text-center p-4">
+                    <i class="fas fa-shopping-cart text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p class="text-muted mt-3 mb-0">Your cart is empty</p>
                 </div>
             </div>
         </div>

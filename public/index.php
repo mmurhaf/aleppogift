@@ -149,6 +149,9 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
     
     <!-- Index Page Specific Styles -->
     <link rel="stylesheet" href="assets/css/index.css">
+    
+    <!-- Header Design Fixes -->
+    <link rel="stylesheet" href="assets/css/header-fixes.css">
 
 </head>
 <body>
@@ -494,8 +497,8 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
     }
     </script>
 
-    <!-- JavaScript - Deferred for Performance -->
-    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- JavaScript - jQuery loaded without defer since inline scripts depend on it -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Simplified Cart Preview JavaScript -->

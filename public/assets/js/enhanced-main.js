@@ -470,9 +470,13 @@ function debounce(func, wait) {
 // Performance monitoring
 function logPerformance() {
     window.addEventListener('load', () => {
-        const perfData = performance.timing;
-        const loadTime = perfData.loadEventEnd - perfData.navigationStart;
-        console.log(`⚡ Page loaded in ${loadTime}ms`);
+        setTimeout(() => {
+            const perfData = performance.timing;
+            const loadTime = perfData.loadEventEnd - perfData.navigationStart;
+            if (loadTime > 0) {
+                console.log(`⚡ Page loaded in ${loadTime}ms`);
+            }
+        }, 0);
     });
 }
 

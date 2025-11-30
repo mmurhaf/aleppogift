@@ -605,51 +605,58 @@ if (!empty($order['customer_id'])) {
                     if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)):
                         // It's valid JSON, display it formatted
                     ?>
-                        <div class="notes-content">
-                            <button class="json-toggle" onclick="toggleJsonView(this)">
+                        <div class="notes-content" style="background: white; border: 1px solid #e0e0e0; padding: 20px;">
+                            <button class="json-toggle" onclick="toggleJsonView(this)" style="float: right;">
                                 <i class="fas fa-eye"></i> Toggle Raw/Formatted View
                             </button>
                             
-                            <div class="json-formatted" style="display: block;">
-                                <?php if (isset($jsonData['success'])): ?>
-                                    <div style="margin-bottom: 15px;">
-                                        <strong>Payment Status:</strong> 
-                                        <span class="badge <?= $jsonData['success'] ? 'bg-success' : 'bg-danger' ?>">
-                                            <?= $jsonData['success'] ? 'Success' : 'Failed' ?>
-                                        </span>
-                                    </div>
-                                <?php endif; ?>
+                            <div class="json-formatted" style="display: block; clear: both; padding-top: 10px;">
+                                <div class="payment-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                                    <?php if (isset($jsonData['success'])): ?>
+                                        <div class="info-card" style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid <?= $jsonData['success'] ? '#28a745' : '#dc3545' ?>;">
+                                            <div style="color: #6c757d; font-size: 0.85em; font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Payment Status</div>
+                                            <span class="badge <?= $jsonData['success'] ? 'bg-success' : 'bg-danger' ?>" style="font-size: 0.9em; padding: 6px 12px;">
+                                                <?= $jsonData['success'] ? 'Success' : 'Failed' ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($jsonData['status'])): ?>
+                                        <div class="info-card" style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #17a2b8;">
+                                            <div style="color: #6c757d; font-size: 0.85em; font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Status</div>
+                                            <span class="badge bg-info" style="font-size: 0.9em; padding: 6px 12px;">
+                                                <?= ucwords(str_replace('_', ' ', htmlspecialchars($jsonData['status']))) ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                                 
                                 <?php if (isset($jsonData['payment_url'])): ?>
-                                    <div style="margin-bottom: 10px;">
-                                        <strong>Payment URL:</strong><br>
+                                    <div class="info-card" style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid #007bff;">
+                                        <div style="color: #6c757d; font-size: 0.85em; font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Payment URL</div>
                                         <a href="<?= htmlspecialchars($jsonData['payment_url']) ?>" 
-                                           target="_blank" class="json-url">
-                                            <?= htmlspecialchars($jsonData['payment_url']) ?>
+                                           target="_blank" 
+                                           style="color: #007bff; text-decoration: none; word-break: break-all; font-size: 0.9em;">
+                                            <i class="fas fa-external-link-alt" style="margin-right: 6px;"></i><?= htmlspecialchars($jsonData['payment_url']) ?>
                                         </a>
                                     </div>
                                 <?php endif; ?>
                                 
                                 <?php if (isset($jsonData['payment_id'])): ?>
-                                    <div style="margin-bottom: 10px;">
-                                        <strong>Payment ID:</strong><br>
-                                        <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9em; word-break: break-all;">
-                                            <?= htmlspecialchars($jsonData['payment_id']) ?>
-                                        </code>
-                                        <button type="button" onclick="copyToClipboard('<?= htmlspecialchars($jsonData['payment_id']) ?>')" 
-                                                style="margin-left: 8px; background: none; border: 1px solid #6c757d; border-radius: 3px; padding: 2px 8px; font-size: 0.8em; cursor: pointer;" 
-                                                title="Copy to clipboard">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <?php if (isset($jsonData['status'])): ?>
-                                    <div style="margin-bottom: 10px;">
-                                        <strong>Status:</strong><br>
-                                        <span class="badge bg-info">
-                                            <?= ucwords(str_replace('_', ' ', htmlspecialchars($jsonData['status']))) ?>
-                                        </span>
+                                    <div class="info-card" style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid #6c757d;">
+                                        <div style="color: #6c757d; font-size: 0.85em; font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Payment ID</div>
+                                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                            <code style="background: #e9ecef; padding: 8px 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; flex: 1; min-width: 200px;">
+                                                <?= htmlspecialchars($jsonData['payment_id']) ?>
+                                            </code>
+                                            <button type="button" onclick="copyToClipboard('<?= htmlspecialchars($jsonData['payment_id']) ?>')" 
+                                                    style="background: #007bff; color: white; border: none; border-radius: 4px; padding: 8px 16px; font-size: 0.85em; cursor: pointer; transition: background 0.2s;" 
+                                                    onmouseover="this.style.background='#0056b3'" 
+                                                    onmouseout="this.style.background='#007bff'"
+                                                    title="Copy to clipboard">
+                                                <i class="fas fa-copy"></i> Copy
+                                            </button>
+                                        </div>
                                     </div>
                                 <?php endif; ?>
                                 

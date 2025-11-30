@@ -66,16 +66,129 @@
 
 /* Enhanced Cart Button Styles */
 .cart-button-header {
-  padding: 0.5rem 1rem;
-  margin-right: 8px;
-  border-radius: 25px;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
   transition: all 0.3s ease;
-  border: 2px solid var(--primary, #007bff);
-  background: transparent;
-  color: var(--primary, #007bff);
+  border: 2px solid #007bff;
+  background: white;
+  color: #007bff;
   font-weight: 600;
   position: relative;
   overflow: visible;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cart-button-header:hover {
+  background: #007bff;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+  border-color: #007bff;
+}
+
+.cart-button-header:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+}
+
+/* Mobile Cart Button */
+.cart-button-mobile {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 2px solid #007bff;
+  background: white;
+  color: #007bff;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cart-button-mobile:hover {
+  background: #007bff;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+}
+
+.cart-button-mobile i {
+  font-size: 1.1rem;
+}
+
+/* Search Button Styles */
+#search-toggle {
+  transition: all 0.3s ease;
+  border: 2px solid #6c757d;
+  background: white;
+  color: #6c757d;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#search-toggle:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);
+  border-color: #6c757d;
+}
+
+#search-toggle i {
+  font-size: 1rem;
+}
+
+/* Search Bar Styles */
+#search-bar {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#search-bar .form-control {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.625rem 1rem;
+  transition: all 0.3s ease;
+}
+
+#search-bar .form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+#search-bar .btn-primary {
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+}
+
+#search-bar .btn-outline-secondary {
+  border-radius: 8px;
+  padding: 0.625rem 1rem;
+  border: 2px solid #6c757d;
+  transition: all 0.3s ease;
+}
+
+#search-bar .btn-outline-secondary:hover {
+  background: #6c757d;
+  color: white;
+  border-color: #6c757d;
 }
 
 .cart-button-header:hover {
@@ -125,7 +238,6 @@
 @media (max-width: 768px) {
   .cart-button-header {
     padding: 0.4rem 0.8rem;
-    margin-right: 6px;
     font-size: 0.9rem;
   }
   
@@ -136,6 +248,90 @@
     height: 18px;
     font-size: 0.6rem;
   }
+}
+
+/* Navigation Links Enhancement */
+.navbar-nav .nav-link {
+  position: relative;
+  font-weight: 500;
+  color: #495057;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #007bff;
+  background: rgba(0, 123, 255, 0.05);
+}
+
+.navbar-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: #007bff;
+  transition: width 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover::after {
+  width: 60%;
+}
+
+/* Navbar Toggler Enhancement */
+.navbar-toggler {
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.navbar-toggler:hover {
+  background: rgba(0, 123, 255, 0.05);
+  border-color: #007bff;
+}
+
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Cart Preview Enhancement */
+#cartPreview {
+  background: white;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+#cartPreview.show {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+#cartPreview .card-header {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+#cartPreview .card-header h6 {
+  color: white;
+}
+
+#cartPreview .btn-close {
+  filter: invert(1) brightness(2);
 }
 
 /* Cart Offcanvas Styles */

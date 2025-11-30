@@ -119,6 +119,7 @@ $products = $db->query($products_query, $params)->fetchAll(PDO::FETCH_ASSOC);
 	<link rel="stylesheet" href="assets/css/enhanced-design.css">
 	<link rel="stylesheet" href="assets/css/components.css">
 	<link rel="stylesheet" href="assets/css/ui-components.css">
+	<link rel="stylesheet" href="assets/css/header-fixes.css">
 	<link rel="stylesheet" href="assets/css/width-improvements.css">
 	
 	<!-- Google Fonts for Enhanced Typography -->

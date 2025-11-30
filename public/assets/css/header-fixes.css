@@ -1,0 +1,371 @@
+/* HEADER DESIGN FIXES - Enhanced Buttons, Icons, and Menus */
+
+/* ========================================
+   HEADER CONTAINER
+   ======================================== */
+.modern-header {
+    position: sticky;
+    top: 0;
+    z-index: 1040;
+    transition: all 0.3s ease;
+}
+
+.modern-header .container-fluid {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ========================================
+   BRAND LOGO
+   ======================================== */
+.modern-brand {
+    transition: transform 0.3s ease;
+}
+
+.modern-brand:hover {
+    transform: scale(1.02);
+}
+
+.brand-logo {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* ========================================
+   NAVIGATION MENU
+   ======================================== */
+.navbar-nav {
+    gap: 0.5rem;
+}
+
+.navbar-nav .nav-item {
+    list-style: none;
+}
+
+.navbar-nav .nav-link {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* Active menu item */
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link[aria-current="page"] {
+    color: #007bff !important;
+    background: rgba(0, 123, 255, 0.1);
+}
+
+/* ========================================
+   ICONS ENHANCEMENT
+   ======================================== */
+.fas, .fa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure icons are properly centered */
+button i.fas,
+button i.fa,
+a i.fas,
+a i.fa {
+    line-height: 1;
+    vertical-align: middle;
+}
+
+/* Icon sizes */
+.cart-button-header i,
+.cart-button-mobile i,
+#search-toggle i {
+    font-size: 1rem;
+}
+
+/* ========================================
+   BUTTON STATES
+   ======================================== */
+.btn {
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none !important;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Focus states for accessibility */
+.btn:focus,
+.btn:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.btn-outline-primary:focus,
+.btn-outline-secondary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* ========================================
+   CART BADGE ENHANCEMENTS
+   ======================================== */
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Don't show badge when count is 0 */
+.badge:empty,
+.badge[aria-label*="0 items"] {
+    display: none !important;
+}
+
+/* ========================================
+   SEARCH BAR ENHANCEMENTS
+   ======================================== */
+#search-bar {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#search-bar .form-control::-webkit-input-placeholder {
+    color: #adb5bd;
+}
+
+#search-bar .form-control::-moz-placeholder {
+    color: #adb5bd;
+}
+
+#search-bar .form-control::placeholder {
+    color: #adb5bd;
+}
+
+/* Search button hover */
+#search-bar .btn-primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+#search-bar .btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ========================================
+   MOBILE OPTIMIZATIONS
+   ======================================== */
+@media (max-width: 991px) {
+    .navbar-nav {
+        padding: 1rem 0;
+        gap: 0.25rem;
+    }
+    
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem;
+        width: 100%;
+        text-align: left;
+    }
+    
+    .navbar-nav .nav-item {
+        width: 100%;
+    }
+    
+    /* Stack buttons in mobile menu */
+    .navbar-nav .nav-item:has(button) {
+        padding: 0.5rem 1rem;
+    }
+    
+    .navbar-collapse {
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-header {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    .brand-logo {
+        height: 38px !important;
+    }
+    
+    /* Adjust mobile cart button */
+    .cart-button-mobile {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .cart-button-mobile i {
+        font-size: 1rem;
+    }
+}
+
+/* ========================================
+   CART PREVIEW ENHANCEMENTS
+   ======================================== */
+#cartPreview {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Smooth scrollbar for cart items */
+#cartPreview .card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+#cartPreview .card-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#cartPreview .card-body::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+#cartPreview .card-body::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Cart preview header gradient */
+#cartPreview .card-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+/* Empty cart state */
+#cartPreview .text-muted {
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   OFFCANVAS CART
+   ======================================== */
+.offcanvas-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+/* Offcanvas scrollbar */
+.offcanvas-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.offcanvas-body::-webkit-scrollbar-track {
+    background: #f8f9fa;
+}
+
+.offcanvas-body::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.offcanvas-body::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* ========================================
+   NAVBAR TOGGLER (Hamburger Menu)
+   ======================================== */
+.navbar-toggler {
+    box-shadow: none !important;
+}
+
+.navbar-toggler:hover .navbar-toggler-icon {
+    opacity: 0.8;
+}
+
+.navbar-toggler-icon {
+    width: 1.5em;
+    height: 1.5em;
+    transition: transform 0.3s ease;
+}
+
+/* Hamburger animation */
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+    transform: rotate(90deg);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.position-relative {
+    position: relative !important;
+}
+
+.position-absolute {
+    position: absolute !important;
+}
+
+.position-fixed {
+    position: fixed !important;
+}
+
+/* ========================================
+   HOVER EFFECTS
+   ======================================== */
+@media (hover: hover) {
+    /* Only apply hover effects on devices that support hover */
+    .cart-button-header:hover i,
+    .cart-button-mobile:hover i,
+    #search-toggle:hover i {
+        transform: scale(1.1);
+        transition: transform 0.2s ease;
+    }
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+.spinner-border {
+    border-width: 0.2em;
+}
+
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Apply animations */
+.navbar-collapse.show {
+    animation: slideInDown 0.3s ease-out;
+}
+
+#cartPreview.show {
+    animation: fadeIn 0.3s ease-out;
+}

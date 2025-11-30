@@ -82,16 +82,26 @@ try {
         $processed_items++;
 
         $price = $product['price'];
+        $display_image = $product['main_image']; // Default to main image
+        $variation = null;
         
-        // Add variation price if applicable
+        // Add variation price if applicable and get variant image
         if (!empty($item['variation_id'])) {
             $variation = $db->query(
-                "SELECT additional_price, size, color FROM product_variations WHERE id = :id", 
+                "SELECT pv.additional_price, pv.size, pv.color, pi.image_path as variant_image
+                 FROM product_variations pv
+                 LEFT JOIN product_images pi ON pv.image_id = pi.id
+                 WHERE pv.id = :id", 
                 ['id' => $item['variation_id']]
             )->fetch(PDO::FETCH_ASSOC);
             
             if ($variation) {
                 $price += $variation['additional_price'];
+                
+                // Use variant-specific image if available
+                if (!empty($variation['variant_image'])) {
+                    $display_image = $variation['variant_image'];
+                }
             }
         }
 
@@ -101,9 +111,12 @@ try {
 ?>
 <div class="cart-item-preview d-flex align-items-center p-3 border-bottom" data-product-id="<?= $item['product_id'] ?>" style="gap: 12px;">
     <div class="item-image-small">
-        <img src="<?= htmlspecialchars(str_replace("../", "", $product['main_image'] ?: 'uploads/default-product.jpg')) ?>" 
+        <img src="<?= htmlspecialchars(str_replace("../", "", $display_image ?: 'uploads/default-product.jpg')) ?>" 
              alt="<?= htmlspecialchars($product['name_en']) ?>"
-             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e9ecef;">
+             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: <?= (!empty($variation) && !empty($variation['variant_image'])) ? '2px solid #E67B2E' : '1px solid #e9ecef' ?>;"
+             <?php if (!empty($variation) && !empty($variation['variant_image'])): ?>
+             title="Selected variant image"
+             <?php endif; ?>>
     </div>
     <div class="item-info flex-grow-1" style="min-width: 0;">
         <div class="item-name fw-semibold text-truncate" style="font-size: 0.9rem; color: #2c3e50;">

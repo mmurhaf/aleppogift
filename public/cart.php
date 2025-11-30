@@ -103,6 +103,7 @@ if (!empty($invalid_items)) {
     <link rel="stylesheet" href="assets/css/enhanced-design.css">
     <link rel="stylesheet" href="assets/css/components.css">
     <link rel="stylesheet" href="assets/css/ui-components.css">
+    <link rel="stylesheet" href="assets/css/header-fixes.css">
     <link rel="stylesheet" href="assets/css/cart.css">
     <link rel="stylesheet" href="assets/css/width-improvements.css">
     <link rel="stylesheet" href="assets/css/full-width-fix.css">
@@ -679,13 +680,24 @@ if (!empty($invalid_items)) {
                                 
                                 $price = $product['price'];
                                 $variationText = "";
+                                $display_image = $product['main_image']; // Default to main image
                                 
                                 if (!empty($item['variation_id'])) {
-                                    $variation = $db->query("SELECT * FROM product_variations WHERE id = :id", ['id' => $item['variation_id']])->fetch(PDO::FETCH_ASSOC);
+                                    $variation = $db->query("
+                                        SELECT pv.*, pi.image_path as variant_image 
+                                        FROM product_variations pv
+                                        LEFT JOIN product_images pi ON pv.image_id = pi.id
+                                        WHERE pv.id = :id
+                                    ", ['id' => $item['variation_id']])->fetch(PDO::FETCH_ASSOC);
 
                                     if ($variation) {
                                         $variationText = "Size: {$variation['size']} / Color: {$variation['color']}";
                                         $price += $variation['additional_price'];
+                                        
+                                        // Use variant-specific image if available
+                                        if (!empty($variation['variant_image'])) {
+                                            $display_image = $variation['variant_image'];
+                                        }
                                     }
                                 }
 
@@ -695,8 +707,12 @@ if (!empty($invalid_items)) {
                             <div class="cart-item slide-up" data-product-id="<?= $product['id'] ?>">
                                 <div class="item-content">
                                     <div class="item-image">
-                                        <img src="<?php echo str_replace("../", "", $product['main_image'] ?: 'uploads/default-product.jpg'); ?>" 
-                                             alt="<?php echo htmlspecialchars($product['name_en']); ?>">
+                                        <img src="<?php echo str_replace("../", "", $display_image ?: 'uploads/default-product.jpg'); ?>" 
+                                             alt="<?php echo htmlspecialchars($product['name_en']); ?>"
+                                             <?php if (!empty($variation) && !empty($variation['variant_image'])): ?>
+                                             title="Selected variant image"
+                                             style="border: 2px solid #E67B2E;"
+                                             <?php endif; ?>>
                                     </div>
                                     <div class="item-details">
                                         <h5>
