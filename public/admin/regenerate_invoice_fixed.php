@@ -9,7 +9,7 @@ $root_dir = dirname(dirname(__DIR__));
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
-require_once($root_dir . '/includes/generate_invoice.php');
+require_once($root_dir . '/includes/generate_invoice_pdf.php');
 
 require_admin_login();
 

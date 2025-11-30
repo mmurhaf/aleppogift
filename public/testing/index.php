@@ -229,6 +229,35 @@
             </div>
 
             <div class="test-categories">
+                <!-- Root Test Files (Production Access) -->
+                <div class="category" style="border-left-color: #e91e63;">
+                    <h3><i class="fas fa-folder-open"></i> Root Test Files</h3>
+                    <ul class="test-list">
+                        <li>
+                            <a href="root_proxy.php" class="test-link" style="font-weight: bold;">
+                                <i class="fas fa-server"></i>
+                                Root Files Browser
+                                <span class="status-indicator" style="background: #e91e63;">PRODUCTION</span>
+                            </a>
+                            <div class="test-description">Access all test files from root directory (normally inaccessible in production)</div>
+                        </li>
+                        <li>
+                            <a href="scan_root_files.php" class="test-link">
+                                <i class="fas fa-search"></i>
+                                Root Files Scanner
+                            </a>
+                            <div class="test-description">Scan and discover test files in root directory</div>
+                        </li>
+                        <li>
+                            <a href="root_files_quick_reference.html" class="test-link">
+                                <i class="fas fa-book"></i>
+                                Quick Reference Guide
+                            </a>
+                            <div class="test-description">Documentation and usage examples for root files access</div>
+                        </li>
+                    </ul>
+                </div>
+
                 <!-- Special Dashboards -->
                 <div class="category">
                     <h3><i class="fas fa-tachometer-alt"></i> Special Dashboards</h3>

@@ -75,3 +75,9 @@ debug_*.php
 
 # htaccess backup
 .htaccess.backup
+ 
+# Sensitive FTP / deployment credentials (created locally)
+/config/ftp_credentials.php
+
+# Deployment backups (timestamped production backups)
+backups/

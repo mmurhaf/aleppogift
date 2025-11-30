@@ -1,0 +1,68 @@
+{
+  "description": "AleppoGift Deployment Configuration",
+  "version": "1.0",
+  
+  "exclude": [
+    "*.git*",
+    ".gitignore",
+    "node_modules",
+    "vendor",
+    "cache",
+    "temp",
+    "tmp",
+    "*.log",
+    "test_*.php",
+    "debug_*.php",
+    "deploy.ps1",
+    "deploy.bat",
+    "deploy-config.json",
+    "backup.ps1",
+    "*.md",
+    "*.bat",
+    "*.txt",
+    "config/ftp_credentials.php",
+    ".vscode",
+    ".idea",
+    "*.backup",
+    "*.bak",
+    "*.old",
+    "*.swp",
+    "*.swo",
+    "*~",
+    ".DS_Store",
+    "Thumbs.db",
+    "*.zip",
+    "*.rar",
+    "*.tar.gz",
+    "public/uploads/*",
+    "public/quotations/*",
+    "public/invoice/*",
+    "logs",
+    "composer.lock",
+    "package-lock.json",
+    "yarn.lock",
+    ".htaccess.backup",
+    "*.test",
+    "architecture_diagram.txt",
+    "setup_instructions.txt",
+    "github-setup-commands.txt",
+    "create_structure.bat",
+    "css-cleanup.bat"
+  ],
+  
+  "include_only": [],
+  
+  "options": {
+    "verify_ssl": false,
+    "timeout_seconds": 300,
+    "max_retries": 3,
+    "show_progress": true
+  },
+  
+  "notes": [
+    "Add patterns to 'exclude' array to skip files during deployment",
+    "Use wildcards: *.ext for extensions, folder/* for directories",
+    "Patterns are case-insensitive on Windows",
+    "To deploy only specific files, add patterns to 'include_only' array"
+  ]
+}

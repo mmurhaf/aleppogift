@@ -107,6 +107,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Handle product variations (colors, sizes)
+        if (!empty($_POST['variations'])) {
+            foreach ($_POST['variations'] as $variation) {
+                $size = !empty($variation['size']) ? trim($variation['size']) : null;
+                $color = !empty($variation['color']) ? trim($variation['color']) : null;
+                $additional_price = !empty($variation['additional_price']) ? floatval($variation['additional_price']) : 0.00;
+                $variation_stock = !empty($variation['stock']) ? intval($variation['stock']) : 0;
+
+                // Only insert if at least size or color is provided
+                if ($size || $color) {
+                    $db->query("INSERT INTO product_variations (product_id, size, color, additional_price, stock)
+                                VALUES (:product_id, :size, :color, :additional_price, :stock)", [
+                        'product_id' => $product_id,
+                        'size' => $size,
+                        'color' => $color,
+                        'additional_price' => $additional_price,
+                        'stock' => $variation_stock
+                    ]);
+                }
+            }
+        }
+
         $success_message = "Product added successfully!";
         // Redirect after 2 seconds
         header("refresh:2;url=products.php");
@@ -173,6 +195,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             object-fit: cover;
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+        .variation-row {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #0d6efd;
+        }
+        .variation-row:hover {
+            background: #e9ecef;
+        }
+        .remove-variation {
+            cursor: pointer;
+            color: #dc3545;
+        }
+        .remove-variation:hover {
+            color: #bb2d3b;
+        }
+        .add-variation-btn {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -307,6 +349,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
+            <!-- Product Variations Section -->
+            <div class="form-section">
+                <h5 class="section-title">Product Variations (Optional)</h5>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Add variations for products that come in different sizes, colors, or combinations. The variant ID is automatically generated.
+                </div>
+                
+                <div id="variationsContainer">
+                    <!-- Variation rows will be added here -->
+                </div>
+                
+                <button type="button" class="btn btn-outline-primary add-variation-btn" id="addVariationBtn">
+                    <i class="fas fa-plus me-2"></i>Add Variation
+                </button>
+            </div>
+
             <!-- Form Actions -->
             <div class="d-flex justify-content-between mt-4">
                 <a href="products.php" class="btn btn-outline-secondary">
@@ -321,6 +380,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let variationCount = 0;
+
+        // Add variation row
+        document.getElementById('addVariationBtn').addEventListener('click', function() {
+            variationCount++;
+            const variationsContainer = document.getElementById('variationsContainer');
+            
+            const variationRow = document.createElement('div');
+            variationRow.className = 'variation-row';
+            variationRow.id = `variation-${variationCount}`;
+            variationRow.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Variation #${variationCount}</h6>
+                    <i class="fas fa-times remove-variation" onclick="removeVariation(${variationCount})"></i>
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Size</label>
+                        <input type="text" class="form-control" name="variations[${variationCount}][size]" placeholder="e.g., S, M, L, XL">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Color</label>
+                        <input type="text" class="form-control" name="variations[${variationCount}][color]" placeholder="e.g., Red, Blue">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Additional Price ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="variations[${variationCount}][additional_price]" value="0.00" placeholder="0.00">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Stock</label>
+                        <input type="number" class="form-control" name="variations[${variationCount}][stock]" value="0" min="0">
+                    </div>
+                </div>
+            `;
+            
+            variationsContainer.appendChild(variationRow);
+        });
+
+        // Remove variation row
+        function removeVariation(id) {
+            const element = document.getElementById(`variation-${id}`);
+            if (element) {
+                element.remove();
+            }
+        }
+
         // Image preview functionality
         document.getElementById('productImages').addEventListener('change', function(event) {
             const previewContainer = document.getElementById('imagePreviewContainer');

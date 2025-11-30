@@ -28,8 +28,10 @@ $images = $db->query("SELECT * FROM product_images WHERE product_id = :id ORDER 
 // Separate main image
 $main_image = null;
 $gallery_images = [];
+$all_images = []; // Keep all images with their IDs for variation linking
 
 foreach ($images as $img) {
+    $all_images[] = $img; // Store all images with IDs
     if ($img['is_main']) {
         $main_image = $img['image_path'];
     } else {
@@ -37,8 +39,14 @@ foreach ($images as $img) {
     }
 }
 
-// Fetch variations
-$variations = $db->query("SELECT * FROM product_variations WHERE product_id = :id", ['id' => $product_id])->fetchAll(PDO::FETCH_ASSOC);
+// Fetch variations with image links
+$variations = $db->query("
+    SELECT pv.*, pi.image_path, pi.id as image_id_ref
+    FROM product_variations pv 
+    LEFT JOIN product_images pi ON pv.image_id = pi.id
+    WHERE pv.product_id = :id
+    ORDER BY pi.display_order ASC, pv.id ASC
+", ['id' => $product_id])->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -380,16 +388,27 @@ $variations = $db->query("SELECT * FROM product_variations WHERE product_id = :i
 
                             <?php if ($gallery_images): ?>
                                 <div class="thumbnail-strip">
-                                    <?php if ($main_image): ?>
-                                        <div class="thumbnail-item active" onclick="changeMainImage('<?php echo str_replace("../", "", $main_image); ?>')">
-                                            <img src="<?php echo str_replace("../", "", $main_image); ?>" 
-                                                 alt="Main" class="thumbnail-image">
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php foreach ($gallery_images as $img): ?>
-                                        <div class="thumbnail-item" onclick="changeMainImage('<?php echo str_replace("../", "", $img); ?>')">
-                                            <img src="<?php echo str_replace("../", "", $img); ?>" 
-                                                 alt="Gallery" class="thumbnail-image">
+                                    <?php 
+                                    // Display all images including main image
+                                    foreach ($all_images as $index => $img): 
+                                        $img_path = str_replace("../", "", $img['image_path']);
+                                        $is_active = $img['is_main'] ? 'active' : '';
+                                        
+                                        // Find variation linked to this image
+                                        $linked_variation_id = null;
+                                        foreach ($variations as $var) {
+                                            if ($var['image_id'] == $img['id']) {
+                                                $linked_variation_id = $var['id'];
+                                                break;
+                                            }
+                                        }
+                                    ?>
+                                        <div class="thumbnail-item <?php echo $is_active; ?>" 
+                                             data-image-id="<?php echo $img['id']; ?>"
+                                             data-variation-id="<?php echo $linked_variation_id ?? ''; ?>"
+                                             onclick="selectImageVariation('<?php echo $img_path; ?>', <?php echo $img['id']; ?>, <?php echo $linked_variation_id ?? 'null'; ?>)">
+                                            <img src="<?php echo $img_path; ?>" 
+                                                 alt="Product variant" class="thumbnail-image">
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -462,13 +481,22 @@ $variations = $db->query("SELECT * FROM product_variations WHERE product_id = :i
                                             <label class="option-label">
                                                 <i class="fas fa-cog me-1"></i>Choose Variation
                                             </label>
-                                            <select name="variation_id" class="option-select" required>
+                                            <select name="variation_id" id="variationSelect" class="option-select" required>
                                                 <option value="">Select variation...</option>
                                                 <?php foreach ($variations as $var): ?>
-                                                    <option value="<?php echo $var['id']; ?>">
-                                                        Size: <?php echo htmlspecialchars($var['size']); ?> | 
-                                                        Color: <?php echo htmlspecialchars($var['color']); ?> |
-                                                        +AED <?php echo number_format($var['additional_price'], 2); ?>
+                                                    <option value="<?php echo $var['id']; ?>" 
+                                                            data-image-id="<?php echo $var['image_id'] ?? ''; ?>">
+                                                        <?php 
+                                                        // Display variation name
+                                                        $var_name = [];
+                                                        if (!empty($var['color'])) $var_name[] = $var['color'];
+                                                        if (!empty($var['size'])) $var_name[] = "Size: " . $var['size'];
+                                                        echo htmlspecialchars(implode(' - ', $var_name));
+                                                        
+                                                        if ($var['additional_price'] > 0) {
+                                                            echo ' (+AED ' . number_format($var['additional_price'], 2) . ')';
+                                                        }
+                                                        ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
@@ -555,6 +583,36 @@ $variations = $db->query("SELECT * FROM product_variations WHERE product_id = :i
     <script src="assets/js/enhanced-main.js"></script>
     
     <script>
+        // Function to select image and its corresponding variation
+        function selectImageVariation(imageSrc, imageId, variationId) {
+            // Change main image
+            document.getElementById('mainProductImage').src = imageSrc;
+            
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.thumbnail-item').classList.add('active');
+            
+            // Auto-select the variation in dropdown if variation exists
+            if (variationId) {
+                const variationSelect = document.getElementById('variationSelect');
+                if (variationSelect) {
+                    variationSelect.value = variationId;
+                    
+                    // Highlight the select to show it was auto-selected
+                    variationSelect.style.borderColor = '#E67B2E';
+                    variationSelect.style.backgroundColor = '#fff3e0';
+                    
+                    setTimeout(() => {
+                        variationSelect.style.borderColor = '';
+                        variationSelect.style.backgroundColor = '';
+                    }, 1000);
+                }
+            }
+        }
+        
+        // Legacy function for backwards compatibility
         function changeMainImage(newSrc) {
             document.getElementById('mainProductImage').src = newSrc;
             

@@ -1,0 +1,136 @@
+================================================================================
+MOBILE CART PREVIEW FIX - PRODUCTION DEPLOYMENT INSTRUCTIONS
+================================================================================
+Date: November 23, 2025
+
+UPLOAD THESE 3 FILES TO YOUR PRODUCTION SERVER:
+
+1. header.php
+   → Upload to: /includes/header.php
+   
+2. enhanced-ui.js
+   → Upload to: /public/assets/js/enhanced-ui.js
+   
+3. style.css
+   → Upload to: /public/assets/css/style.css
+
+================================================================================
+FTP/SFTP UPLOAD STEPS:
+================================================================================
+
+METHOD 1: Using FileZilla (Recommended)
+----------------------------------------
+1. Open FileZilla FTP Client
+2. Connect to your server:
+   - Host: ftp.yourdomain.com (or your server IP)
+   - Username: your_ftp_username
+   - Password: your_ftp_password
+   - Port: 21 (FTP) or 22 (SFTP)
+
+3. Navigate to your website root (usually public_html or www)
+
+4. Upload each file to its destination:
+   - header.php → /includes/
+   - enhanced-ui.js → /public/assets/js/
+   - style.css → /public/assets/css/
+
+5. Overwrite existing files when prompted
+
+
+METHOD 2: Using cPanel File Manager
+------------------------------------
+1. Log in to your cPanel
+2. Open "File Manager"
+3. Navigate to public_html (or your website root)
+
+4. For each file:
+   a. Navigate to the target folder
+   b. Click "Upload" button
+   c. Select the file from deployment_mobile_cart_fix folder
+   d. Confirm overwrite if asked
+
+
+METHOD 3: Using Command Line (SFTP)
+------------------------------------
+sftp username@yourserver.com
+
+cd /path/to/website/root
+
+put header.php includes/header.php
+put enhanced-ui.js public/assets/js/enhanced-ui.js
+put style.css public/assets/css/style.css
+
+exit
+
+
+METHOD 4: Using WinSCP (Windows)
+---------------------------------
+1. Open WinSCP
+2. Enter server details and connect
+3. Drag and drop files from local to remote:
+   - Local: deployment_mobile_cart_fix folder
+   - Remote: Corresponding folders on server
+
+================================================================================
+VERIFICATION AFTER UPLOAD:
+================================================================================
+
+1. Clear your browser cache (Ctrl+F5)
+
+2. Test on desktop:
+   - Visit your website
+   - Click the cart button
+   - Verify cart preview appears
+
+3. Test on mobile:
+   - Open website on mobile device or use Chrome DevTools device mode
+   - Click cart button
+   - Verify offcanvas/mobile cart appears correctly
+
+4. Use test page (optional):
+   - Upload test_cart_mobile.html to your server root
+   - Visit: https://yourdomain.com/test_cart_mobile.html
+   - Run all tests
+
+================================================================================
+WHAT THESE FILES FIX:
+================================================================================
+
+✓ Mobile cart button now works properly (no more invalid HTML)
+✓ Cart preview function name mismatch resolved
+✓ Improved mobile responsive CSS (works on all screen sizes)
+✓ Cart preview adapts to screen width automatically
+✓ Desktop shows dropdown preview
+✓ Mobile (≤768px) shows offcanvas sliding panel
+
+================================================================================
+BACKUP RECOMMENDATION:
+================================================================================
+
+Before uploading, download and backup the current versions of:
+- /includes/header.php
+- /public/assets/js/enhanced-ui.js
+- /public/assets/css/style.css
+
+Store them in a "backup_[date]" folder in case you need to rollback.
+
+================================================================================
+ROLLBACK (If needed):
+================================================================================
+
+If something goes wrong, simply upload your backup files back to restore
+the previous version.
+
+================================================================================
+SUPPORT:
+================================================================================
+
+If you encounter issues:
+1. Check browser console for JavaScript errors (F12)
+2. Verify all 3 files were uploaded correctly
+3. Clear browser cache completely
+4. Test in incognito/private mode
+
+For detailed technical documentation, see: MOBILE_CART_PREVIEW_FIX.md
+
+================================================================================

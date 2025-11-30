@@ -34,12 +34,16 @@ try {
             oi.*, 
             p.name_en AS product_name, 
             p.id,
+            pv.id AS variation_id_info,
             pv.size, 
             pv.color,
-            (SELECT image_path FROM product_images WHERE product_id = p.id AND is_main = 1 LIMIT 1) AS image
+            pv.image_id,
+            COALESCE(pi_variant.image_path, pi_main.image_path) AS image
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
         LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN product_images pi_variant ON pv.image_id = pi_variant.id
+        LEFT JOIN product_images pi_main ON p.id = pi_main.product_id AND pi_main.is_main = 1
         WHERE oi.order_id = :order_id
     ", ['order_id' => $order_id])->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
@@ -300,6 +304,40 @@ if (!empty($order['customer_id'])) {
             object-fit: cover;
             border-radius: 4px;
             border: 1px solid #e0e0e0;
+        }
+        
+        .product-img[title*="Variant-specific"] {
+            border: 2px solid #E67B2E;
+            box-shadow: 0 0 0 2px rgba(230, 123, 46, 0.1);
+        }
+        
+        .variant-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .variant-name {
+            font-weight: 500;
+            color: #E67B2E;
+            font-size: 0.95rem;
+        }
+        
+        .variant-id {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        
+        .variant-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            background: #d4edda;
+            color: #155724;
+            border-radius: 12px;
+            font-weight: 500;
         }
         
         .summary-table {
@@ -680,7 +718,7 @@ if (!empty($order['customer_id'])) {
                     <thead>
                         <tr>
                             <th>Product</th>
-                            <th>Variation</th>
+                            <th>Variant</th>
                             <th>Price</th>
                             <th>Qty</th>
                             <th>Total</th>
@@ -694,7 +732,7 @@ if (!empty($order['customer_id'])) {
                                     <div style="display: flex; align-items: center; gap: 15px;">
                                         <?php if (!empty($item['image'])): ?>
                                             <a href="../product.php?id=<?= htmlspecialchars($item['product_id'] ?? '') ?>" target="_blank">
-                                            <img src="../<?= htmlspecialchars($item['image']) ?>" alt="" class="product-img">
+                                            <img src="../<?= htmlspecialchars($item['image']) ?>" alt="" class="product-img" title="<?= !empty($item['variation_id']) ? 'Variant-specific image' : 'Main product image' ?>">
                                             </a>
                                         <?php else: ?>
                                             <div style="width: 60px; height: 60px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
@@ -707,17 +745,37 @@ if (!empty($order['customer_id'])) {
                                                 <?= htmlspecialchars($item['product_name'] ?? 'Unknown Product') ?>
                                                 </a>
                                             </div>
-                                            <div style="font-size: 0.8rem; color: #6c757d;">SKU: <?= htmlspecialchars($item['sku'] ?? '—') ?> / id: <?= htmlspecialchars($item['id'] ?? '—') ?></div>
+                                            <div style="font-size: 0.8rem; color: #6c757d;">
+                                                Product ID: <?= htmlspecialchars($item['product_id'] ?? '—') ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <?php if (!empty($item['size']) || !empty($item['color'])): ?>
-                                        <?= htmlspecialchars($item['size'] ?? '') ?>
-                                        <?= (!empty($item['size']) && !empty($item['color'])) ? ' / ' : '' ?>
-                                        <?= htmlspecialchars($item['color'] ?? '') ?>
+                                    <?php if (!empty($item['variation_id'])): ?>
+                                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                                            <?php if (!empty($item['color']) || !empty($item['size'])): ?>
+                                                <div style="font-weight: 500; color: #E67B2E;">
+                                                    <i class="fas fa-tag" style="font-size: 0.85rem;"></i>
+                                                    <?php 
+                                                    $variant_parts = [];
+                                                    if (!empty($item['color'])) $variant_parts[] = htmlspecialchars($item['color']);
+                                                    if (!empty($item['size'])) $variant_parts[] = 'Size: ' . htmlspecialchars($item['size']);
+                                                    echo implode(' / ', $variant_parts);
+                                                    ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div style="font-size: 0.75rem; color: #6c757d;">
+                                                Variant ID: <?= htmlspecialchars($item['variation_id']) ?>
+                                            </div>
+                                            <?php if (!empty($item['image_id'])): ?>
+                                                <div style="font-size: 0.75rem; color: #28a745;">
+                                                    <i class="fas fa-check-circle"></i> Specific image selected
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php else: ?>
-                                        —
+                                        <span style="color: #6c757d; font-style: italic;">No variant</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>AED <?= number_format($item['price'] ?? 0, 2) ?></td>

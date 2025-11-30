@@ -29,9 +29,9 @@
                         <h5 class="mb-3">Shop</h5>
                         <ul class="nav flex-column">
                             <li class="nav-item mb-2"><a href="products.php" class="nav-link p-0 text-muted">All Products</a></li>
-                            <li class="nav-item mb-2"><a href="#?sort=new" class="nav-link p-0 text-muted">New Arrivals</a></li>
-                            <li class="nav-item mb-2"><a href="#?sort=best" class="nav-link p-0 text-muted">Best Sellers</a></li>
-                            <li class="nav-item mb-2"><a href="#?sort=sale" class="nav-link p-0 text-muted">Sale Items</a></li>
+                            <li class="nav-item mb-2"><a href="products.php?sort=new" class="nav-link p-0 text-muted">New Arrivals</a></li>
+                            <li class="nav-item mb-2"><a href="products.php?sort=best" class="nav-link p-0 text-muted">Best Sellers</a></li>
+                            <li class="nav-item mb-2"><a href="products.php?sort=sale" class="nav-link p-0 text-muted">Sale Items</a></li>
                         </ul>
                     </div>
 

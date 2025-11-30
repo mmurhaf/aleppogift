@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FAQs - AleppoGift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #e67e22;
+            --secondary-color: #2c3e50;
+            --light-color: #f9f9f9;
+            --text-color: #333;
+            --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .faq-header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--primary-color), #d35400);
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .faq-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .faq-item {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            background: white;
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--secondary-color);
+            transition: background 0.3s;
+        }
+        
+        .faq-question:hover {
+            background: var(--light-color);
+        }
+        
+        .faq-answer {
+            padding: 0 1.5rem 1.5rem;
+            color: #666;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin: 2rem 0;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: background 0.3s;
+        }
+        
+        .back-link:hover {
+            background: #d35400;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="faq-header">
+        <h1><i class="fas fa-question-circle"></i> Frequently Asked Questions</h1>
+        <p>Find answers to common questions about AleppoGift</p>
+    </div>
+
+    <div class="container">
+        <div class="accordion" id="faqAccordion">
+            <!-- General Questions -->
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        What is AleppoGift?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        AleppoGift is your premier destination for authentic gifts and souvenirs from Dubai. We offer a carefully curated selection of premium products that capture the essence of UAE culture and luxury.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        Do you ship internationally?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        Yes! We ship worldwide. Shipping costs and delivery times vary depending on your location. Please check our <a href="shipping.php">Shipping Policy</a> for more details.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        What payment methods do you accept?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        We accept all major credit cards including Visa, MasterCard, American Express, as well as PayPal and Apple Pay for your convenience.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders & Shipping -->
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                        How long does shipping take?
+                    </button>
+                </h2>
+                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        Shipping times vary by location:
+                        <ul>
+                            <li>UAE: 2-3 business days</li>
+                            <li>GCC Countries: 3-5 business days</li>
+                            <li>International: 7-14 business days</li>
+                        </ul>
+                        Express shipping options are available at checkout.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                        How can I track my order?
+                    </button>
+                </h2>
+                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        Once your order ships, you'll receive a confirmation email with a tracking number. You can use this number to track your package on our shipping partner's website.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Returns & Refunds -->
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                        What is your return policy?
+                    </button>
+                </h2>
+                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        We offer a 30-day return policy for unused items in their original packaging. Please visit our <a href="returns.html">Returns Page</a> for detailed information on how to initiate a return.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                        How long does it take to get a refund?
+                    </button>
+                </h2>
+                <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        Refunds are processed within 5-7 business days after we receive your returned item. The refund will be credited to your original payment method.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products -->
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                        Are your products authentic?
+                    </button>
+                </h2>
+                <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        Absolutely! We source all our products directly from authorized suppliers and manufacturers in Dubai. We guarantee 100% authenticity for all items in our store.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq9">
+                        Can I request custom gift packaging?
+                    </button>
+                </h2>
+                <div id="faq9" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        Yes! We offer premium gift packaging services. Simply select the gift wrap option during checkout, and we'll beautifully package your items with a personalized message card.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact -->
+            <div class="accordion-item faq-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faq10">
+                        How can I contact customer support?
+                    </button>
+                </h2>
+                <div id="faq10" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body faq-answer">
+                        You can reach our customer support team:
+                        <ul>
+                            <li>Email: info@aleppogift.com</li>
+                            <li>Phone: +971-56-112-5320 (Mon-Fri, 9AM-6PM GST)</li>
+                            <li>Contact Form: <a href="contact.html">Click here</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="../index.php" class="back-link">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

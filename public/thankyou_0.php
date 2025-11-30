@@ -38,8 +38,10 @@ if ($order['payment_status'] !== 'paid') {
 }
 
 // Generate invoice
-require_once '../includes/generate_invoice.php';
-$invoicePath = "../invoice/invoice_{$order_id}.pdf";
+require_once '../includes/generate_invoice_pdf.php';
+$generator = new PDFInvoiceGenerator();
+$result = $generator->generateInvoicePDF($order_id);
+$invoicePath = $result['file_path'] ?? "../invoice/invoice_{$order_id}.pdf";
 $_SESSION['valid_invoice_' . $order_id] = true;
 
 

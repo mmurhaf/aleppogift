@@ -543,16 +543,12 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
         $fullPath = '';
         
         try {
-            ob_start();
-            $invoiceInfo = require('../includes/generate_invoice.php');
-            $output = ob_get_clean();
-            
-            if (!empty($output)) {
-                error_log("⚠️ Invoice generation produced output: " . substr($output, 0, 200));
-            }
+            require_once('../includes/generate_invoice_pdf.php');
+            $generator = new PDFInvoiceGenerator();
+            $invoiceInfo = $generator->generateInvoicePDF($order_id);
             
             error_log("📄 Invoice generation completed for Order #$order_id");
-            $fullPath = $invoiceInfo['full_path'] ?? '';
+            $fullPath = $invoiceInfo['file_path'] ?? '';
             
         } catch (Exception $e) {
             error_log("❌ Invoice generation error for Order #$order_id: " . $e->getMessage());

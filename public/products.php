@@ -54,6 +54,23 @@ if ($search !== '') {
     }
 }
 
+// --- Handle sorting ---
+$orderBy = "p.featured DESC, p.id DESC"; // Default sorting
+if (isset($_GET['sort'])) {
+    switch ($_GET['sort']) {
+        case 'new':
+            $orderBy = "p.created_at DESC, p.id DESC";
+            break;
+        case 'best':
+            $orderBy = "p.featured DESC, p.id DESC";
+            break;
+        case 'sale':
+            $where[] = "p.discount > 0";
+            $orderBy = "p.discount DESC, p.id DESC";
+            break;
+    }
+}
+
 // Pagination
 $limit = 12;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
@@ -79,7 +96,7 @@ $products_query = "
     LEFT JOIN categories c ON p.category_id = c.id 
     LEFT JOIN brands b ON p.brand_id = b.id 
     WHERE $whereClause 
-    ORDER BY p.featured DESC, p.id DESC 
+    ORDER BY $orderBy 
     LIMIT :limit OFFSET :offset
 ";
 
@@ -98,11 +115,11 @@ $products = $db->query($products_query, $params)->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
      <!--<link rel="stylesheet" href="assets/css/style.css">-->
-	<link rel="stylesheet" href="assets/css1/index.css">
-	<link rel="stylesheet" href="assets/css1/enhanced-design.css">
-	<link rel="stylesheet" href="assets/css1/components.css">
-	<link rel="stylesheet" href="assets/css1/ui-components.css">
-	<link rel="stylesheet" href="assets/css1/width-improvements.css">
+	<link rel="stylesheet" href="assets/css/index.css">
+	<link rel="stylesheet" href="assets/css/enhanced-design.css">
+	<link rel="stylesheet" href="assets/css/components.css">
+	<link rel="stylesheet" href="assets/css/ui-components.css">
+	<link rel="stylesheet" href="assets/css/width-improvements.css">
 	
 	<!-- Google Fonts for Enhanced Typography -->
 	<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -238,12 +255,16 @@ $products = $db->query($products_query, $params)->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="product-meta">
                                     <span class="product-category">
                                         <i class="fas fa-tag"></i>
-                                        <?= htmlspecialchars($product['category_name'] ?: 'Uncategorized') ?>
+                                        <a href="?category=<?= $product['category_id'] ?>" class="text-decoration-none" title="View all <?= htmlspecialchars($product['category_name'] ?: 'Uncategorized') ?> products">
+                                            <?= htmlspecialchars($product['category_name'] ?: 'Uncategorized') ?>
+                                        </a>
                                     </span>
                                     <?php if ($product['brand_name']): ?>
                                         <span class="product-brand">
                                             <i class="fas fa-certificate"></i>
-                                            <?= htmlspecialchars($product['brand_name']) ?>
+                                            <a href="?brand=<?= $product['brand_id'] ?>" class="text-decoration-none" title="View all <?= htmlspecialchars($product['brand_name']) ?> products">
+                                                <?= htmlspecialchars($product['brand_name']) ?>
+                                            </a>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -254,7 +275,7 @@ $products = $db->query($products_query, $params)->fetchAll(PDO::FETCH_ASSOC);
                                 </h5>
                                 <div class="product-price-wrapper">
                                     <div class="product-price">AED <?= number_format($product['price'], 2) ?></div>
-                                    <?php if ($product['quantity'] > 0): ?>
+                                    <?php if ($product['stock'] > 0): ?>
                                         <span class="stock-badge in-stock">
                                             <i class="fas fa-check-circle"></i> In Stock
                                         </span>
@@ -267,7 +288,7 @@ $products = $db->query($products_query, $params)->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="product-actions">
                                     <button onclick="addToCart(<?= $product['id'] ?>, 1)" 
                                             class="btn btn-add-to-cart" 
-                                            <?= $product['quantity'] <= 0 ? 'disabled' : '' ?>>
+                                            <?= $product['stock'] <= 0 ? 'disabled' : '' ?>>
                                         <i class="fas fa-cart-plus me-1"></i> Add to Cart
                                     </button>
                                 </div>

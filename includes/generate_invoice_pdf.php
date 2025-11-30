@@ -126,9 +126,50 @@ class PDFInvoiceGenerator {
         $pdf->SetTextColor(60);
         $pdf->Cell(0, 5, 'Payment Method: ' . ($order['payment_method'] ?: 'N/A'), 0, 1);
         $pdf->Cell(0, 5, 'Payment Status: ' . ucfirst($order['payment_status'] ?: 'pending'), 0, 1);
+        $pdf->Ln(5);
+
+        // Shipping Information
+        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
+        $pdf->Cell(0, 6, 'SHIPPING INFORMATION', 0, 1);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetTextColor(60);
+        
         if (!empty($order['shipping_method'])) {
             $pdf->Cell(0, 5, 'Shipping Method: ' . $order['shipping_method'], 0, 1);
         }
+        
+        // Display shipping cost
+        $shipping_cost = $order['shipping_aed'] ?? $order['shipping_amount'] ?? 0;
+        if ($shipping_cost > 0) {
+            $pdf->Cell(0, 5, 'Shipping Cost: AED ' . number_format($shipping_cost, 2), 0, 1);
+        } else {
+            $pdf->Cell(0, 5, 'Shipping Cost: Free Shipping', 0, 1);
+        }
+        
+        // Display total weight
+        if (!empty($order['total_weight']) && $order['total_weight'] > 0) {
+            $pdf->Cell(0, 5, 'Total Weight: ' . number_format($order['total_weight'], 2) . ' kg', 0, 1);
+        }
+        
+        if (!empty($order['tracking_number'])) {
+            $pdf->Cell(0, 5, 'Tracking Number: ' . $order['tracking_number'], 0, 1);
+        }
+        
+        if (!empty($order['carrier_name'])) {
+            $pdf->Cell(0, 5, 'Carrier: ' . $order['carrier_name'], 0, 1);
+        }
+        
+        if (!empty($order['shipment_status'])) {
+            $status_display = ucfirst($order['shipment_status']);
+            $pdf->Cell(0, 5, 'Shipment Status: ' . $status_display, 0, 1);
+        }
+        
+        if (!empty($order['shipped_date'])) {
+            $shipped_date = date('F j, Y', strtotime($order['shipped_date']));
+            $pdf->Cell(0, 5, 'Shipped Date: ' . $shipped_date, 0, 1);
+        }
+        
         $pdf->Ln(10);
 
         // Items Table Header

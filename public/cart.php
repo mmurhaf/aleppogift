@@ -313,6 +313,26 @@ if (!empty($invalid_items)) {
             color: var(--cart-primary-dark);
         }
 
+        .brand-link {
+            font-weight: 700;
+            color: #6c757d !important;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .brand-link:hover {
+            color: var(--cart-primary) !important;
+            text-decoration: underline;
+        }
+
+        .brand-separator {
+            margin: 0 0.5rem;
+            color: #dee2e6;
+            font-weight: 300;
+        }
+
         .item-variation {
             color: #6c757d;
             font-size: 0.9rem;
@@ -644,10 +664,14 @@ if (!empty($invalid_items)) {
                             <?php
                             $grandTotal = 0;
                             foreach ($_SESSION['cart'] as $key => $item):
-                                $product = $db->query("SELECT * 
+                                $product = $db->query("SELECT p.* 
                                  , (SELECT image_path FROM product_images 
-                                        WHERE product_images.product_id = products.id AND is_main = 1 LIMIT 1) as main_image 
-                                    FROM products WHERE id = :id AND status = 1", ['id' => $item['product_id']])->fetch(PDO::FETCH_ASSOC);
+                                        WHERE product_images.product_id = p.id AND is_main = 1 LIMIT 1) as main_image,
+                                    b.name_en as brand_name,
+                                    b.id as brand_id
+                                    FROM products p
+                                    LEFT JOIN brands b ON p.brand_id = b.id
+                                    WHERE p.id = :id AND p.status = 1", ['id' => $item['product_id']])->fetch(PDO::FETCH_ASSOC);
                                 
                                 if (!$product) {
                                     continue;
@@ -676,6 +700,12 @@ if (!empty($invalid_items)) {
                                     </div>
                                     <div class="item-details">
                                         <h5>
+                                            <?php if (!empty($product['brand_name'])): ?>
+                                                <a href="products.php?brand=<?= $product['brand_id'] ?>" class="brand-link" title="View all products from <?= htmlspecialchars($product['brand_name']) ?>">
+                                                    <?php echo htmlspecialchars($product['brand_name']); ?>
+                                                </a>
+                                                <span class="brand-separator">-</span>
+                                            <?php endif; ?>
                                             <a href="product.php?id=<?= $product['id'] ?>">
                                                 <?php echo htmlspecialchars($product['name_en']); ?>
                                             </a>

@@ -335,11 +335,11 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
         sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
 
         // Generate and send invoice
-        ob_start();
-        $invoiceInfo = require('../includes/generate_invoice.php');
-        ob_end_clean();
-
-        $fullPath = $invoiceInfo['full_path'] ?? '';
+        require_once('../includes/generate_invoice_pdf.php');
+        $generator = new PDFInvoiceGenerator();
+        $invoiceInfo = $generator->generateInvoicePDF($order_id);
+        
+        $fullPath = $invoiceInfo['file_path'] ?? '';
 
         if (!empty($fullPath) && file_exists($fullPath)) {
             $status = sendInvoiceEmail($email, $order_id, $fullPath);

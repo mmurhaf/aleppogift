@@ -101,47 +101,14 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0531879237494766" crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aleppo Gift - Premium Gifts & Home Decor UAE | Luxury Branded Gifts</title>
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Shop premium gifts and home decor at Aleppo Gift. Discover unique luxury branded gifts for every occasion with fast delivery in UAE. Browse our exclusive collection today!">
-    <meta name="keywords" content="gifts UAE, luxury gifts, home decor, branded gifts, Aleppo Gift, premium gifts Dubai, gift shop UAE, luxury home decor">
-    <meta name="author" content="Aleppo Gift">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://aleppogift.com/">
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Aleppo Gift - Premium Gifts & Home Decor UAE">
-    <meta property="og:description" content="Discover our unique collection of luxury and branded gifts with fast delivery in UAE">
-    <meta property="og:image" content="https://aleppogift.com/assets/images/og-image.jpg">
-    <meta property="og:url" content="https://aleppogift.com/">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Aleppo Gift">
-    
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Aleppo Gift - Premium Gifts & Home Decor UAE">
-    <meta name="twitter:description" content="Discover our unique collection of luxury and branded gifts">
-    <meta name="twitter:image" content="https://aleppogift.com/assets/images/og-image.jpg">
-    
-    <!-- Preconnect to External Resources -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://code.jquery.com">
-    
-    <!-- Preload Critical Resources -->
-    <link rel="preload" href="assets/css/main.css" as="style">
-    <link rel="preload" href="assets/css/index.css" as="style">
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style">
-    
-    <!-- Stylesheets -->
+    <title>Aleppo Gift - Premium Gifts & Home Decor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
     
     <!-- Google Fonts for Enhanced Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     
     <!-- Modern CSS Architecture -->
@@ -322,10 +289,7 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
                             
                             <img src="<?= $p['main_image'] ?: 'assets/images/no-image.png'; ?>" 
                                  alt="<?= htmlspecialchars($p['name_en']); ?>"
-                                 loading="lazy"
-                                 decoding="async"
-                                 width="320"
-                                 height="280">
+                                 loading="lazy">
                             
                             <!-- Product Badge -->
                             <?php if (!empty($p['on_sale'])): ?>
@@ -476,27 +440,9 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
 
 
 
-    <!-- JSON-LD Structured Data for SEO -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Store",
-      "name": "Aleppo Gift",
-      "description": "Premium Gifts & Home Decor in UAE",
-      "url": "https://aleppogift.com",
-      "telephone": "+971561125320",
-      "address": {
-        "@type": "PostalAddress",
-        "addressCountry": "AE"
-      },
-      "priceRange": "$$",
-      "image": "https://aleppogift.com/assets/images/og-image.jpg"
-    }
-    </script>
-
-    <!-- JavaScript - Deferred for Performance -->
-    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Simplified Cart Preview JavaScript -->
     <script>
@@ -576,25 +522,15 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
             });
         }
         
-        // Enhanced add to cart functionality with debouncing
+        // Enhanced add to cart functionality
         $(document).ready(function() {
-            let cartSubmitting = false;
-            
-            // Handle add to cart form submission with debounce protection
+            // Handle add to cart form submission
             $(document).on('submit', '.add-to-cart-form', function(e) {
                 e.preventDefault();
-                
-                // Prevent double submissions
-                if (cartSubmitting) {
-                    return false;
-                }
                 
                 const form = $(this);
                 const button = form.find('button[type="submit"]');
                 const originalText = button.html();
-                
-                // Set debounce flag
-                cartSubmitting = true;
                 
                 // Show loading state
                 button.prop('disabled', true);
@@ -612,14 +548,13 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
                             button.removeClass('btn-primary').addClass('btn-success');
                             
                             // Show cart preview briefly
-                            setTimeout(showCartPreview, 300);
+                            setTimeout(showCartPreview, 500);
                             
                             // Reset button after 2 seconds
                             setTimeout(function() {
                                 button.html(originalText);
                                 button.removeClass('btn-success').addClass('btn-primary');
                                 button.prop('disabled', false);
-                                cartSubmitting = false;
                             }, 2000);
                             
                         } else {
@@ -635,20 +570,17 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
                             button.html(originalText);
                             button.removeClass('btn-danger').addClass('btn-primary');
                             button.prop('disabled', false);
-                            cartSubmitting = false;
                         }, 3000);
                     });
-                
-                return false;
             });
         });
     </script>
     
-	<script defer src="assets/js/main.js"></script>
-	<script defer src="assets/js/enhanced-main.js"></script>
-	<script defer src="assets/js/enhanced-ui.js"></script>
+	<script src="assets/js/main.js"></script>
+	<script src="assets/js/enhanced-main.js"></script>
+	<script src="assets/js/enhanced-ui.js"></script>
     <!-- Index Page JavaScript -->
-    <script defer src="assets/js/index.js"></script>
+    <script src="assets/js/index.js"></script>
 </body>
 </html>
 <?php

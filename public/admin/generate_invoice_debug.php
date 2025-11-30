@@ -10,7 +10,7 @@ $root_dir = dirname(dirname(__DIR__));
 echo "Root dir: $root_dir<br>";
 
 try {
-    require_once($root_dir . '/includes/generate_invoice.php');
+    require_once($root_dir . '/includes/generate_invoice_pdf.php');
     echo "✅ generate_invoice.php included<br>";
 
     if (!isset($_GET['id'])) {

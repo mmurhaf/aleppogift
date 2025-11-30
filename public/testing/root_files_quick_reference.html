@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Root Files Access - Quick Reference</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff7f00 0%, #ff5722 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #ff7f00;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section h2 i {
+            color: #ff7f00;
+        }
+        
+        .url-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            word-break: break-all;
+        }
+        
+        .url-box.primary {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #ff7f00;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #e56b00;
+            transform: translateY(-2px);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .feature {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .feature i {
+            color: #4caf50;
+            margin-right: 8px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .warning i {
+            margin-right: 8px;
+            color: #ffc107;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        .nav-buttons {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-book"></i> Root Files Access</h1>
+            <p>Quick Reference Guide</p>
+        </div>
+        
+        <div class="content">
+            <!-- Primary Access -->
+            <div class="section">
+                <h2><i class="fas fa-rocket"></i> Primary Access Point</h2>
+                <p><strong>Root Files Browser:</strong></p>
+                <div class="url-box primary">
+                    https://yourdomain.com/testing/root_proxy.php
+                </div>
+                <p style="margin-top: 15px;">
+                    <a href="root_proxy.php" class="btn">
+                        <i class="fas fa-folder-open"></i> Open Root Files Browser
+                    </a>
+                </p>
+            </div>
+            
+            <!-- How to Use -->
+            <div class="section">
+                <h2><i class="fas fa-question-circle"></i> How to Use</h2>
+                
+                <h3 style="margin-top: 15px; color: #555;">Method 1: File Browser (Recommended)</h3>
+                <p>Navigate to the root proxy URL and browse available files visually:</p>
+                <div class="url-box">
+                    https://yourdomain.com/testing/root_proxy.php
+                </div>
+                
+                <h3 style="margin-top: 20px; color: #555;">Method 2: Direct File Access</h3>
+                <p>Access a specific test file directly by adding the <code>file</code> parameter:</p>
+                <div class="url-box">
+                    https://yourdomain.com/testing/root_proxy.php?file=test_image_variations.php
+                </div>
+                
+                <h3 style="margin-top: 20px; color: #555;">Method 3: Via Testing Dashboard</h3>
+                <p>Access through the main testing dashboard:</p>
+                <div class="url-box">
+                    https://yourdomain.com/testing/
+                </div>
+                <p style="margin-top: 10px;">Click on <strong>"Root Files Browser"</strong> in the "Root Test Files" section</p>
+            </div>
+            
+            <!-- Available Files -->
+            <div class="section">
+                <h2><i class="fas fa-list"></i> File Categories</h2>
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-vial"></i>
+                        <strong>PHP Test Files</strong>
+                        <p style="margin-top: 5px; font-size: 0.9em; color: #666;">test_*.php files</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-file-code"></i>
+                        <strong>HTML Test Files</strong>
+                        <p style="margin-top: 5px; font-size: 0.9em; color: #666;">test_*.html files</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-bug"></i>
+                        <strong>Debug Tools</strong>
+                        <p style="margin-top: 5px; font-size: 0.9em; color: #666;">debug_*, diagnostic_*</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-database"></i>
+                        <strong>DB Scripts</strong>
+                        <p style="margin-top: 5px; font-size: 0.9em; color: #666;">Migration & setup files</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Popular Test Files -->
+            <div class="section">
+                <h2><i class="fas fa-star"></i> Popular Test Files</h2>
+                <ul>
+                    <li><code>test_image_variations.php</code> - Test image variation system</li>
+                    <li><code>debug_sql_comprehensive.php</code> - SQL debugging tools</li>
+                    <li><code>test_cart_ajax.html</code> - AJAX cart functionality tests</li>
+                    <li><code>system_status.php</code> - System health monitoring</li>
+                    <li><code>diagnostic_shipping.php</code> - Shipping system diagnostics</li>
+                </ul>
+            </div>
+            
+            <!-- Security -->
+            <div class="section">
+                <h2><i class="fas fa-shield-alt"></i> Security Features</h2>
+                <div class="warning">
+                    <i class="fas fa-lock"></i>
+                    <strong>Whitelist Protected:</strong> Only approved test files can be accessed. Attempts to access non-whitelisted files will result in a 403 Forbidden error.
+                </div>
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        Directory traversal protection
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        File existence verification
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        Whitelist-only access
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        No sensitive file exposure
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features -->
+            <div class="section">
+                <h2><i class="fas fa-sparkles"></i> Browser Features</h2>
+                <ul>
+                    <li><i class="fas fa-search"></i> Built-in search functionality</li>
+                    <li><i class="fas fa-chart-bar"></i> File statistics and counts</li>
+                    <li><i class="fas fa-tags"></i> File categorization (PHP, HTML, etc.)</li>
+                    <li><i class="fas fa-exclamation-triangle"></i> Missing file detection</li>
+                    <li><i class="fas fa-mobile-alt"></i> Responsive design for mobile access</li>
+                    <li><i class="fas fa-palette"></i> Color-coded file status</li>
+                </ul>
+            </div>
+            
+            <!-- Examples -->
+            <div class="section">
+                <h2><i class="fas fa-code"></i> Example URLs</h2>
+                <p><strong>File Browser:</strong></p>
+                <div class="url-box">
+                    /testing/root_proxy.php
+                </div>
+                
+                <p style="margin-top: 15px;"><strong>Specific Files:</strong></p>
+                <div class="url-box">
+                    /testing/root_proxy.php?file=test_image_variations.php
+                </div>
+                <div class="url-box">
+                    /testing/root_proxy.php?file=debug_sql_comprehensive.php
+                </div>
+                <div class="url-box">
+                    /testing/root_proxy.php?file=test_cart_ajax.html
+                </div>
+            </div>
+            
+            <!-- Adding Files -->
+            <div class="section">
+                <h2><i class="fas fa-plus-circle"></i> Adding New Files to Whitelist</h2>
+                <p>To allow access to a new test file:</p>
+                <ol>
+                    <li>Edit <code>public/testing/root_proxy.php</code></li>
+                    <li>Add the filename to the <code>$allowedFiles</code> array</li>
+                    <li>Upload the updated file to production</li>
+                </ol>
+                <div class="warning" style="margin-top: 15px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Security Warning:</strong> Never add sensitive files (config.php, .env, database credentials, etc.) to the whitelist!
+                </div>
+            </div>
+            
+            <!-- Quick Links -->
+            <div class="nav-buttons">
+                <a href="root_proxy.php" class="btn">
+                    <i class="fas fa-folder-open"></i> Root Files Browser
+                </a>
+                <a href="index.php" class="btn">
+                    <i class="fas fa-flask"></i> Testing Dashboard
+                </a>
+                <a href="../index.php" class="btn">
+                    <i class="fas fa-home"></i> Site Home
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

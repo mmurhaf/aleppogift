@@ -703,22 +703,10 @@ footer {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 768px) {
-    #cartPreview {
-        width: calc(100vw - 40px) !important;
-        right: 20px !important;
-        left: 20px !important;
-        max-width: 380px;
-        margin: 0 auto;
-    }
-}
-
 @media (max-width: 576px) {
     #cartPreview {
-        width: calc(100vw - 32px) !important;
-        right: 16px !important;
-        left: 16px !important;
-        max-width: none;
+        width: 300px;
+        right: 10px !important;
     }
 }
 

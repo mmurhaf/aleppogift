@@ -217,6 +217,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadCartPreview = loadCartPreview;
     window.loadCartOffcanvas = loadCartOffcanvas;
     
+    // Create alias for toggleCartPreview to match header.php
+    window.toggleCartPreview = window.toggleCart;
+    
     // Load cart preview on page load if cart has items
     document.addEventListener('DOMContentLoaded', function() {
         // Load cart preview content when DOM is ready
@@ -313,32 +316,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ========================================
-    // ENHANCED HEADER SCROLL EFFECT
+    // HEADER SCROLL EFFECT
     // ========================================
     let lastScrollTop = 0;
-    const header = document.querySelector('.main-header, .modern-header, .navbar');
+    const header = document.querySelector('.modern-header, .navbar');
     
     window.addEventListener('scroll', function() {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         
         if (header) {
             // Add scrolled class for styling
-            if (scrollTop > 100) {
+            if (scrollTop > 50) {
                 header.classList.add('scrolled');
             } else {
                 header.classList.remove('scrolled');
             }
             
-            // Hide header on scroll down, show on scroll up (improved UX)
-            if (scrollTop > lastScrollTop && scrollTop > 500) {
-                header.classList.add('hidden');
+            // Hide/show header on scroll (optional)
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                header.style.transform = 'translateY(-100%)';
             } else {
-                header.classList.remove('hidden');
+                header.style.transform = 'translateY(0)';
             }
         }
         
         lastScrollTop = scrollTop;
-    }, { passive: true }); // Passive listener for better scroll performance
+    });
     
     // ========================================
     // INITIALIZE CART COUNT

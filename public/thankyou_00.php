@@ -36,8 +36,10 @@ if ($order['payment_status'] !== 'paid') {
 }
 
 // Generate invoice
-require_once '../includes/generate_invoice.php';
-$invoicePath = "../invoice/invoice_{$order_id}.pdf";
+require_once '../includes/generate_invoice_pdf.php';
+$generator = new PDFInvoiceGenerator();
+$result = $generator->generateInvoicePDF($order_id);
+$invoicePath = $result['file_path'] ?? "../invoice/invoice_{$order_id}.pdf";
 $_SESSION['valid_invoice_' . $order_id] = true;
 
 
@@ -87,11 +89,11 @@ if (isset($_SESSION['temp_order'])) {
 function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email) {
         sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
 
-        ob_start();
-        $invoiceInfo = require('../includes/generate_invoice.php');
-        ob_end_clean();
-
-        $fullPath = $invoiceInfo['full_path'] ?? '';
+        require_once('../includes/generate_invoice_pdf.php');
+        $generator = new PDFInvoiceGenerator();
+        $invoiceInfo = $generator->generateInvoicePDF($order_id);
+        
+        $fullPath = $invoiceInfo['file_path'] ?? '';
 
     // Send order confirmation email
         if (!empty($fullPath) && file_exists($fullPath)) {

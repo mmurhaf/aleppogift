@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Returns & Refunds - AleppoGift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #e67e22;
+            --secondary-color: #2c3e50;
+            --light-color: #f9f9f9;
+            --text-color: #333;
+            --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .returns-header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--primary-color), #d35400);
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .returns-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content-card {
+            background: white;
+            padding: 3rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .content-card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .content-card h3 {
+            color: var(--secondary-color);
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .process-steps {
+            counter-reset: step-counter;
+        }
+        
+        .process-step {
+            counter-increment: step-counter;
+            margin-bottom: 1.5rem;
+            padding-left: 3rem;
+            position: relative;
+        }
+        
+        .process-step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #0dcaf0;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin: 2rem 0;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: background 0.3s;
+        }
+        
+        .back-link:hover {
+            background: #d35400;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="returns-header">
+        <h1><i class="fas fa-undo-alt"></i> Returns & Refunds Policy</h1>
+        <p>Your satisfaction is our priority</p>
+    </div>
+
+    <div class="container">
+        <div class="content-card">
+            <h2>Our Return Policy</h2>
+            <p>At AleppoGift, we want you to be completely satisfied with your purchase. If for any reason you're not happy with your order, we offer a hassle-free 30-day return policy.</p>
+            
+            <div class="highlight-box">
+                <strong><i class="fas fa-info-circle"></i> Important:</strong> Items must be unused, in their original condition, and in the original packaging with all tags attached.
+            </div>
+
+            <h3>Eligible Items</h3>
+            <ul>
+                <li>Unopened products in original packaging</li>
+                <li>Items with all original tags and labels</li>
+                <li>Products that are not personalized or custom-made</li>
+                <li>Items purchased within the last 30 days</li>
+            </ul>
+
+            <h3>Non-Returnable Items</h3>
+            <ul>
+                <li>Personalized or customized products</li>
+                <li>Items marked as "Final Sale"</li>
+                <li>Gift cards</li>
+                <li>Perishable goods</li>
+                <li>Opened or used items</li>
+                <li>Items without original packaging or tags</li>
+            </ul>
+        </div>
+
+        <div class="content-card">
+            <h2>How to Return an Item</h2>
+            
+            <div class="process-steps">
+                <div class="process-step">
+                    <h4>Contact Us</h4>
+                    <p>Email us at <strong>returns@aleppogift.com</strong> or call <strong>+971-56-112-5320</strong> within 30 days of receiving your order. Please include your order number and reason for return.</p>
+                </div>
+                
+                <div class="process-step">
+                    <h4>Receive Return Authorization</h4>
+                    <p>Our customer service team will review your request and provide you with a Return Authorization (RA) number and return shipping instructions.</p>
+                </div>
+                
+                <div class="process-step">
+                    <h4>Package Your Item</h4>
+                    <p>Securely pack the item in its original packaging, including all accessories, manuals, and tags. Include your RA number on the package.</p>
+                </div>
+                
+                <div class="process-step">
+                    <h4>Ship the Item</h4>
+                    <p>Ship the package to the address provided. We recommend using a trackable shipping service. Keep your tracking number for reference.</p>
+                </div>
+                
+                <div class="process-step">
+                    <h4>Receive Your Refund</h4>
+                    <p>Once we receive and inspect your return, we'll process your refund within 5-7 business days.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2>Refund Information</h2>
+            
+            <h3>Refund Processing</h3>
+            <p>After your return is received and inspected, we will send you an email notification. If approved, your refund will be processed and automatically applied to your original payment method.</p>
+            
+            <div class="info-box">
+                <strong><i class="fas fa-clock"></i> Processing Time:</strong> Please allow 5-7 business days for the refund to appear in your account. Depending on your bank or card issuer, it may take additional time.
+            </div>
+
+            <h3>Partial Refunds</h3>
+            <p>In certain situations, only partial refunds may be granted:</p>
+            <ul>
+                <li>Items with obvious signs of use</li>
+                <li>Items not in their original condition or missing parts not due to our error</li>
+                <li>Items returned more than 30 days after delivery</li>
+            </ul>
+
+            <h3>Shipping Costs</h3>
+            <ul>
+                <li><strong>Standard Returns:</strong> You are responsible for return shipping costs</li>
+                <li><strong>Defective/Incorrect Items:</strong> We will cover return shipping costs</li>
+                <li>Original shipping charges are non-refundable</li>
+                <li>If you received free shipping, the actual shipping cost will be deducted from your refund</li>
+            </ul>
+        </div>
+
+        <div class="content-card">
+            <h2>Exchanges</h2>
+            <p>We currently do not offer direct exchanges. If you need a different size, color, or item, please return the original item and place a new order for the desired product.</p>
+            
+            <div class="highlight-box">
+                <strong><i class="fas fa-lightbulb"></i> Tip:</strong> To ensure the item you want is available, consider placing your new order before returning the original item.
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2>Damaged or Defective Items</h2>
+            <p>We carefully inspect all products before shipping. However, if you receive a damaged or defective item:</p>
+            
+            <ol>
+                <li>Contact us immediately at <strong>info@aleppogift.com</strong></li>
+                <li>Provide photos of the damaged item and packaging</li>
+                <li>Include your order number</li>
+            </ol>
+            
+            <p>We will arrange for a replacement or full refund, including return shipping costs.</p>
+        </div>
+
+        <div class="content-card">
+            <h2>International Returns</h2>
+            <p>International customers are responsible for return shipping costs and any customs fees. We recommend using a trackable shipping service for international returns.</p>
+            
+            <div class="info-box">
+                <strong><i class="fas fa-globe"></i> Note:</strong> Customs duties and taxes are non-refundable.
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2>Contact Us</h2>
+            <p>If you have any questions about our returns policy, please don't hesitate to contact us:</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                    <h5>Email</h5>
+                    <p>returns@aleppogift.com<br>info@aleppogift.com</p>
+                </div>
+                <div class="col-md-4">
+                    <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                    <h5>Phone</h5>
+                    <p>+971-56-112-5320<br>Mon-Fri, 9AM-6PM GST</p>
+                </div>
+                <div class="col-md-4">
+                    <i class="fas fa-comment-dots fa-2x text-primary mb-2"></i>
+                    <h5>Live Chat</h5>
+                    <p>Available on our website<br>Mon-Fri, 9AM-6PM GST</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a href="../index.php" class="back-link">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

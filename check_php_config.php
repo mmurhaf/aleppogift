@@ -21,8 +21,8 @@ if (function_exists('opcache_get_status')) {
 echo "<h3>File Modification Times</h3>";
 $files = [
     '/includes/Database.php',
-    '/includes/generate_invoice.php',
-    '/admin/generate_invoice.php'
+    '/includes/generate_invoice_pdf.php',
+    '/public/admin/generate_invoice.php'
 ];
 
 foreach ($files as $file) {
