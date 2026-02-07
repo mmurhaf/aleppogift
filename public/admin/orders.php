@@ -62,6 +62,7 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orders Management - AleppoGift</title>
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/admin-theme.css">
@@ -170,7 +171,16 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                     </ol>
                 </nav>
             </div>
-            <div>
+            <div class="d-flex gap-2">
+                <a href="create_order.php" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> Create Order
+                </a>
+                <a href="quick_payment_link.php" class="btn btn-warning">
+                    <i class="fas fa-bolt me-1"></i> Quick Payment
+                </a>
+                <a href="payment_links.php" class="btn btn-success">
+                    <i class="fas fa-link me-1"></i> Payment Links
+                </a>
                 <a href="dashboard.php" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
                 </a>

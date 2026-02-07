@@ -1,0 +1,23 @@
+{
+  "new_arrival": {
+    "templates": [
+      "New arrival! \ud83c\udf89 {product_name} - Perfect for your home \u2728 Only ${price}",
+      "Just in! {product_name} \ud83c\udf1f Limited stock available! Shop now \ud83d\uded2"
+    ],
+    "hashtags_common": ["#NewArrival", "#JustIn", "#ShopNow"]
+  },
+  "product_spotlight": {
+    "templates": [
+      "Spotlight on {product_name}! \ud83d\udc8e Handcrafted perfection at ${price}",
+      "{product_name} - Our customer favorite! \u2b50 Get yours today!"
+    ],
+    "hashtags_common": ["#ProductSpotlight", "#CustomerFavorite"]
+  },
+  "limited_offer": {
+    "templates": [
+      "Limited time! \ud83d\udd25 {product_name} now only ${price}",
+      "Don't miss out! {product_name} - Special price ${price} \u23f0"
+    ],
+    "hashtags_common": ["#Sale", "#LimitedOffer", "#DealOfTheDay"]
+  }
+}

@@ -54,6 +54,7 @@ function countOrderItems($order_id) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - AleppoGift</title>
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="assets/admin-theme.css">
@@ -185,8 +186,16 @@ function countOrderItems($order_id) {
 </style>
 </head>
 <body>
+    <!-- Mobile Menu Toggle Button -->
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
     <!-- Sidebar Navigation -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h2><i class="fas fa-gifts"></i> <span>AleppoGift</span></h2>
         </div>
@@ -197,6 +206,9 @@ function countOrderItems($order_id) {
             <li><a href="brands.php"><i class="fas fa-copyright"></i> <span>Brands</span></a></li>
             <li><a href="coupons.php"><i class="fas fa-ticket-alt"></i> <span>Coupons</span></a></li>
             <li><a href="orders.php"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
+            <li><a href="create_order.php"><i class="fas fa-plus-circle"></i> <span>Create Order</span></a></li>
+            <li><a href="payment_links.php"><i class="fas fa-link"></i> <span>Payment Links</span></a></li>
+            <li><a href="quick_payment_link.php"><i class="fas fa-bolt"></i> <span>Quick Payment</span></a></li>
             <li><a href="regenerate_invoice.php"><i class="fas fa-file-invoice-dollar"></i> <span>Regenerate Invoice</span></a></li>
             <li><a href="customers.php"><i class="fas fa-users"></i> <span>Customers</span></a></li>
             <li><a href="../testing/" target="_blank"><i class="fas fa-flask"></i> <span>Testing Dashboard</span></a></li>
@@ -210,9 +222,14 @@ function countOrderItems($order_id) {
     <!-- Main Content -->
     <div class="main-content">
         <div class="header">
-            <h1>Dashboard Overview</h1>
+            <div class="header-title">
+                <button class="header-menu-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Dashboard Overview</h1>
+            </div>
             <div class="user-info">
-                <img src="https://via.placeholder.com/40" alt="Admin">
+                <i class="fas fa-user-circle" style="font-size: 40px; color: #667eea;"></i>
                 <span>Admin</span>
             </div>
         </div>
@@ -330,5 +347,27 @@ function countOrderItems($order_id) {
             </div>
         </div>
     </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        // Close sidebar when clicking on a menu item (mobile only)
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuLinks = document.querySelectorAll('.sidebar-menu a');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

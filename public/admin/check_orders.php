@@ -8,7 +8,7 @@ try {
     $orders = $db->query("
         SELECT 
             o.id,
-            o.created_at,
+            o.order_date,
             c.fullname AS customer_name,
             c.email AS customer_email
         FROM orders o
@@ -19,7 +19,7 @@ try {
 
     echo "Recent orders:\n";
     foreach ($orders as $order) {
-        echo "Order ID: " . $order['id'] . " | Customer: " . $order['customer_name'] . " | Email: " . $order['customer_email'] . " | Date: " . $order['created_at'] . "\n";
+        echo "Order ID: " . $order['id'] . " | Customer: " . $order['customer_name'] . " | Email: " . $order['customer_email'] . " | Date: " . $order['order_date'] . "\n";
     }
 
 } catch (Exception $e) {

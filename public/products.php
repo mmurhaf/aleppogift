@@ -113,7 +113,7 @@ $products = $db->query($products_query, $params)->fetchAll(PDO::FETCH_ASSOC);
     <title>Products - aleppogift</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
      <!--<link rel="stylesheet" href="assets/css/style.css">-->
 	<link rel="stylesheet" href="assets/css/index.css">
 	<link rel="stylesheet" href="assets/css/enhanced-design.css">

@@ -17,10 +17,16 @@ $order_items = $_SESSION['cart'] ?? [];
 $country = $_SESSION['shipping_country'] ?? 'Not specified';
 $city = $_SESSION['shipping_city'] ?? 'Not specified';
 $totalWeight = $_SESSION['total_weight'] ?? 0;
+$shippingAED = $_SESSION['shipping_cost'] ?? 0.00;
+
+// --- CUSTOMER INFO ---
+$customerName = $_SESSION['customer_name'] ?? 'Customer Name';
+$customerAddress = $_SESSION['customer_address'] ?? 'Customer Address';
+$customerPhone = $_SESSION['customer_phone'] ?? 'Customer Phone';
+$customerEmail = $_SESSION['customer_email'] ?? 'Customer Email';
 
 // --- OTHER INFO ---
 $note = $_SESSION['customer_note'] ?? '';
-$shippingAED = 0.00; // Placeholder or calculate dynamically
 
 // --- GRAND TOTAL ---
 
@@ -72,13 +78,13 @@ $pdf->SetTextColor(60);
 
 // Company info
 $pdf->Cell(95, 6, 'Aleppo Gift Trading LLC', 0, 0);
-$pdf->Cell(95, 6, 'customer_name', 0, 1);
+$pdf->Cell(95, 6, htmlspecialchars($customerName), 0, 1);
 $pdf->Cell(95, 6, 'Dubai, United Arab Emirates', 0, 0);
-$pdf->Cell(95, 6, 'customer_address', 0, 1);
+$pdf->Cell(95, 6, htmlspecialchars($customerAddress), 0, 1);
 $pdf->Cell(95, 6, 'Phone: +971 56 112 5320', 0, 0);
-$pdf->Cell(95, 6, 'Phone: ' . 'customer_phone', 0, 1);
+$pdf->Cell(95, 6, 'Phone: ' . htmlspecialchars($customerPhone), 0, 1);
 $pdf->Cell(95, 6, 'Email: info@aleppogift.com', 0, 0);
-$pdf->Cell(95, 6, 'Email: ' . 'customer_email', 0, 1);
+$pdf->Cell(95, 6, 'Email: ' . htmlspecialchars($customerEmail), 0, 1);
 $pdf->Ln(15);
 
 // Shipping Information
@@ -164,6 +170,10 @@ $pdf->SetFont('Arial', '', 11);
 $pdf->SetTextColor(60);
 $pdf->SetFillColor(255);
 
+// Subtotal
+$pdf->Cell(140, 8, 'Subtotal:', 0, 0, 'R');
+$pdf->Cell(40, 8, number_format($grand_Total, 2), 0, 1, 'R');
+
 // Shipping
 $pdf->Cell(140, 8, 'Shipping:', 0, 0, 'R');
 $pdf->Cell(40, 8, number_format($shippingAED, 2), 0, 1, 'R');
@@ -178,7 +188,7 @@ $vat = 0;
 $pdf->SetFont('Arial', 'B', 14);
 $pdf->SetTextColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
 $pdf->Cell(140, 10, 'GRAND TOTAL:', 0, 0, 'R');
-$pdf->Cell(40, 10, number_format($grand_Total + $vat, 2), 0, 1, 'R');
+$pdf->Cell(40, 10, number_format($grand_Total + $shippingAED + $vat, 2), 0, 1, 'R');
 $pdf->Ln(15);
 
 // Footer Notes
@@ -186,7 +196,12 @@ $pdf->SetFont('Arial', 'I', 9);
 $pdf->SetTextColor(100);
 $pdf->MultiCell(0, 5, "Payment Terms: Due upon receipt\nAll amounts are in UAE Dirhams (AED)", 0, 'C');
 
-$pdf->MultiCell(0, 5, "Note: Shipping cost is not included in this quotation. It will be calculated at checkout after selecting your country and city.\nYou can review our shipping rates at: https://www.aleppogift.com/shipping.php", 0, 'L');
+// Show different note based on whether shipping is calculated
+if ($shippingAED > 0) {
+    $pdf->MultiCell(0, 5, "Note: Shipping cost of AED " . number_format($shippingAED, 2) . " is included for delivery to " . htmlspecialchars($city) . ", " . htmlspecialchars($country) . ".\nFor more shipping information, visit: https://www.aleppogift.com/shipping.php", 0, 'L');
+} else {
+    $pdf->MultiCell(0, 5, "Note: Shipping cost is not included in this quotation. It will be calculated at checkout after selecting your country and city.\nYou can review our shipping rates at: https://www.aleppogift.com/shipping.php", 0, 'L');
+}
 
 $pdf->Ln(10);
 $pdf->SetFont('Arial', 'I', 9);

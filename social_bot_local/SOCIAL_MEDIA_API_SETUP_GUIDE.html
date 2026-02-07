@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media API Setup Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 2em;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h3 {
+            color: #764ba2;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        h4 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+        
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .toc h2 {
+            margin-top: 0;
+            border-bottom: none;
+            font-size: 1.5em;
+        }
+        
+        .toc ol {
+            margin-left: 20px;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .platform-section {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px dashed #ddd;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+        
+        strong {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px solid #eee;
+            margin: 40px 0;
+        }
+        
+        .quick-ref {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .quick-ref-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .quick-ref-card h3 {
+            color: white;
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        
+        .quick-ref-card p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        
+        .quick-ref-card a {
+            color: #fff;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            h2 {
+                font-size: 1.5em;
+            }
+            
+            h3 {
+                font-size: 1.2em;
+            }
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #667eea;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        .back-to-top:hover {
+            background: #764ba2;
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Social Media API Setup Guide</h1>
+            <p>Complete guide to obtaining API keys and access tokens for TikTok, Instagram, and Facebook</p>
+        </div>
+        
+        <div class="content">
+            <div class="toc">
+                <h2>📑 Table of Contents</h2>
+                <ol>
+                    <li><a href="#tiktok">TikTok API Setup</a></li>
+                    <li><a href="#instagram">Instagram API Setup</a></li>
+                    <li><a href="#facebook">Facebook API Setup</a></li>
+                    <li><a href="#testing">Testing Your Credentials</a></li>
+                    <li><a href="#troubleshooting">Troubleshooting</a></li>
+                    <li><a href="#security">Security Best Practices</a></li>
+                </ol>
+            </div>
+            
+            <!-- TikTok Section -->
+            <div class="platform-section" id="tiktok">
+                <h2>🎵 TikTok API Setup</h2>
+                
+                <h3>Prerequisites</h3>
+                <ul>
+                    <li>A TikTok Business Account</li>
+                    <li>A registered TikTok Developer account</li>
+                    <li>Your application approved by TikTok</li>
+                </ul>
+                
+                <h3>Step 1: Create a TikTok Developer Account</h3>
+                <ol>
+                    <li>Go to <a href="https://developers.tiktok.com/" target="_blank">TikTok for Developers</a></li>
+                    <li>Click <strong>"Register"</strong> or <strong>"Sign In"</strong> (top right)</li>
+                    <li>Log in with your TikTok account credentials</li>
+                    <li>Complete the developer profile form:
+                        <ul>
+                            <li>Full Name</li>
+                            <li>Email Address</li>
+                            <li>Company/Organization Name</li>
+                            <li>Phone Number</li>
+                        </ul>
+                    </li>
+                    <li>Verify your email address</li>
+                </ol>
+                
+                <h3>Step 2: Create an Application</h3>
+                <ol>
+                    <li>Once logged in, go to <a href="https://developers.tiktok.com/apps" target="_blank">My Apps</a></li>
+                    <li>Click <strong>"+ Create App"</strong> or <strong>"Connect an app"</strong></li>
+                    <li>Fill in the application details:
+                        <ul>
+                            <li><strong>App Name</strong>: Your application name (e.g., "Aleppo Gift Social Bot")</li>
+                            <li><strong>App Description</strong>: Brief description of your app's purpose</li>
+                            <li><strong>Category</strong>: Select "Marketing & Commerce" or "Content & Publishing"</li>
+                            <li><strong>Icon</strong>: Upload an app icon (512x512 px recommended)</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>"Create"</strong> or <strong>"Submit"</strong></li>
+                </ol>
+                
+                <h3>Step 3: Request Content Posting API Access</h3>
+                <ol>
+                    <li>In your app dashboard, navigate to <strong>"Products"</strong> or <strong>"Add Products"</strong></li>
+                    <li>Look for <strong>"Content Posting API"</strong> or <strong>"Video Publishing"</strong></li>
+                    <li>Click <strong>"Apply"</strong> or <strong>"Request Access"</strong></li>
+                    <li>Fill out the use case form:
+                        <ul>
+                            <li>Explain you need to post product videos automatically</li>
+                            <li>Describe your business and content strategy</li>
+                            <li>Provide examples if requested</li>
+                        </ul>
+                    </li>
+                    <li>Submit and wait for approval (can take 1-7 days)</li>
+                </ol>
+                
+                <h3>Step 4: Get Your API Credentials</h3>
+                <ol>
+                    <li>Once approved, go to your app's <strong>"Basic Information"</strong> or <strong>"Settings"</strong></li>
+                    <li>Find and copy these values:
+                        <ul>
+                            <li><strong>Client Key</strong> (also called App ID)</li>
+                            <li><strong>Client Secret</strong></li>
+                        </ul>
+                    </li>
+                    <li>Save these securely - you'll need them</li>
+                </ol>
+                
+                <h3>Step 5: Set Up OAuth and Get Access Token</h3>
+                <ol>
+                    <li>In your app settings, configure <strong>"Redirect URI"</strong>:
+                        <ul>
+                            <li>Add: <code>http://localhost:8501/oauth/callback</code></li>
+                            <li>Or use your production domain if deployed</li>
+                        </ul>
+                    </li>
+                    <li>Under <strong>"Scopes"</strong> or <strong>"Permissions"</strong>, enable:
+                        <ul>
+                            <li><code>user.info.basic</code> - Get user profile</li>
+                            <li><code>video.upload</code> - Upload videos</li>
+                            <li><code>video.publish</code> - Publish videos</li>
+                        </ul>
+                    </li>
+                    <li>Save changes</li>
+                </ol>
+                
+                <h3>Step 6: Generate Access Token (First Time)</h3>
+                <ol>
+                    <li>Go to <strong>"Authorization"</strong> or <strong>"Tools"</strong> section</li>
+                    <li>Click <strong>"Generate Access Token"</strong></li>
+                    <li>Or use the OAuth flow:</li>
+                </ol>
+                <pre><code>https://www.tiktok.com/v2/auth/authorize?
+client_key=YOUR_CLIENT_KEY&
+scope=user.info.basic,video.upload,video.publish&
+response_type=code&
+redirect_uri=YOUR_REDIRECT_URI</code></pre>
+                <ol start="4">
+                    <li>Authorize the app when prompted</li>
+                    <li>Exchange the authorization code for an access token using the API or developer tools</li>
+                </ol>
+                
+                <h3>Step 7: Configure in Social Bot</h3>
+                <ol>
+                    <li>Open Social Bot Creator application</li>
+                    <li>Go to <strong>Settings</strong> tab</li>
+                    <li>Enter your TikTok credentials:
+                        <ul>
+                            <li><strong>TikTok Client Key</strong>: Your Client Key</li>
+                            <li><strong>TikTok Client Secret</strong>: Your Client Secret</li>
+                            <li><strong>TikTok Access Token</strong>: Your generated access token</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>Save</strong></li>
+                </ol>
+                
+                <div class="warning">
+                    <h4>⚠️ Important Notes for TikTok:</h4>
+                    <ul>
+                        <li>TikTok API access requires business verification and approval</li>
+                        <li>🔄 Access tokens expire after 24 hours - implement refresh token mechanism</li>
+                        <li>📹 Video requirements: MP4 format, max 287MB, duration 3s-60s for organic posts</li>
+                        <li>🔒 TikTok has strict content policies - review before automating</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Instagram Section -->
+            <div class="platform-section" id="instagram">
+                <h2>📷 Instagram API Setup</h2>
+                
+                <p><em>Instagram requires Facebook Developer account and uses Facebook Graph API.</em></p>
+                
+                <h3>Prerequisites</h3>
+                <ul>
+                    <li>Instagram Business or Creator Account (Professional Account)</li>
+                    <li>Facebook Page connected to your Instagram account</li>
+                    <li>Facebook Developer account</li>
+                </ul>
+                
+                <h3>Step 1: Convert to Instagram Business Account</h3>
+                <ol>
+                    <li>Open Instagram app on mobile</li>
+                    <li>Go to <strong>Settings</strong> → <strong>Account</strong></li>
+                    <li>Select <strong>Switch to Professional Account</strong></li>
+                    <li>Choose <strong>Business</strong> or <strong>Creator</strong></li>
+                    <li>Connect to your Facebook Page (required)</li>
+                </ol>
+                
+                <h3>Step 2: Create Facebook Developer Account</h3>
+                <ol>
+                    <li>Go to <a href="https://developers.facebook.com/" target="_blank">Facebook for Developers</a></li>
+                    <li>Click <strong>"Get Started"</strong> (top right)</li>
+                    <li>Log in with your Facebook account</li>
+                    <li>Complete registration:
+                        <ul>
+                            <li>Accept developer agreement</li>
+                            <li>Verify your account (email or phone)</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h3>Step 3: Create a Facebook App</h3>
+                <ol>
+                    <li>Go to <a href="https://developers.facebook.com/apps" target="_blank">My Apps</a></li>
+                    <li>Click <strong>"Create App"</strong> or <strong>"Create New App"</strong></li>
+                    <li>Select <strong>"Business"</strong> or <strong>"Consumer"</strong> type</li>
+                    <li>Fill in app details:
+                        <ul>
+                            <li><strong>App Name</strong>: "Aleppo Gift Social Bot"</li>
+                            <li><strong>Contact Email</strong>: Your email</li>
+                            <li><strong>Business Account</strong>: Select or create one</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>"Create App"</strong></li>
+                </ol>
+                
+                <h3>Step 4: Add Instagram Product</h3>
+                <ol>
+                    <li>In your app dashboard, find <strong>"Add Products"</strong></li>
+                    <li>Locate <strong>"Instagram Graph API"</strong> or <strong>"Instagram Basic Display"</strong></li>
+                    <li>Click <strong>"Set Up"</strong></li>
+                    <li>For posting, you need <strong>Instagram Graph API</strong> (not Basic Display)</li>
+                </ol>
+                
+                <h3>Step 5: Configure Instagram API</h3>
+                <ol>
+                    <li>Go to <strong>Instagram Graph API</strong> → <strong>Settings</strong></li>
+                    <li>Add <strong>Instagram Accounts</strong>:
+                        <ul>
+                            <li>Click <strong>"Add or Remove Instagram Accounts"</strong></li>
+                            <li>Log in and authorize</li>
+                            <li>Select your Instagram Business Account</li>
+                        </ul>
+                    </li>
+                    <li>Add required permissions:
+                        <ul>
+                            <li><code>instagram_basic</code></li>
+                            <li><code>instagram_content_publish</code></li>
+                            <li><code>pages_show_list</code></li>
+                            <li><code>pages_read_engagement</code></li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h3>Step 6: Get Your Credentials</h3>
+                <ol>
+                    <li>Go to <strong>Settings</strong> → <strong>Basic</strong></li>
+                    <li>Copy these values:
+                        <ul>
+                            <li><strong>App ID</strong></li>
+                            <li><strong>App Secret</strong> (click "Show")</li>
+                        </ul>
+                    </li>
+                    <li>Scroll down to add <strong>Redirect URIs</strong>:
+                        <ul>
+                            <li>Add: <code>https://localhost:8501/oauth/callback</code></li>
+                        </ul>
+                    </li>
+                    <li>Save changes</li>
+                </ol>
+                
+                <h3>Step 7: Get Instagram Business Account ID</h3>
+                <ol>
+                    <li>Use <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Graph API Explorer</a></li>
+                    <li>Select your app from dropdown</li>
+                    <li>Add these permissions: <code>instagram_basic</code>, <code>pages_show_list</code></li>
+                    <li>Click <strong>"Generate Access Token"</strong></li>
+                    <li>In the query field, enter:</li>
+                </ol>
+                <pre><code>me/accounts?fields=instagram_business_account</code></pre>
+                <ol start="6">
+                    <li>Click <strong>Submit</strong> - copy the <code>instagram_business_account</code> ID</li>
+                </ol>
+                
+                <h3>Step 8: Generate Long-Lived Access Token</h3>
+                <p>Short-lived tokens expire in 1 hour. Convert to long-lived (60 days):</p>
+                <ol>
+                    <li>Get a short-lived User Access Token from Graph API Explorer</li>
+                    <li>Use this endpoint:</li>
+                </ol>
+                <pre><code>https://graph.facebook.com/v18.0/oauth/access_token?
+grant_type=fb_exchange_token&
+client_id=YOUR_APP_ID&
+client_secret=YOUR_APP_SECRET&
+fb_exchange_token=YOUR_SHORT_LIVED_TOKEN</code></pre>
+                <ol start="3">
+                    <li>Copy the returned <code>access_token</code></li>
+                </ol>
+                
+                <h3>Step 9: Configure in Social Bot</h3>
+                <ol>
+                    <li>Open Social Bot Creator → <strong>Settings</strong></li>
+                    <li>Enter Instagram credentials:
+                        <ul>
+                            <li><strong>Instagram App ID</strong>: Your App ID</li>
+                            <li><strong>Instagram App Secret</strong>: Your App Secret</li>
+                            <li><strong>Instagram Access Token</strong>: Your long-lived access token</li>
+                            <li><strong>Instagram Account ID</strong>: Your business account ID</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>Save</strong></li>
+                </ol>
+                
+                <div class="info">
+                    <h4>📱 Important Notes for Instagram:</h4>
+                    <ul>
+                        <li>Must be a Business or Creator account (not personal)</li>
+                        <li>🔗 Must be connected to a Facebook Page</li>
+                        <li>🎥 Instagram supports photos, videos, carousels, and Reels</li>
+                        <li>⏱️ Long-lived tokens expire after 60 days - implement refresh mechanism</li>
+                        <li>📏 Image requirements: JPG/PNG, 1080x1080px recommended</li>
+                        <li>🎬 Video requirements: MP4, aspect ratio 9:16 for Reels</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Facebook Section -->
+            <div class="platform-section" id="facebook">
+                <h2>👥 Facebook API Setup</h2>
+                
+                <h3>Prerequisites</h3>
+                <ul>
+                    <li>Facebook Page (not personal profile)</li>
+                    <li>Facebook Developer account</li>
+                </ul>
+                
+                <h3>Step 1: Create Facebook Page (if needed)</h3>
+                <ol>
+                    <li>Go to <a href="https://www.facebook.com/pages/create" target="_blank">facebook.com/pages/create</a></li>
+                    <li>Select page type (Business/Brand)</li>
+                    <li>Fill in page details</li>
+                    <li>Upload profile and cover photos</li>
+                    <li>Complete page setup</li>
+                </ol>
+                
+                <h3>Step 2: Create Facebook Developer Account</h3>
+                <ol>
+                    <li>Go to <a href="https://developers.facebook.com/" target="_blank">Facebook for Developers</a></li>
+                    <li>Click <strong>"Get Started"</strong></li>
+                    <li>Log in with Facebook account</li>
+                    <li>Complete registration and verification</li>
+                </ol>
+                
+                <h3>Step 3: Create Facebook App</h3>
+                <ol>
+                    <li>Go to <a href="https://developers.facebook.com/apps" target="_blank">My Apps</a></li>
+                    <li>Click <strong>"Create App"</strong></li>
+                    <li>Select app type: <strong>"Business"</strong></li>
+                    <li>Fill in details:
+                        <ul>
+                            <li><strong>App Name</strong>: "Aleppo Gift Social Bot"</li>
+                            <li><strong>Contact Email</strong>: Your email</li>
+                            <li><strong>Business Account</strong>: Select or skip</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>"Create App"</strong></li>
+                </ol>
+                
+                <h3>Step 4: Add Facebook Login Product</h3>
+                <ol>
+                    <li>In app dashboard, find <strong>"Add Product"</strong></li>
+                    <li>Select <strong>"Facebook Login"</strong></li>
+                    <li>Click <strong>"Set Up"</strong></li>
+                    <li>Choose <strong>"Web"</strong> platform</li>
+                    <li>Enter your site URL: <code>http://localhost:8501</code></li>
+                </ol>
+                
+                <h3>Step 5: Configure OAuth Settings</h3>
+                <ol>
+                    <li>Go to <strong>Facebook Login</strong> → <strong>Settings</strong></li>
+                    <li>Add <strong>Valid OAuth Redirect URIs</strong>:</li>
+                </ol>
+                <pre><code>http://localhost:8501/oauth/callback
+https://yourdomain.com/oauth/callback</code></pre>
+                <ol start="3">
+                    <li>Save changes</li>
+                </ol>
+                
+                <h3>Step 6: Request Page Permissions</h3>
+                <ol>
+                    <li>Go to <strong>App Review</strong> → <strong>Permissions and Features</strong></li>
+                    <li>Request these permissions:
+                        <ul>
+                            <li><code>pages_manage_posts</code> - Publish to pages</li>
+                            <li><code>pages_read_engagement</code> - Read page metrics</li>
+                            <li><code>pages_show_list</code> - List pages</li>
+                            <li><code>publish_video</code> - Upload videos (if needed)</li>
+                        </ul>
+                    </li>
+                    <li>For each permission:
+                        <ul>
+                            <li>Click <strong>"Request"</strong></li>
+                            <li>Fill out the use case form</li>
+                            <li>Provide screenshots/examples</li>
+                            <li>Submit for review</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <div class="note">
+                    <strong>Note:</strong> Some permissions require app review by Facebook (can take 3-7 days)
+                </div>
+                
+                <h3>Step 7: Get App Credentials</h3>
+                <ol>
+                    <li>Go to <strong>Settings</strong> → <strong>Basic</strong></li>
+                    <li>Copy these values:
+                        <ul>
+                            <li><strong>App ID</strong></li>
+                            <li><strong>App Secret</strong> (click "Show")</li>
+                        </ul>
+                    </li>
+                    <li>Keep these secure</li>
+                </ol>
+                
+                <h3>Step 8: Get Page Access Token</h3>
+                <ol>
+                    <li>Use <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Graph API Explorer</a></li>
+                    <li>Select your app from dropdown</li>
+                    <li>Click <strong>"Get Token"</strong> → <strong>"Get User Access Token"</strong></li>
+                    <li>Select permissions:
+                        <ul>
+                            <li><code>pages_manage_posts</code></li>
+                            <li><code>pages_read_engagement</code></li>
+                            <li><code>pages_show_list</code></li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>"Generate Access Token"</strong> and authorize</li>
+                    <li>In the query field, enter: <code>me/accounts</code></li>
+                    <li>Click <strong>Submit</strong></li>
+                    <li>Find your page in the results and copy its <code>access_token</code></li>
+                </ol>
+                
+                <h3>Step 9: Convert to Long-Lived Page Token</h3>
+                <ol>
+                    <li>First, convert user token to long-lived:</li>
+                </ol>
+                <pre><code>https://graph.facebook.com/v18.0/oauth/access_token?
+grant_type=fb_exchange_token&
+client_id=YOUR_APP_ID&
+client_secret=YOUR_APP_SECRET&
+fb_exchange_token=YOUR_SHORT_LIVED_TOKEN</code></pre>
+                <ol start="2">
+                    <li>Then get the long-lived page token:</li>
+                </ol>
+                <pre><code>https://graph.facebook.com/v18.0/me/accounts?
+access_token=YOUR_LONG_LIVED_USER_TOKEN</code></pre>
+                <ol start="3">
+                    <li>Copy the page <code>access_token</code> (this never expires unless you change your password)</li>
+                </ol>
+                
+                <h3>Step 10: Get Page ID</h3>
+                <p>In the same API response from Step 9, copy the page <code>id</code></p>
+                
+                <h3>Step 11: Configure in Social Bot</h3>
+                <ol>
+                    <li>Open Social Bot Creator → <strong>Settings</strong></li>
+                    <li>Enter Facebook credentials:
+                        <ul>
+                            <li><strong>Facebook App ID</strong>: Your App ID</li>
+                            <li><strong>Facebook App Secret</strong>: Your App Secret</li>
+                            <li><strong>Facebook Page Access Token</strong>: Your long-lived page token</li>
+                            <li><strong>Facebook Page ID</strong>: Your page ID</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>Save</strong></li>
+                </ol>
+                
+                <div class="success">
+                    <h4>✅ Important Notes for Facebook:</h4>
+                    <ul>
+                        <li>📄 Must post to a Page, not personal profile</li>
+                        <li>🎥 Video requirements: MP4, max 4GB, 1080p recommended</li>
+                        <li>📷 Image requirements: JPG/PNG, 2048px width recommended</li>
+                        <li>🔒 Page tokens don't expire unless password changes</li>
+                        <li>⚠️ Some permissions require app review and business verification</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Testing Section -->
+            <div class="platform-section" id="testing">
+                <h2>🧪 Testing Your Credentials</h2>
+                
+                <h3>Test API Connection</h3>
+                <ol>
+                    <li>In Social Bot Creator, go to <strong>Settings</strong> tab</li>
+                    <li>After entering credentials, click <strong>"Test Connection"</strong> for each platform</li>
+                    <li>Verify success messages:
+                        <ul>
+                            <li>✅ "TikTok: Connected successfully"</li>
+                            <li>✅ "Instagram: Connected successfully"</li>
+                            <li>✅ "Facebook: Connected successfully"</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h3>Test Posting (Manual)</h3>
+                <ol>
+                    <li>Create a simple test post:
+                        <ul>
+                            <li>Upload a test image</li>
+                            <li>Write caption: "Test post - please ignore"</li>
+                            <li>Select one platform</li>
+                            <li>Click <strong>"Post Now"</strong></li>
+                        </ul>
+                    </li>
+                    <li>Check your social media account to confirm post appears</li>
+                    <li>Delete the test post after verification</li>
+                </ol>
+                
+                <h3>Common Test Failures</h3>
+                <ul>
+                    <li>❌ <strong>"Invalid access token"</strong>: Token expired or incorrect</li>
+                    <li>❌ <strong>"Permission denied"</strong>: Missing required permissions</li>
+                    <li>❌ <strong>"App not authorized"</strong>: Complete app review process</li>
+                    <li>❌ <strong>"Account not found"</strong>: Check Account ID is correct</li>
+                </ul>
+            </div>
+            
+            <!-- Troubleshooting Section -->
+            <div class="platform-section" id="troubleshooting">
+                <h2>🔧 Troubleshooting</h2>
+                
+                <h3>TikTok Issues</h3>
+                
+                <h4>Problem: "App not approved for Content Posting API"</h4>
+                <p><strong>Solution:</strong> Complete the approval process in TikTok Developer portal. This can take 1-7 business days.</p>
+                
+                <h4>Problem: "Access token expired"</h4>
+                <p><strong>Solution:</strong> TikTok tokens expire after 24 hours. Implement refresh token mechanism or generate new tokens regularly.</p>
+                
+                <h4>Problem: "Invalid video format"</h4>
+                <p><strong>Solution:</strong> Ensure video is MP4, H.264 codec, AAC audio, max 287MB, 3-60 seconds duration.</p>
+                
+                <h4>Problem: "Rate limit exceeded"</h4>
+                <p><strong>Solution:</strong> TikTok has posting limits. Wait before retrying. Typical limit: 5 posts per day for new apps.</p>
+                
+                <h3>Instagram Issues</h3>
+                
+                <h4>Problem: "Instagram account not found"</h4>
+                <p><strong>Solution:</strong> Ensure your Instagram account is converted to Business/Creator and linked to a Facebook Page.</p>
+                
+                <h4>Problem: "Permission not granted"</h4>
+                <p><strong>Solution:</strong> Re-authorize and ensure <code>instagram_content_publish</code> permission is granted.</p>
+                
+                <h4>Problem: "Media type not supported"</h4>
+                <p><strong>Solution:</strong> Instagram Reels require 9:16 aspect ratio, MP4 format, H.264 codec.</p>
+                
+                <h4>Problem: "Page not authorized for Instagram"</h4>
+                <p><strong>Solution:</strong> Verify the Facebook Page is properly connected to your Instagram Business account.</p>
+                
+                <h3>Facebook Issues</h3>
+                
+                <h4>Problem: "Page access token invalid"</h4>
+                <p><strong>Solution:</strong> Regenerate the page access token using the steps in the setup guide.</p>
+                
+                <h4>Problem: "Permissions not approved"</h4>
+                <p><strong>Solution:</strong> Some permissions require app review. Go to App Review and request approval.</p>
+                
+                <h4>Problem: "App not in production"</h4>
+                <p><strong>Solution:</strong> In Facebook App settings, switch the app from Development to Production mode.</p>
+                
+                <h4>Problem: "OAuthException"</h4>
+                <p><strong>Solution:</strong> Check that your app has all required permissions and the token hasn't been revoked.</p>
+                
+                <h3>General Issues</h3>
+                
+                <h4>Problem: "Network error" or "Connection timeout"</h4>
+                <p><strong>Solution:</strong> Check your internet connection. Verify firewall isn't blocking API requests.</p>
+                
+                <h4>Problem: "SSL certificate error"</h4>
+                <p><strong>Solution:</strong> Update your system certificates or disable SSL verification (not recommended for production).</p>
+                
+                <h4>Problem: "Invalid redirect URI"</h4>
+                <p><strong>Solution:</strong> Ensure redirect URIs in developer console match exactly what your app uses (including http vs https).</p>
+            </div>
+            
+            <!-- Security Section -->
+            <div class="platform-section" id="security">
+                <h2>🔒 Security Best Practices</h2>
+                
+                <h3>Protecting Your Credentials</h3>
+                
+                <h4>1. Never Share Publicly</h4>
+                <ul>
+                    <li>Don't commit API keys to GitHub or public repositories</li>
+                    <li>Don't share in chat, email, or screenshots</li>
+                    <li>Don't hardcode in client-side code</li>
+                </ul>
+                
+                <h4>2. Use Environment Variables</h4>
+                <pre><code># .env file (add to .gitignore)
+TIKTOK_CLIENT_KEY=your_key_here
+TIKTOK_CLIENT_SECRET=your_secret_here
+INSTAGRAM_APP_ID=your_id_here</code></pre>
+                
+                <h4>3. Rotate Keys Regularly</h4>
+                <ul>
+                    <li>Change tokens every 60-90 days</li>
+                    <li>Rotate immediately if compromised</li>
+                    <li>Remove old tokens from developer console</li>
+                </ul>
+                
+                <h4>4. Use Separate Apps for Dev/Production</h4>
+                <ul>
+                    <li>Create separate apps for testing</li>
+                    <li>Use different credentials for each environment</li>
+                    <li>Never test with production credentials</li>
+                </ul>
+                
+                <h4>5. Monitor API Usage</h4>
+                <ul>
+                    <li>Check developer dashboards regularly</li>
+                    <li>Set up alerts for unusual activity</li>
+                    <li>Review API logs for unauthorized access</li>
+                </ul>
+                
+                <h4>6. Implement Token Refresh</h4>
+                <ul>
+                    <li>Don't rely on expired tokens</li>
+                    <li>Implement automatic refresh mechanism</li>
+                    <li>Store refresh tokens securely</li>
+                </ul>
+                
+                <h3>Access Control</h3>
+                
+                <h4>1. Principle of Least Privilege</h4>
+                <ul>
+                    <li>Only request permissions you actually need</li>
+                    <li>Remove unused permissions</li>
+                    <li>Review permissions quarterly</li>
+                </ul>
+                
+                <h4>2. Team Access</h4>
+                <ul>
+                    <li>Limit who has access to API credentials</li>
+                    <li>Use role-based access control</li>
+                    <li>Log all credential access</li>
+                </ul>
+                
+                <h4>3. Revoke When Necessary</h4>
+                <p>Immediately revoke access if:</p>
+                <ul>
+                    <li>Employee leaves</li>
+                    <li>Device is lost/stolen</li>
+                    <li>Suspicious activity detected</li>
+                    <li>Keys are accidentally exposed</li>
+                </ul>
+                
+                <h3>Compliance</h3>
+                
+                <h4>1. Follow Platform Policies</h4>
+                <ul>
+                    <li>Read and understand Terms of Service</li>
+                    <li>Comply with content policies</li>
+                    <li>Respect rate limits</li>
+                    <li>Honor user privacy</li>
+                </ul>
+                
+                <h4>2. Data Protection</h4>
+                <ul>
+                    <li>Don't store unnecessary user data</li>
+                    <li>Encrypt sensitive information</li>
+                    <li>Comply with GDPR, CCPA if applicable</li>
+                    <li>Have a privacy policy</li>
+                </ul>
+                
+                <h4>3. Content Guidelines</h4>
+                <ul>
+                    <li>No spam or automated abuse</li>
+                    <li>No misleading content</li>
+                    <li>Respect copyright and trademarks</li>
+                    <li>Follow community standards</li>
+                </ul>
+            </div>
+            
+            <!-- Quick Reference Section -->
+            <div class="platform-section">
+                <h2>📚 Quick Reference</h2>
+                
+                <div class="quick-ref">
+                    <div class="quick-ref-card">
+                        <h3>🎵 TikTok</h3>
+                        <p><strong>Developer Portal:</strong><br><a href="https://developers.tiktok.com/" target="_blank">developers.tiktok.com</a></p>
+                        <p><strong>Token Expiry:</strong> 24 hours</p>
+                        <p><strong>Posting API:</strong> Requires approval</p>
+                    </div>
+                    
+                    <div class="quick-ref-card">
+                        <h3>📷 Instagram</h3>
+                        <p><strong>Developer Portal:</strong><br><a href="https://developers.facebook.com/" target="_blank">developers.facebook.com</a></p>
+                        <p><strong>Token Expiry:</strong> 60 days (long-lived)</p>
+                        <p><strong>API:</strong> Facebook Graph API</p>
+                    </div>
+                    
+                    <div class="quick-ref-card">
+                        <h3>👥 Facebook</h3>
+                        <p><strong>Developer Portal:</strong><br><a href="https://developers.facebook.com/" target="_blank">developers.facebook.com</a></p>
+                        <p><strong>Token Expiry:</strong> Never (page tokens)</p>
+                        <p><strong>API:</strong> Facebook Graph API</p>
+                    </div>
+                </div>
+                
+                <h3>Common Setup Time</h3>
+                <ul>
+                    <li><strong>TikTok:</strong> 2-7 business days (pending approval)</li>
+                    <li><strong>Instagram:</strong> 1-2 hours (immediate if no review needed)</li>
+                    <li><strong>Facebook:</strong> 1-2 hours to 7 days (depending on permissions)</li>
+                </ul>
+                
+                <h3>Need More Help?</h3>
+                <ul>
+                    <li>📖 Official documentation for each platform (links above)</li>
+                    <li>💬 Developer community forums</li>
+                    <li>📧 Platform support teams</li>
+                    <li>🎥 YouTube tutorials for API setup</li>
+                </ul>
+                
+                <div class="info">
+                    <h4>Still Having Issues?</h4>
+                    <ol>
+                        <li>Double-check all credentials are entered correctly</li>
+                        <li>Verify your accounts meet all prerequisites</li>
+                        <li>Check platform status pages for outages</li>
+                        <li>Review error messages carefully</li>
+                        <li>Search developer forums for similar issues</li>
+                        <li>Contact platform support with specific error details</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <p style="text-align: center; color: #999; font-size: 0.9em;">
+                <strong>Last Updated:</strong> February 2026<br>
+                <em>Note: Social media platforms frequently update their APIs and developer processes. Always refer to official documentation for the most current information.</em>
+            </p>
+        </div>
+    </div>
+    
+    <a href="#" class="back-to-top">↑</a>
+    
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Show/hide back to top button
+        window.addEventListener('scroll', function() {
+            const backToTop = document.querySelector('.back-to-top');
+            if (window.scrollY > 300) {
+                backToTop.style.display = 'flex';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

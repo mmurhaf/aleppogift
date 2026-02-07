@@ -197,6 +197,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Cash on Delivery is only available in the United Arab Emirates.');
         }
 
+        // Store shipping information in session for quotation download
+        $_SESSION['shipping_country'] = $country;
+        $_SESSION['shipping_city'] = $city;
+        $_SESSION['customer_name'] = $fullname;
+        $_SESSION['customer_address'] = $address;
+        $_SESSION['customer_phone'] = $phone;
+        $_SESSION['customer_email'] = $email;
+        
         // Final cart validation before order creation
         error_log("🛒 Starting cart validation...");
         list($valid_cart_items, $invalid_cart_items) = validateCartItems($db, $_SESSION['cart']);
@@ -219,6 +227,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $finalShippingCost = calculateShippingCost($country, $city, $finalTotalWeight);
         error_log("🚚 Shipping calculation - Country: $country, City: $city, Weight: $finalTotalWeight, Cost: $finalShippingCost");
+        
+        // Store shipping cost and weight in session for quotation
+        $_SESSION['shipping_cost'] = $finalShippingCost;
+        $_SESSION['total_weight'] = $finalTotalWeight;
         
         $finalDiscount = $_SESSION['discount_amount'] ?? 0;
         $finalSubtotal = max(0, $finalCartTotal - $finalDiscount);
@@ -678,7 +690,7 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     <title>Checkout - AleppoGift</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
     
     <!-- Google Fonts for Enhanced Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

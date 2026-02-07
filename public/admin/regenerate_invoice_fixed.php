@@ -142,7 +142,7 @@ elseif (isset($_GET['id'])) {
                         </div>
                         <div class="card-body">
                             <p><strong>Order ID:</strong> #<?= $order['id'] ?></p>
-                            <p><strong>Date:</strong> <?= date('M j, Y h:i A', strtotime($order['created_at'] ?? 'now')) ?></p>
+                            <p><strong>Date:</strong> <?= date('M j, Y h:i A', strtotime($order['order_date'] ?? 'now')) ?></p>
                             <p><strong>Total:</strong> AED <?= number_format($order['total_amount'], 2) ?></p>
                             <p><strong>Payment Method:</strong> <?= ucwords(str_replace('_', ' ', $order['payment_method'] ?? 'N/A')) ?></p>
                             <p><strong>Status:</strong> 

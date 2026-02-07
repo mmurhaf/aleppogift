@@ -6,16 +6,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // ========================================
-    // MOBILE MENU TOGGLE
+    // MOBILE MENU TOGGLE - Fixed for Bootstrap collapse
     // ========================================
     const mobileToggle = document.querySelector('.navbar-toggler, .modern-toggler');
-    const navbarNav = document.querySelector('.navbar-nav');
+    const navbarNav = document.querySelector('#navbarNav');
     
     if (mobileToggle && navbarNav) {
-        mobileToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            navbarNav.classList.toggle('show');
-            
+        // Bootstrap will handle the collapse, but we can add custom behavior
+        mobileToggle.addEventListener('click', function() {
             // Animate hamburger icon
             const icon = mobileToggle.querySelector('.navbar-toggler-icon');
             if (icon) {
@@ -23,11 +21,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!mobileToggle.contains(e.target) && !navbarNav.contains(e.target)) {
-                navbarNav.classList.remove('show');
-            }
+        // Close mobile menu when clicking on a nav link
+        const navLinks = navbarNav.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                const bsCollapse = bootstrap.Collapse.getInstance(navbarNav);
+                if (bsCollapse) {
+                    bsCollapse.hide();
+                }
+            });
         });
     }
     
@@ -71,35 +73,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========================================
     let cartPreviewTimeout;
     
-    // Define toggleCart only if it hasn't been defined by other scripts (avoid conflicts)
-    if (!window.toggleCart) {
-        window.toggleCart = function() {
-            const cartPreview = document.getElementById('cartPreview');
-            const cartOffcanvas = document.getElementById('cartOffcanvas');
-            
-            // On mobile, use offcanvas
-            if (window.innerWidth <= 768 && cartOffcanvas) {
-                const bsOffcanvas = new bootstrap.Offcanvas(cartOffcanvas);
-                bsOffcanvas.show();
-                loadCartOffcanvas();
-            } 
-            // On desktop, use fixed preview
-            else if (cartPreview) {
-                if (cartPreview.style.display === 'none' || !cartPreview.style.display) {
-                    showCartPreview();
-                } else {
-                    hideCartPreview();
-                }
-            }
-        };
-    } else {
-        console.log('enhanced-ui: window.toggleCart already defined, skipping override');
-    }
-    
-    function showCartPreview() {
+    // Define cart functions globally BEFORE they are called
+    window.showCartPreview = function() {
         const cartPreview = document.getElementById('cartPreview');
         if (cartPreview) {
-            clearTimeout(cartPreviewTimeout);
+            if (window.cartPreviewTimeout) {
+                clearTimeout(window.cartPreviewTimeout);
+            }
             cartPreview.style.display = 'block';
             
             // Add show class for animation
@@ -107,45 +87,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 cartPreview.classList.add('show');
             }, 10);
             
-            loadCartPreview();
+            if (window.loadCartPreview) {
+                window.loadCartPreview();
+            }
             
             // Auto-hide after 5 seconds of no interaction
-            cartPreviewTimeout = setTimeout(() => {
-                hideCartPreview();
+            window.cartPreviewTimeout = setTimeout(() => {
+                window.hideCartPreview();
             }, 5000);
         }
-    }
+    };
     
-    function hideCartPreview() {
+    window.hideCartPreview = function() {
         const cartPreview = document.getElementById('cartPreview');
         if (cartPreview) {
-            clearTimeout(cartPreviewTimeout);
+            if (window.cartPreviewTimeout) {
+                clearTimeout(window.cartPreviewTimeout);
+            }
             cartPreview.classList.remove('show');
             
             setTimeout(() => {
                 cartPreview.style.display = 'none';
             }, 200);
         }
-    }
+    };
     
     // Keep cart preview open when hovering
     const cartPreview = document.getElementById('cartPreview');
     if (cartPreview) {
         cartPreview.addEventListener('mouseenter', function() {
-            clearTimeout(cartPreviewTimeout);
+            if (window.cartPreviewTimeout) {
+                clearTimeout(window.cartPreviewTimeout);
+            }
         });
         
         cartPreview.addEventListener('mouseleave', function() {
-            cartPreviewTimeout = setTimeout(() => {
-                hideCartPreview();
+            window.cartPreviewTimeout = setTimeout(() => {
+                window.hideCartPreview();
             }, 2000);
         });
     }
     
     // ========================================
-    // CART PREVIEW LOADING
+    // CART PREVIEW LOADING - Global functions
     // ========================================
-    function loadCartPreview() {
+    window.loadCartPreview = function() {
         const cartPreviewContent = document.querySelector('#cartPreview #cart-items-preview');
         
         if (cartPreviewContent) {
@@ -170,16 +156,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     cartPreviewContent.innerHTML = `
                         <div class="text-center p-4">
                             <p class="text-muted">Unable to load cart</p>
-                            <button class="btn btn-sm btn-outline-primary" onclick="loadCartPreview()">
+                            <button class="btn btn-sm btn-outline-primary" onclick="window.loadCartPreview()">
                                 Try Again
                             </button>
                         </div>
                     `;
                 });
         }
-    }
+    };
 
-    function loadCartOffcanvas() {
+    window.loadCartOffcanvas = function() {
         const cartOffcanvasContent = document.querySelector('#cartOffcanvas #cart-items-offcanvas');
         
         if (cartOffcanvasContent) {
@@ -204,43 +190,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     cartOffcanvasContent.innerHTML = `
                         <div class="text-center p-4">
                             <p class="text-muted">Unable to load cart</p>
-                            <button class="btn btn-sm btn-outline-primary" onclick="loadCartOffcanvas()">
+                            <button class="btn btn-sm btn-outline-primary" onclick="window.loadCartOffcanvas()">
                                 Try Again
                             </button>
                         </div>
                     `;
                 });
         }
-    }
-
-    // Make functions globally available
-    window.loadCartPreview = loadCartPreview;
-    window.loadCartOffcanvas = loadCartOffcanvas;
-    window.hideCartPreview = hideCartPreview;
-    window.showCartPreview = showCartPreview;
+    };
     
-    // Create alias for toggleCartPreview to match header.php onclick
-    window.toggleCartPreview = window.toggleCart;
-    
-    // Load cart preview on page load if cart has items
-    document.addEventListener('DOMContentLoaded', function() {
-        // Load cart preview content when DOM is ready
-        setTimeout(() => {
-            if (window.loadCartPreview) {
-                loadCartPreview();
-            }
-        }, 500);
-        
-        // Load offcanvas content when it's shown
+    // Define toggleCartPreview to match header.php onclick
+    window.toggleCartPreview = function() {
+        const cartPreview = document.getElementById('cartPreview');
         const cartOffcanvas = document.getElementById('cartOffcanvas');
-        if (cartOffcanvas) {
-            cartOffcanvas.addEventListener('shown.bs.offcanvas', function() {
-                if (window.loadCartOffcanvas) {
-                    loadCartOffcanvas();
-                }
-            });
+        
+        // On mobile, use offcanvas
+        if (window.innerWidth <= 768 && cartOffcanvas) {
+            const bsOffcanvas = new bootstrap.Offcanvas(cartOffcanvas);
+            bsOffcanvas.show();
+            window.loadCartOffcanvas();
+        } 
+        // On desktop, use fixed preview
+        else if (cartPreview) {
+            if (cartPreview.style.display === 'none' || !cartPreview.style.display) {
+                window.showCartPreview();
+            } else {
+                window.hideCartPreview();
+            }
         }
-    });
+    };
+    
+    // Load offcanvas content when it's shown
+    const cartOffcanvasEl = document.getElementById('cartOffcanvas');
+    if (cartOffcanvasEl) {
+        cartOffcanvasEl.addEventListener('shown.bs.offcanvas', function() {
+            window.loadCartOffcanvas();
+        });
+    }
     
     // ========================================
     // SMOOTH SCROLLING FOR ANCHOR LINKS
@@ -334,12 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 header.classList.remove('scrolled');
             }
             
-            // Hide header on scroll down, show on scroll up (improved UX)
-            if (scrollTop > lastScrollTop && scrollTop > 500) {
-                header.classList.add('hidden');
-            } else {
-                header.classList.remove('hidden');
-            }
+            // Note: Removed auto-hide behavior to prevent blinking issues
+            // Header will remain visible for better user experience
         }
         
         lastScrollTop = scrollTop;
@@ -359,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (cartPreview && cartButton) {
             if (!cartPreview.contains(e.target) && !cartButton.contains(e.target)) {
-                hideCartPreview();
+                window.hideCartPreview();
             }
         }
     });

@@ -13,9 +13,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_brand'])) {
     $name_en = trim($_POST['name_en']);
     $status = isset($_POST['status']) ? (int)$_POST['status'] : 1;
     $logo_filename = null;
+    $error = false;
+
+    // Validate inputs
+    if (empty($name_en) || empty($name_ar)) {
+        $message = "Both English and Arabic names are required.";
+        $error = true;
+    }
 
     // Handle logo upload
-    if (isset($_FILES['brand_logo']) && $_FILES['brand_logo']['error'] == 0) {
+    if (!$error && isset($_FILES['brand_logo']) && $_FILES['brand_logo']['error'] == 0) {
         $upload_dir = '../uploads/brands/';
         
         // Create directory if it doesn't exist
@@ -23,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_brand'])) {
             mkdir($upload_dir, 0755, true);
         }
 
-        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
         $file_type = $_FILES['brand_logo']['type'];
         
         if (in_array($file_type, $allowed_types)) {
@@ -31,26 +38,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_brand'])) {
             $logo_filename = 'brand_' . time() . '_' . uniqid() . '.' . $file_extension;
             $upload_path = $upload_dir . $logo_filename;
             
-            if (move_uploaded_file($_FILES['brand_logo']['tmp_name'], $upload_path)) {
-                // Logo uploaded successfully
-            } else {
-                $message = "Error uploading logo file.";
+            if (!move_uploaded_file($_FILES['brand_logo']['tmp_name'], $upload_path)) {
+                $message = "Error uploading logo file. Please check directory permissions.";
                 $logo_filename = null;
+                $error = true;
             }
         } else {
-            $message = "Invalid file type. Please upload JPG, PNG, GIF, or SVG images only.";
+            $message = "Invalid file type. Please upload JPG, PNG, GIF, SVG, or WEBP images only.";
+            $error = true;
         }
     }
 
-    if (!isset($message)) {
-        $db->query("INSERT INTO brands (name_ar, name_en, status, logo) VALUES (:name_ar, :name_en, :status, :logo)", [
-            'name_ar' => $name_ar,
-            'name_en' => $name_en,
-            'status' => $status,
-            'logo' => $logo_filename
-        ]);
+    // Insert into database if no errors
+    if (!$error) {
+        try {
+            $db->query("INSERT INTO brands (name_ar, name_en, status, logo) VALUES (:name_ar, :name_en, :status, :logo)", [
+                'name_ar' => $name_ar,
+                'name_en' => $name_en,
+                'status' => $status,
+                'logo' => $logo_filename
+            ]);
 
-        $message = "Brand added successfully!";
+            $message = "Brand added successfully!";
+        } catch (Exception $e) {
+            $message = "Error adding brand: " . $e->getMessage();
+        }
     }
 }
 
@@ -81,8 +93,14 @@ if (isset($_GET['toggle_status'])) {
     exit;
 }
 
-// Fetch brands
-$brands = $db->query("SELECT * FROM brands ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+// Fetch brands with product count
+$brands = $db->query("
+    SELECT b.*, COUNT(p.id) as product_count 
+    FROM brands b 
+    LEFT JOIN products p ON b.id = p.brand_id 
+    GROUP BY b.id 
+    ORDER BY b.id DESC
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -90,6 +108,7 @@ $brands = $db->query("SELECT * FROM brands ORDER BY id DESC")->fetchAll(PDO::FET
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brands Management - AleppoGift</title>
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/admin-theme.css">

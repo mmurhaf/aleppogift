@@ -174,7 +174,7 @@ foreach ($countries as $name => $flag) {
             .table th, .table td { padding: 0.75rem; border-top: 1px solid #dee2e6; }
         </style>
     </noscript>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Calculate your shipping costs with our easy-to-use shipping estimator. Get accurate rates based on your country, city, and package weight.">
     <meta name="keywords" content="shipping, calculator, estimator, rates, AleppoGift">

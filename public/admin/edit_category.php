@@ -193,8 +193,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
 </head>
 <body>
 
+<!-- Mobile Menu Toggle Button -->
+<button class="mobile-menu-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 <!-- Sidebar Navigation -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <h2><i class="fas fa-gifts"></i> <span>AleppoGift</span></h2>
     </div>
@@ -347,6 +355,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
             removeInput.value = '1';
         }
     }
+    
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+    
+    // Close sidebar when clicking on a menu item (mobile only)
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuLinks = document.querySelectorAll('.sidebar-menu a');
+        menuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+    });
 </script>
 
 </body>

@@ -7,7 +7,17 @@
     position: sticky;
     top: 0;
     z-index: 1040;
-    transition: all 0.3s ease;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+    /* Prevent any transform animations that could cause blinking */
+    transform: none !important;
+    will-change: box-shadow;
+}
+
+/* Prevent the header from being hidden */
+.modern-header.hidden {
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .modern-header .container-fluid {

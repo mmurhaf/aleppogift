@@ -1,0 +1,17 @@
+{
+  "tiktok": {
+    "brand": ["#AleppoGift", "#AleppoCrafts", "#HandmadeGifts"],
+    "home_decor": ["#HomeDecor", "#InteriorDesign", "#HomeInspo", "#DecorIdeas"],
+    "trending": ["#FYP", "#ForYou", "#Viral", "#TikTokShop"]
+  },
+  "instagram": {
+    "brand": ["#AleppoGift", "#AleppoCrafts"],
+    "home_decor": ["#HomeDecor", "#HomeStyle", "#InteriorDesign", "#DecorInspiration"],
+    "engagement": ["#InstaGood", "#InstaDaily", "#ShopSmall"]
+  },
+  "facebook": {
+    "brand": ["#AleppoGift"],
+    "home_decor": ["#HomeDecor", "#GiftIdeas", "#Handmade"],
+    "location": ["#UAEBusiness", "#DubaiShopping"]
+  }
+}

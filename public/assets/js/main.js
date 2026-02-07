@@ -494,15 +494,7 @@ console.log("AleppoGift JS loaded.");
         $(this).closest('form').submit();
     });
 
-
-            document.getElementById('search-toggle').addEventListener('click', function() {
-            document.getElementById('search-bar').classList.remove('d-none');
-            document.querySelector('#search-bar input').focus();
-                });
-
-                document.getElementById('search-close').addEventListener('click', function() {
-                    document.getElementById('search-bar').classList.add('d-none');
-                });
+    // Search toggle handlers removed - now handled by enhanced-ui.js to avoid conflicts
 
     });
 

@@ -7,6 +7,11 @@ error_reporting(E_ERROR | E_PARSE);
 ini_set('display_errors', 0);
 
 try {
+    // Start session to store shipping data
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
     // Include required files
     require_once(__DIR__ . '/../../includes/shipping.php');
 
@@ -45,6 +50,12 @@ try {
     if (!is_numeric($cost) || $cost < 0) {
         throw new Exception('Invalid shipping cost: ' . var_export($cost, true));
     }
+
+    // Store shipping information in session for quotation download
+    $_SESSION['shipping_country'] = $country;
+    $_SESSION['shipping_city'] = $city;
+    $_SESSION['shipping_cost'] = $cost;
+    $_SESSION['total_weight'] = $totalWeight;
 
     // Return success response
     $response = [
