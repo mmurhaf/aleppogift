@@ -470,6 +470,66 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
                 <a href="#top" class="btn btn-secondary">Back to Top</a>
             </div>
         </div>
+
+        <!-- Pagination at Bottom -->
+        <section class="mb-4">
+            <div class="pagination-container">
+                <div class="pagination-info">Products (<?= $totalProducts ?> found)</div>
+                
+                <nav class="pagination-nav">
+                    <ul class="pagination">
+                        <!-- Previous Page Link -->
+                        <li class="page-item <?= $currentPage == 1 ? 'disabled' : '' ?>">
+                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $currentPage - 1])) ?>" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        
+                        <!-- First Page -->
+                        <?php if ($totalPages > 0): ?>
+                        <li class="page-item <?= $currentPage == 1 ? 'active' : '' ?>">
+                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>">1</a>
+                        </li>
+                        <?php endif; ?>
+                        
+                        <!-- Ellipsis and middle pages logic -->
+                        <?php if ($totalPages > 1): ?>
+                            <?php if ($currentPage > 3): ?>
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            <?php endif; ?>
+                            
+                            <?php for ($i = max(2, $currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1); $i++): ?>
+                                <li class="page-item <?= $currentPage == $i ? 'active' : '' ?>">
+                                    <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+                            
+                            <?php if ($currentPage < $totalPages - 2): ?>
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <!-- Last Page -->
+                        <?php if ($totalPages > 1): ?>
+                        <li class="page-item <?= $currentPage == $totalPages ? 'active' : '' ?>">
+                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>"><?= $totalPages ?></a>
+                        </li>
+                        <?php endif; ?>
+                        
+                        <!-- Next Page Link -->
+                        <li class="page-item <?= $currentPage == $totalPages ? 'disabled' : '' ?>">
+                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $currentPage + 1])) ?>" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </section>
     </main>
 
     <footer class="footer">

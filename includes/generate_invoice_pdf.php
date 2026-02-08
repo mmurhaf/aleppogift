@@ -235,37 +235,44 @@ class PDFInvoiceGenerator {
 
         // Totals Section
         $pdf->Ln(5);
-        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetFont('Arial', 'B', 9);
         $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
 
+        // Exchange rate: 1 USD = 3.68 AED (1 AED = 0.27 USD)
+        $aed_to_usd = 0.27;
+
         // Subtotal
-        $pdf->Cell(130, 8, 'Subtotal:', 0, 0, 'R');
-        $pdf->Cell(40, 8, 'AED ' . number_format($subtotal, 2), 1, 1, 'C');
+        $subtotal_usd = $subtotal * $aed_to_usd;
+        $pdf->Cell(110, 8, 'Subtotal:', 0, 0, 'R');
+        $pdf->Cell(60, 8, 'AED ' . number_format($subtotal, 2) . ' (USD ' . number_format($subtotal_usd, 2) . ')', 1, 1, 'C');
 
         // Shipping - Always display
         $shipping_amount = $order['shipping_aed'] ?? $order['shipping_amount'] ?? 0;
-        $pdf->Cell(130, 8, 'Shipping:', 0, 0, 'R');
+        $shipping_usd = $shipping_amount * $aed_to_usd;
+        $pdf->Cell(110, 8, 'Shipping:', 0, 0, 'R');
         if ($shipping_amount > 0) {
-            $pdf->Cell(40, 8, 'AED ' . number_format($shipping_amount, 2), 1, 1, 'C');
+            $pdf->Cell(60, 8, 'AED ' . number_format($shipping_amount, 2) . ' (USD ' . number_format($shipping_usd, 2) . ')', 1, 1, 'C');
         } else {
-            $pdf->Cell(40, 8, 'FREE', 1, 1, 'C');
+            $pdf->Cell(60, 8, 'FREE', 1, 1, 'C');
         }
 
         // Discount
         $discount_amount = $order['discount_amount'] ?? 0;
         if ($discount_amount > 0) {
+            $discount_usd = $discount_amount * $aed_to_usd;
             $pdf->SetTextColor(220, 53, 69); // Red color for discount
-            $pdf->Cell(130, 8, 'Discount:', 0, 0, 'R');
-            $pdf->Cell(40, 8, '-AED ' . number_format($discount_amount, 2), 1, 1, 'C');
+            $pdf->Cell(110, 8, 'Discount:', 0, 0, 'R');
+            $pdf->Cell(60, 8, '-AED ' . number_format($discount_amount, 2) . ' (-USD ' . number_format($discount_usd, 2) . ')', 1, 1, 'C');
             $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
         }
 
         // Grand Total
-        $pdf->SetFont('Arial', 'B', 12);
+        $total_usd = $order['total_amount'] * $aed_to_usd;
+        $pdf->SetFont('Arial', 'B', 11);
         $pdf->SetFillColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
         $pdf->SetTextColor(255);
-        $pdf->Cell(130, 10, 'GRAND TOTAL:', 0, 0, 'R');
-        $pdf->Cell(40, 10, 'AED ' . number_format($order['total_amount'], 2), 1, 1, 'C', true);
+        $pdf->Cell(110, 10, 'GRAND TOTAL:', 0, 0, 'R');
+        $pdf->Cell(60, 10, 'AED ' . number_format($order['total_amount'], 2) . ' (USD ' . number_format($total_usd, 2) . ')', 1, 1, 'C', true);
 
         // Notes section
         if (!empty($order['notes'])) {

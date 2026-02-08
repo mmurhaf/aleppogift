@@ -551,7 +551,7 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     try {
         // Send WhatsApp notification to admin
         error_log("📱 Sending WhatsApp notification for Order #$order_id");
-        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
+        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method, $customer_data['phone'] ?? '', $customer_data['city'] ?? '', $customer_data['country'] ?? '');
         error_log("✅ WhatsApp sent for Order #$order_id");
 
         // Generate and send invoice - with enhanced error handling

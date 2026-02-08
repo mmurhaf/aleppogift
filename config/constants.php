@@ -38,7 +38,7 @@ define('ADMIN_EMAIL', 'admin@aleppogift.com');
 // =================================================================
 define('DEFAULT_CURRENCY', 'AED');
 define('USD_TO_AED_RATE', 3.68);
-define('CURRENCY_SYMBOL', 'د.إ');
+define('CURRENCY_SYMBOL', 'AED');
 
 // =================================================================
 // IMAGE SETTINGS

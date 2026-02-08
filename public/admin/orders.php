@@ -265,6 +265,9 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                                     </form>
 
                                     <?php if ($order['payment_status'] == 'paid'): ?>
+                                    <a href="edit_invoice.php?id=<?php echo $order['id']; ?>" class="invoice-link" title="Edit Invoice">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
                                     <a href="../download_invoice.php?id=<?php echo $order['id']; ?>" target="_blank" class="invoice-link">
                                         <i class="fas fa-file-invoice me-1"></i>Invoice
                                     </a>

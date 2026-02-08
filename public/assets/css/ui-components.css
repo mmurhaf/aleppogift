@@ -327,7 +327,7 @@
 
 /* UAE Symbol - Text approach fallback */
 .uae-symbol-text::before {
-  content: "د.إ";
+  content: "AED";
   margin-right: 0.25rem;
   font-weight: 700;
 }

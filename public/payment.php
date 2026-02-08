@@ -293,18 +293,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
                     
                     <!-- Order Summary -->
                     <div class="order-summary">
+                        <?php 
+                        $aed_to_usd = 0.27;
+                        $subtotal = $order['total_amount'] - ($order['shipping_aed'] ?? 0);
+                        $subtotal_usd = $subtotal * $aed_to_usd;
+                        $shipping_usd = ($order['shipping_aed'] ?? 0) * $aed_to_usd;
+                        $total_usd = $order['total_amount'] * $aed_to_usd;
+                        ?>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Subtotal:</span>
-                            <strong>AED <?php echo number_format($order['total_amount'] - ($order['shipping_aed'] ?? 0), 2); ?></strong>
+                            <strong>AED <?php echo number_format($subtotal, 2); ?> ($<?php echo number_format($subtotal_usd, 2); ?>)</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
                             <span>Shipping:</span>
-                            <strong>AED <?php echo number_format($order['shipping_aed'] ?? 0, 2); ?></strong>
+                            <strong>AED <?php echo number_format($order['shipping_aed'] ?? 0, 2); ?> ($<?php echo number_format($shipping_usd, 2); ?>)</strong>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="h5 mb-0">Total Amount:</span>
-                            <span class="total-amount">AED <?php echo number_format($order['total_amount'], 2); ?></span>
+                            <span class="total-amount">AED <?php echo number_format($order['total_amount'], 2); ?> ($<?php echo number_format($total_usd, 2); ?>)</span>
                         </div>
                     </div>
                     

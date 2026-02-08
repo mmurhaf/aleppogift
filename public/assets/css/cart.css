@@ -566,15 +566,21 @@
         height: 60px;
     }
     
+    /* Fixed: Increase touch targets to 44px minimum for mobile accessibility */
     .quantity-controls .btn {
-        width: 28px;
-        height: 28px;
-        font-size: 0.7rem;
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
     }
     
     .quantity-display {
-        min-width: 35px;
-        font-size: 0.9rem;
+        min-width: 40px;
+        font-size: 1rem;
+    }
+    
+    .remove-item {
+        width: 44px;
+        height: 44px;
     }
     
     .cart-summary-modern {
@@ -585,6 +591,28 @@
         padding: 0.75rem 1rem;
         font-size: 0.9rem;
     }
+    
+    /* Fixed: Improve mobile item controls layout */
+    .item-controls {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 0.5rem;
+        width: 100%;
+        align-items: center;
+    }
+    
+    .quantity-controls {
+        justify-self: start;
+    }
+    
+    .item-total-price {
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    
+    .remove-item {
+        justify-self: end;
+    }
 }
 
 /* Loading States */
@@ -609,45 +637,53 @@
     z-index: 1060;
 }
 
-/* Cart button in header enhancement */
-.btn.position-relative .badge {
-    animation: pulse 2s infinite;
-}
-
+/* Cart button in header - only animate on change, not continuously */
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
-/* Loading States */
-.update-qty:disabled,
-.remove-item:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+
+/* Only animate when cart count changes - controlled by JS */
+.btn.position-relative .badge.pulse-once {
+    animation: pulse 0.5s ease-out;
 }
 
-/* Animation for cart updates */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Mobile cart summary - fixed to bottom on mobile */
+@media (max-width: 768px) {
+    .cart-summary-mobile-fixed {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 15px 15px 0 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        z-index: 1000;
+        max-height: 40vh;
+        overflow-y: auto;
+    }
+    
+    /* Add padding to cart items so they're not hidden behind summary */
+    .cart-items-with-fixed-summary {
+        padding-bottom: 200px;
+    }
+    
+    /* Fix cart preview width on mobile */
+    .cart-preview,
+    #cartPreview {
+        width: calc(100vw - 20px) !important;
+        left: 10px !important;
+        right: 10px !important;
+        max-width: 400px;
+    }
 }
 
-.cart-item-modern {
-    animation: fadeIn 0.3s ease-out;
-}
-
-/* Toast notifications positioning */
-#toast-container {
-    z-index: 1060;
-}
-
-/* Cart button in header enhancement */
-.btn.position-relative .badge {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+/* Consistent z-index scale */
+:root {
+    --z-header: 1000;
+    --z-dropdown: 1010;
+    --z-cart-preview: 1020;
+    --z-search: 1030;
+    --z-modal: 1040;
+    --z-toast: 1050;
 }

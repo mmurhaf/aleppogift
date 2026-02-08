@@ -129,7 +129,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $success_message = "Product added successfully!";
+        // Auto-generate variants from images if checkbox is checked
+        if (isset($_POST['auto_generate_variants']) && $_POST['auto_generate_variants'] == '1') {
+            // Get all images for this product
+            $images = $db->query(
+                "SELECT id, image_path, is_main FROM product_images WHERE product_id = :id ORDER BY display_order ASC, id ASC",
+                ['id' => $product_id]
+            )->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (!empty($images)) {
+                $variant_stock = isset($stock) ? (int)$stock : 0;
+                $variants_created = 0;
+                
+                foreach ($images as $index => $image) {
+                    // Create variant name based on image
+                    $variant_name = "Image Variant " . ($index + 1);
+                    if ($image['is_main']) {
+                        $variant_name = "Main Image Variant";
+                    }
+                    
+                    // Insert new variation linked to this image
+                    $db->query(
+                        "INSERT INTO product_variations (product_id, image_id, size, color, additional_price, stock) 
+                         VALUES (:product_id, :image_id, :size, :color, :additional_price, :stock)",
+                        [
+                            'product_id' => $product_id,
+                            'image_id' => $image['id'],
+                            'size' => null,
+                            'color' => $variant_name,
+                            'additional_price' => 0.00,
+                            'stock' => $variant_stock
+                        ]
+                    );
+                    $variants_created++;
+                }
+                
+                $success_message = "Product added successfully! {$variants_created} variant(s) auto-generated from images.";
+            } else {
+                $success_message = "Product added successfully! (No images found to generate variants)";
+            }
+        } else {
+            $success_message = "Product added successfully!";
+        }
+        
         // Redirect after 2 seconds
         header("refresh:2;url=products.php");
         
@@ -355,7 +397,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h5 class="section-title">Product Variations (Optional)</h5>
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    Add variations for products that come in different sizes, colors, or combinations. The variant ID is automatically generated.
+                    <strong>Option 1:</strong> Check the box below to automatically create variants from uploaded images when saving.<br>
+                    <strong>Option 2:</strong> Add variations manually using the form below.
+                </div>
+                
+                <!-- Auto-generate checkbox -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="auto_generate_variants" name="auto_generate_variants" value="1">
+                        <label class="form-check-label" for="auto_generate_variants">
+                            <i class="fas fa-magic me-2"></i><strong>Auto-generate variants from uploaded images</strong>
+                            <small class="d-block text-muted">Each uploaded image will become a separate variant</small>
+                        </label>
+                    </div>
                 </div>
                 
                 <div id="variationsContainer">
@@ -363,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <button type="button" class="btn btn-outline-primary add-variation-btn" id="addVariationBtn">
-                    <i class="fas fa-plus me-2"></i>Add Variation
+                    <i class="fas fa-plus me-2"></i>Add Manual Variation
                 </button>
             </div>
 

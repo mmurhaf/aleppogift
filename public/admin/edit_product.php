@@ -61,6 +61,14 @@ try {
         $categories = [];
     }
 
+    // Fetch brands
+    try {
+        $brands = $db->query("SELECT id, name_en, name_ar FROM brands ORDER BY name_en ASC")->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Database error fetching brands: " . $e->getMessage());
+        $brands = [];
+    }
+
     // Fetch existing images
     try {
         $images = $db->query("SELECT * FROM product_images WHERE product_id = :id ORDER BY display_order ASC, id ASC", ['id' => $product_id])->fetchAll(PDO::FETCH_ASSOC);
@@ -80,6 +88,7 @@ try {
         $stock = intval($_POST['stock'] ?? 0);
         $weight = floatval($_POST['weight'] ?? 0);
         $category_id = intval($_POST['category_id'] ?? 0);
+        $brand_id = intval($_POST['brand_id'] ?? 0);
         $status = isset($_POST['status']) ? 1 : 0;
         $featured = isset($_POST['featured']) ? 1 : 0;
 
@@ -90,6 +99,7 @@ try {
         if ($stock < 0) $errors[] = "Stock cannot be negative";
         if ($weight < 0) $errors[] = "Weight cannot be negative";
         if ($category_id <= 0) $errors[] = "Please select a category";
+        if ($brand_id <= 0) $errors[] = "Please select a brand";
 
         if (empty($errors)) {
             try {
@@ -104,6 +114,7 @@ try {
                         stock = :stock,
                         weight = :weight,
                         category_id = :category_id,
+                        brand_id = :brand_id,
                         status = :status,
                         featured = :featured
                     WHERE id = :id
@@ -116,6 +127,7 @@ try {
                     'stock' => $stock,
                     'weight' => $weight,
                     'category_id' => $category_id,
+                    'brand_id' => $brand_id,
                     'status' => $status,
                     'featured' => $featured,
                     'id' => $product_id
@@ -323,7 +335,7 @@ try {
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="category_id" class="form-label">Category *</label>
                                 <select class="form-select" id="category_id" name="category_id" required>
                                     <option value="">Select Category</option>
@@ -331,6 +343,18 @@ try {
                                     <option value="<?php echo $cat['id']; ?>" 
                                             <?php echo $product['category_id'] == $cat['id'] ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($cat['name_en']); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="brand_id" class="form-label">Brand *</label>
+                                <select class="form-select" id="brand_id" name="brand_id" required>
+                                    <option value="">Select Brand</option>
+                                    <?php foreach ($brands as $brand): ?>
+                                    <option value="<?php echo $brand['id']; ?>" 
+                                            <?php echo $product['brand_id'] == $brand['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($brand['name_en']); ?>
                                     </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -412,6 +436,20 @@ try {
                             <div class="form-text">Select multiple images. Max 5MB each. Supported: JPG, PNG, GIF, WebP</div>
                         </div>
 
+                        <!-- Product Variations Section -->
+                        <div class="mb-3">
+                            <label class="form-label">Product Variations</label>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Link Images to Variations:</strong> Each image can be linked to a product variant. 
+                                Click the button below to automatically create variants for each image.
+                            </div>
+                            <button type="button" class="btn btn-primary" id="autoCreateVariantsBtn">
+                                <i class="fas fa-magic me-2"></i>Auto-Generate Variants from Images
+                            </button>
+                            <div id="variantCreationResult" class="mt-2"></div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-check">
@@ -447,6 +485,45 @@ try {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Auto-create variants button handler
+        document.getElementById('autoCreateVariantsBtn')?.addEventListener('click', function() {
+            const btn = this;
+            const resultDiv = document.getElementById('variantCreationResult');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating variants...';
+            resultDiv.innerHTML = '';
+            
+            fetch('ajax/auto_create_variants.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'product_id=<?php echo $product_id; ?>'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `<div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>${data.message}
+                    </div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>${data.message}
+                    </div>`;
+                }
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic me-2"></i>Auto-Generate Variants from Images';
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Error: ${error.message}
+                </div>`;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic me-2"></i>Auto-Generate Variants from Images';
+            });
+        });
+
         function markForDeletion(imageId, button) {
             if (confirm('Are you sure you want to delete this image?')) {
                 const input = document.createElement('input');

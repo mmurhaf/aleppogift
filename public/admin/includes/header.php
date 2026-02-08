@@ -68,6 +68,9 @@ $admin_id = $_SESSION['admin_id'] ?? null;
                     <li class="nav-item">
                         <a class="nav-link" href="coupons.php"><i class="fas fa-ticket-alt me-1"></i>Coupons</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="http://localhost:8501" target="_blank"><i class="fas fa-robot me-1"></i>Social Media Bot</a>
+                    </li>
                 </ul>
                 
                 <ul class="navbar-nav">

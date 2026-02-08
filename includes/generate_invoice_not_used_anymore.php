@@ -193,21 +193,27 @@ $pdf->SetFont('Arial', '', 11);
 $pdf->SetTextColor(60);
 $pdf->SetFillColor(255);
 
+// Exchange rate: 1 USD = 3.68 AED (1 AED = 0.27 USD)
+$aed_to_usd = 0.27;
+
 // Subtotal
+$subtotal_usd = $subtotal * $aed_to_usd;
 $pdf->SetFont('Arial', 'B', 11);
 $pdf->Cell(140, 8, 'Subtotal:', 0, 0, 'R');
-$pdf->Cell(40, 8, number_format($subtotal, 2), 0, 1, 'R');
+$pdf->Cell(40, 8, number_format($subtotal, 2) . ' (USD ' . number_format($subtotal_usd, 2) . ')', 0, 1, 'R');
 
 // Shipping
+$shipping_usd = $shippingAED * $aed_to_usd;
 $pdf->SetFont('Arial', '', 11);
 $pdf->Cell(140, 8, 'Shipping:', 0, 0, 'R');
-$pdf->Cell(40, 8, number_format($shippingAED, 2), 0, 1, 'R');
+$pdf->Cell(40, 8, number_format($shippingAED, 2) . ' (USD ' . number_format($shipping_usd, 2) . ')', 0, 1, 'R');
 
 // Discount (if applicable)
 if ($discountAmount > 0) {
+    $discount_usd = $discountAmount * $aed_to_usd;
     $pdf->SetTextColor(220, 53, 69); // Red color for discount
     $pdf->Cell(140, 8, 'Discount:', 0, 0, 'R');
-    $pdf->Cell(40, 8, '- ' . number_format($discountAmount, 2), 0, 1, 'R');
+    $pdf->Cell(40, 8, '- ' . number_format($discountAmount, 2) . ' (-USD ' . number_format($discount_usd, 2) . ')', 0, 1, 'R');
     $pdf->SetTextColor(60); // Reset to default color
 }
 
@@ -218,11 +224,12 @@ $vat = 0;
 // $pdf->Cell(40, 8, number_format($vat, 2), 0, 1, 'R');
 
 // Grand Total
+$total_usd = $grand_Total * $aed_to_usd;
 $pdf->Ln(3);
 $pdf->SetFont('Arial', 'B', 14);
 $pdf->SetTextColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
 $pdf->Cell(140, 10, 'GRAND TOTAL:', 0, 0, 'R');
-$pdf->Cell(40, 10, number_format($grand_Total, 2), 0, 1, 'R');
+$pdf->Cell(40, 10, number_format($grand_Total, 2) . ' (USD ' . number_format($total_usd, 2) . ')', 0, 1, 'R');
 $pdf->Ln(15);
 
 // Footer Notes

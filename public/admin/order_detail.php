@@ -482,7 +482,7 @@ if (!empty($order['customer_id'])) {
         <div class="header">
             <h1><i class="fas fa-file-invoice"></i> Order #<?= htmlspecialchars($order['id']) ?></h1>
             <div>
-                <a href="regenerate_invoice.php?id=<?= htmlspecialchars($order['id']) ?>" class="btn btn-edit" title="Edit and regenerate invoice">
+                <a href="edit_invoice.php?id=<?= htmlspecialchars($order['id']) ?>" class="btn btn-edit" title="Edit invoice with visual editor">
                     <i class="fas fa-edit"></i> Edit Invoice
                 </a>
                 <a href="generate_invoice.php?id=<?= htmlspecialchars($order['id']) ?>" class="btn btn-generate" target="_blank" title="View/Generate invoice">
@@ -801,23 +801,31 @@ if (!empty($order['customer_id'])) {
             </div>
             
             <table class="summary-table">
+                <?php 
+                $aed_to_usd = 0.27;
+                $subtotal = ($order['total_amount'] ?? 0) - ($order['shipping_aed'] ?? 0) + ($order['discount_amount'] ?? 0);
+                $subtotal_usd = $subtotal * $aed_to_usd;
+                $shipping_usd = ($order['shipping_aed'] ?? 0) * $aed_to_usd;
+                $total_usd = ($order['total_amount'] ?? 0) * $aed_to_usd;
+                ?>
                 <tr>
                     <td>Subtotal:</td>
-                    <td style="text-align: right;">AED <?= number_format(($order['total_amount'] ?? 0) - ($order['shipping_aed'] ?? 0) + ($order['discount_amount'] ?? 0), 2) ?></td>
+                    <td style="text-align: right;">AED <?= number_format($subtotal, 2) ?> ($<?= number_format($subtotal_usd, 2) ?>)</td>
                 </tr>
                 <?php if (!empty($order['discount_amount'])): ?>
+                <?php $discount_usd = $order['discount_amount'] * $aed_to_usd; ?>
                 <tr>
                     <td>Discount:</td>
-                    <td style="text-align: right;">-AED <?= number_format($order['discount_amount'], 2) ?></td>
+                    <td style="text-align: right;">-AED <?= number_format($order['discount_amount'], 2) ?> (-$<?= number_format($discount_usd, 2) ?>)</td>
                 </tr>
                 <?php endif; ?>
                 <tr>
                     <td>Shipping:</td>
-                    <td style="text-align: right;">AED <?= number_format($order['shipping_aed'] ?? 0, 2) ?></td>
+                    <td style="text-align: right;">AED <?= number_format($order['shipping_aed'] ?? 0, 2) ?> ($<?= number_format($shipping_usd, 2) ?>)</td>
                 </tr>
                 <tr>
                     <td>Total:</td>
-                    <td style="text-align: right;">AED <?= number_format($order['total_amount'] ?? 0, 2) ?></td>
+                    <td style="text-align: right;">AED <?= number_format($order['total_amount'] ?? 0, 2) ?> ($<?= number_format($total_usd, 2) ?>)</td>
                 </tr>
             </table>
         </div>

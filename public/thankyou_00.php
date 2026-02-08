@@ -87,7 +87,7 @@ if (isset($_SESSION['temp_order'])) {
 
 // --- Confirmation function ---
 function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email) {
-        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
+        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method, $customer_phone ?? '', $customer_city ?? '', $customer_country ?? '');
 
         require_once('../includes/generate_invoice_pdf.php');
         $generator = new PDFInvoiceGenerator();

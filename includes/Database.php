@@ -73,5 +73,27 @@ class Database {
     public function getPdo() {
         return $this->conn;
     }
+    
+    /**
+     * Execute a query and fetch a single row
+     * @param string $sql SQL query with placeholders
+     * @param array $params Parameters for the query
+     * @return array|false Single row as associative array or false
+     */
+    public function fetch($sql, $params = []) {
+        $stmt = $this->query($sql, $params);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Execute a query and fetch all rows
+     * @param string $sql SQL query with placeholders
+     * @param array $params Parameters for the query
+     * @return array All rows as associative arrays
+     */
+    public function fetchAll($sql, $params = []) {
+        $stmt = $this->query($sql, $params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

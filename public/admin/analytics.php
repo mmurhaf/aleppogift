@@ -1,0 +1,795 @@
+<?php
+/**
+ * Visitor Analytics & Statistics
+ * AleppoGift - E-commerce Platform
+ */
+
+date_default_timezone_set('Asia/Dubai');
+
+$root_dir = dirname(dirname(__DIR__));
+require_once($root_dir . '/config/config.php');
+require_once($root_dir . '/includes/session_helper.php');
+require_once($root_dir . '/includes/Database.php');
+
+require_admin_login();
+
+$db = new Database();
+
+/**
+ * Format IP address for display (shorten IPv6)
+ */
+function formatIpDisplay($ip) {
+    // Check if it's IPv6
+    if (strpos($ip, ':') !== false && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        // Check for IPv4-mapped IPv6
+        if (preg_match('/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i', $ip, $matches)) {
+            return $matches[1];
+        }
+        
+        // Shorten for display
+        $parts = explode(':', $ip);
+        if (count($parts) > 4) {
+            return substr($parts[0], 0, 4) . ':...:' . substr(end($parts), 0, 4);
+        }
+        return $ip;
+    }
+    
+    // Already has (IPv6) marker from tracker
+    if (strpos($ip, '(IPv6)') !== false) {
+        return $ip;
+    }
+    
+    return $ip;
+}
+
+/**
+ * Format country for display with flag
+ */
+function formatCountry($country, $countryCode) {
+    if (empty($countryCode) || $countryCode === 'XX' || $countryCode === 'LO') {
+        return '<i class="fas fa-globe text-muted me-2"></i> ' . ($country ?: 'Unknown');
+    }
+    
+    // Convert country code to lowercase for flag-icon-css
+    $code = strtolower($countryCode);
+    return '<span class="fi fi-' . $code . ' me-2"></span> ' . ($country ?: 'Unknown');
+}
+
+// Get date range from query parameters
+$startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
+$endDate = $_GET['end_date'] ?? date('Y-m-d');
+$timeframe = $_GET['timeframe'] ?? '30days';
+
+// Preset timeframes
+if ($timeframe && $timeframe != 'custom') {
+    switch ($timeframe) {
+        case 'today':
+            $startDate = $endDate = date('Y-m-d');
+            break;
+        case '7days':
+            $startDate = date('Y-m-d', strtotime('-7 days'));
+            $endDate = date('Y-m-d');
+            break;
+        case '30days':
+            $startDate = date('Y-m-d', strtotime('-30 days'));
+            $endDate = date('Y-m-d');
+            break;
+        case '90days':
+            $startDate = date('Y-m-d', strtotime('-90 days'));
+            $endDate = date('Y-m-d');
+            break;
+        case 'thismonth':
+            $startDate = date('Y-m-01');
+            $endDate = date('Y-m-d');
+            break;
+        case 'lastmonth':
+            $startDate = date('Y-m-01', strtotime('first day of last month'));
+            $endDate = date('Y-m-t', strtotime('last day of last month'));
+            break;
+    }
+}
+
+// Validate dates
+if (strtotime($startDate) === false) $startDate = date('Y-m-d', strtotime('-30 days'));
+if (strtotime($endDate) === false) $endDate = date('Y-m-d');
+if (strtotime($startDate) > strtotime($endDate)) {
+    $temp = $startDate;
+    $startDate = $endDate;
+    $endDate = $temp;
+}
+
+// Get visitor statistics
+$stats = [];
+
+// Total Unique Visitors
+$stats['total_visitors'] = $db->fetch(
+    "SELECT COUNT(DISTINCT ip_address) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    [$startDate, $endDate]
+)['count'];
+
+// Total Visits
+$stats['total_visits'] = $db->fetch(
+    "SELECT COUNT(*) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    [$startDate, $endDate]
+)['count'];
+
+// Average visits per day
+$daysDiff = max(1, (strtotime($endDate) - strtotime($startDate)) / 86400 + 1);
+$stats['avg_visits_per_day'] = round($stats['total_visits'] / $daysDiff, 1);
+
+// Returning visitors (IPs with more than 1 visit)
+$stats['returning_visitors'] = $db->fetch(
+    "SELECT COUNT(DISTINCT ip_address) as count 
+     FROM visitors 
+     WHERE ip_address IN (
+         SELECT ip_address 
+         FROM visitors 
+         WHERE DATE(visit_time) BETWEEN ? AND ?
+         GROUP BY ip_address 
+         HAVING COUNT(*) > 1
+     ) AND DATE(visit_time) BETWEEN ? AND ?",
+    [$startDate, $endDate, $startDate, $endDate]
+)['count'];
+
+// New visitors (first time in the period)
+$stats['new_visitors'] = $stats['total_visitors'] - $stats['returning_visitors'];
+
+// Conversion rate (visitors who became customers)
+$conversions = $db->fetch(
+    "SELECT COUNT(DISTINCT c.id) as count 
+     FROM customers c 
+     WHERE DATE(c.created_at) BETWEEN ? AND ?",
+    [$startDate, $endDate]
+)['count'];
+$stats['conversion_rate'] = $stats['total_visitors'] > 0 
+    ? round(($conversions / $stats['total_visitors']) * 100, 2) 
+    : 0;
+
+// Daily visitor trend
+$dailyVisitors = $db->fetchAll(
+    "SELECT 
+        DATE(visit_time) as date,
+        COUNT(*) as total_visits,
+        COUNT(DISTINCT ip_address) as unique_visitors
+     FROM visitors 
+     WHERE DATE(visit_time) BETWEEN ? AND ?
+     GROUP BY DATE(visit_time)
+     ORDER BY date ASC",
+    [$startDate, $endDate]
+);
+
+// Hourly distribution (for current period)
+$hourlyDistribution = $db->fetchAll(
+    "SELECT 
+        HOUR(visit_time) as hour,
+        COUNT(*) as visits
+     FROM visitors 
+     WHERE DATE(visit_time) BETWEEN ? AND ?
+     GROUP BY HOUR(visit_time)
+     ORDER BY hour ASC",
+    [$startDate, $endDate]
+);
+
+// Day of week distribution
+$weekdayDistribution = $db->fetchAll(
+    "SELECT 
+        DAYNAME(visit_time) as day_name,
+        DAYOFWEEK(visit_time) as day_num,
+        COUNT(*) as visits
+     FROM visitors 
+     WHERE DATE(visit_time) BETWEEN ? AND ?
+     GROUP BY DAYNAME(visit_time), DAYOFWEEK(visit_time)
+     ORDER BY day_num ASC",
+    [$startDate, $endDate]
+);
+
+// Top visitor IPs
+$topVisitors = $db->fetchAll(
+    "SELECT 
+        ip_address,
+        COUNT(*) as visit_count,
+        MIN(visit_time) as first_visit,
+        MAX(visit_time) as last_visit,
+        MAX(country) as country,
+        MAX(country_code) as country_code
+     FROM visitors 
+     WHERE DATE(visit_time) BETWEEN ? AND ?
+     GROUP BY ip_address
+     ORDER BY visit_count DESC
+     LIMIT 20",
+    [$startDate, $endDate]
+);
+
+// Recent visitors
+$recentVisitors = $db->fetchAll(
+    "SELECT ip_address, visit_time, country, country_code 
+     FROM visitors 
+     ORDER BY visit_time DESC 
+     LIMIT 50"
+);
+
+// Visitors by country
+$visitorsByCountry = $db->fetchAll(
+    "SELECT 
+        COALESCE(country, 'Unknown') as country,
+        COALESCE(country_code, 'XX') as country_code,
+        COUNT(*) as visits,
+        COUNT(DISTINCT ip_address) as unique_visitors
+     FROM visitors 
+     WHERE DATE(visit_time) BETWEEN ? AND ?
+     GROUP BY country, country_code
+     ORDER BY visits DESC
+     LIMIT 15",
+    [$startDate, $endDate]
+);
+
+// Compare with previous period
+$periodLength = (strtotime($endDate) - strtotime($startDate)) / 86400;
+$prevStartDate = date('Y-m-d', strtotime($startDate . " -" . ($periodLength + 1) . " days"));
+$prevEndDate = date('Y-m-d', strtotime($startDate . " -1 day"));
+
+$prevStats = [];
+$prevStats['total_visits'] = $db->fetch(
+    "SELECT COUNT(*) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    [$prevStartDate, $prevEndDate]
+)['count'];
+
+$prevStats['total_visitors'] = $db->fetch(
+    "SELECT COUNT(DISTINCT ip_address) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    [$prevStartDate, $prevEndDate]
+)['count'];
+
+// Calculate percentage changes
+$visitChange = $prevStats['total_visits'] > 0 
+    ? round((($stats['total_visits'] - $prevStats['total_visits']) / $prevStats['total_visits']) * 100, 1)
+    : 0;
+
+$visitorChange = $prevStats['total_visitors'] > 0 
+    ? round((($stats['total_visitors'] - $prevStats['total_visitors']) / $prevStats['total_visitors']) * 100, 1)
+    : 0;
+
+$pageTitle = "Visitor Analytics";
+?>
+
+<?php require_once 'header.php'; ?>
+
+<style>
+    .card-header h5 {
+        margin: 0;
+    }
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #fff;
+    }
+    .table-responsive {
+        position: relative;
+    }
+    canvas {
+        max-height: 400px;
+    }
+</style>
+
+    <div class="page-header">
+        <h1><i class="fas fa-chart-line me-2"></i>Visitor Analytics</h1>
+        <div class="header-actions">
+            <a href="backfill_visitor_countries.php" class="btn btn-outline-primary btn-sm" target="_blank" title="Backfill missing country data">
+                <i class="fas fa-globe me-1"></i>Backfill Countries
+            </a>
+        </div>
+    </div>
+
+    <!-- Date Range Selector -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>Analytics Period</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <select name="timeframe" class="form-select form-select-sm" id="timeframeSelect">
+                        <option value="today" <?php echo $timeframe == 'today' ? 'selected' : ''; ?>>Today</option>
+                        <option value="7days" <?php echo $timeframe == '7days' ? 'selected' : ''; ?>>Last 7 Days</option>
+                        <option value="30days" <?php echo $timeframe == '30days' ? 'selected' : ''; ?>>Last 30 Days</option>
+                        <option value="90days" <?php echo $timeframe == '90days' ? 'selected' : ''; ?>>Last 90 Days</option>
+                        <option value="thismonth" <?php echo $timeframe == 'thismonth' ? 'selected' : ''; ?>>This Month</option>
+                        <option value="lastmonth" <?php echo $timeframe == 'lastmonth' ? 'selected' : ''; ?>>Last Month</option>
+                        <option value="custom" <?php echo $timeframe == 'custom' ? 'selected' : ''; ?>>Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-auto" id="customDates" style="display: <?php echo $timeframe == 'custom' ? 'block' : 'none'; ?>;">
+                    <input type="date" name="start_date" class="form-control form-control-sm" value="<?php echo $startDate; ?>">
+                </div>
+                <div class="col-auto" id="customDatesTo" style="display: <?php echo $timeframe == 'custom' ? 'block' : 'none'; ?>;">
+                    <span>to</span>
+                </div>
+                <div class="col-auto" id="customDatesEnd" style="display: <?php echo $timeframe == 'custom' ? 'block' : 'none'; ?>;">
+                    <input type="date" name="end_date" class="form-control form-control-sm" value="<?php echo $endDate; ?>">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-search me-1"></i>Apply
+                    </button>
+                </div>
+            </form>
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <?php echo date('M d, Y', strtotime($startDate)); ?> - <?php echo date('M d, Y', strtotime($endDate)); ?>
+                    (<?php echo round($daysDiff); ?> days)
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <!-- Total Visits -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Visits</h6>
+                            <h3 class="mb-0"><?php echo number_format($stats['total_visits']); ?></h3>
+                            <?php if ($visitChange != 0): ?>
+                            <small class="<?php echo $visitChange > 0 ? 'text-success' : 'text-danger'; ?>">
+                                <i class="fas fa-arrow-<?php echo $visitChange > 0 ? 'up' : 'down'; ?>"></i>
+                                <?php echo abs($visitChange); ?>% vs previous period
+                            </small>
+                            <?php endif; ?>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-eye fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Unique Visitors -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Unique Visitors</h6>
+                            <h3 class="mb-0"><?php echo number_format($stats['total_visitors']); ?></h3>
+                            <?php if ($visitorChange != 0): ?>
+                            <small class="<?php echo $visitorChange > 0 ? 'text-success' : 'text-danger'; ?>">
+                                <i class="fas fa-arrow-<?php echo $visitorChange > 0 ? 'up' : 'down'; ?>"></i>
+                                <?php echo abs($visitorChange); ?>% vs previous period
+                            </small>
+                            <?php endif; ?>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Avg Visits/Day -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Avg Visits/Day</h6>
+                            <h3 class="mb-0"><?php echo number_format($stats['avg_visits_per_day'], 1); ?></h3>
+                            <small class="text-muted">
+                                <?php echo number_format($stats['new_visitors']); ?> new / 
+                                <?php echo number_format($stats['returning_visitors']); ?> returning
+                            </small>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Conversion Rate -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Conversion Rate</h6>
+                            <h3 class="mb-0"><?php echo $stats['conversion_rate']; ?>%</h3>
+                            <small class="text-muted">
+                                <?php echo number_format($conversions); ?> visitors became customers
+                            </small>
+                        </div>
+                        <div class="text-warning">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- End Statistics Cards Row -->
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <!-- Daily Visitors Trend -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>Daily Visitor Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyVisitorsChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hourly Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Peak Hours</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="hourlyChart" height="160"></canvas>
+                </div>
+            </div>
+        </div>
+    </div><!-- End Charts Row 1 -->
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <!-- Day of Week Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-week me-2"></i>Traffic by Day of Week</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="weekdayChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visitor Type Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Visitor Types</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="visitorTypeChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visitors by Country -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-globe me-2"></i>Visitors by Country</h5>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (!empty($visitorsByCountry)): ?>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="sticky-top bg-white">
+                                <tr>
+                                    <th>Country</th>
+                                    <th class="text-end">Visits</th>
+                                    <th class="text-end">Unique</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($visitorsByCountry as $row): ?>
+                                <tr>
+                                    <td>
+                                        <?php echo formatCountry($row['country'], $row['country_code']); ?>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-primary"><?php echo number_format($row['visits']); ?></span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-secondary"><?php echo number_format($row['unique_visitors']); ?></span>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <div class="text-center py-4">
+                        <p class="text-muted">No country data yet</p>
+                        <small class="text-muted">Country data will appear for new visitors</small>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div><!-- End Charts Row 2 -->
+
+    <!-- Tables Row -->
+    <div class="row mb-4">
+        <!-- Top Visitors -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Top Visitors by Activity</h5>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (!empty($topVisitors)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Country</th>
+                                    <th>Visits</th>
+                                    <th>First Visit</th>
+                                    <th>Last Visit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach (array_slice($topVisitors, 0, 10) as $visitor): ?>
+                                <tr>
+                                    <td>
+                                        <code><?php echo htmlspecialchars(formatIpDisplay($visitor['ip_address'])); ?></code>
+                                    </td>
+                                    <td>
+                                        <span title="<?php echo htmlspecialchars($visitor['country'] ?? 'Unknown'); ?>">
+                                            <?php echo formatCountry($visitor['country'] ?? null, $visitor['country_code'] ?? null); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary"><?php echo number_format($visitor['visit_count']); ?></span>
+                                    </td>
+                                    <td>
+                                        <small><?php echo date('M d, H:i', strtotime($visitor['first_visit'])); ?></small>
+                                    </td>
+                                    <td>
+                                        <small><?php echo date('M d, H:i', strtotime($visitor['last_visit'])); ?></small>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <div class="text-center py-4">
+                        <p class="text-muted">No visitor data for this period</p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Visitors -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Visitors</h5>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (!empty($recentVisitors)): ?>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="sticky-top bg-white">
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Country</th>
+                                    <th>Visit Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($recentVisitors as $visitor): ?>
+                                <tr>
+                                    <td>
+                                        <code><?php echo htmlspecialchars(formatIpDisplay($visitor['ip_address'])); ?></code>
+                                    </td>
+                                    <td>
+                                        <span title="<?php echo htmlspecialchars($visitor['country'] ?? 'Unknown'); ?>">
+                                            <?php echo formatCountry($visitor['country'] ?? null, $visitor['country_code'] ?? null); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small><?php echo date('M d, Y H:i:s', strtotime($visitor['visit_time'])); ?></small>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <div class="text-center py-4">
+                        <p class="text-muted">No recent visitors</p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div><!-- End Tables Row -->
+
+</div><!-- End main-content -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Timeframe selector
+document.getElementById('timeframeSelect').addEventListener('change', function() {
+    const customDates = document.getElementById('customDates');
+    const customDatesTo = document.getElementById('customDatesTo');
+    const customDatesEnd = document.getElementById('customDatesEnd');
+    
+    if (this.value === 'custom') {
+        customDates.style.display = 'block';
+        customDatesTo.style.display = 'block';
+        customDatesEnd.style.display = 'block';
+    } else {
+        customDates.style.display = 'none';
+        customDatesTo.style.display = 'none';
+        customDatesEnd.style.display = 'none';
+        this.form.submit();
+    }
+});
+
+// Chart colors
+const primaryColor = 'rgb(13, 110, 253)';
+const successColor = 'rgb(25, 135, 84)';
+const infoColor = 'rgb(13, 202, 240)';
+const warningColor = 'rgb(255, 193, 7)';
+const dangerColor = 'rgb(220, 53, 69)';
+
+// Daily Visitors Chart
+const dailyVisitorsCtx = document.getElementById('dailyVisitorsChart').getContext('2d');
+const dailyVisitorsChart = new Chart(dailyVisitorsCtx, {
+    type: 'line',
+    data: {
+        labels: <?php echo json_encode(array_column($dailyVisitors, 'date')); ?>,
+        datasets: [{
+            label: 'Total Visits',
+            data: <?php echo json_encode(array_column($dailyVisitors, 'total_visits')); ?>,
+            borderColor: primaryColor,
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Unique Visitors',
+            data: <?php echo json_encode(array_column($dailyVisitors, 'unique_visitors')); ?>,
+            borderColor: successColor,
+            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+
+// Hourly Distribution Chart
+const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+const hourlyData = <?php echo json_encode($hourlyDistribution); ?>;
+
+// Fill in missing hours with 0
+const hourlyFilled = [];
+for (let i = 0; i < 24; i++) {
+    const found = hourlyData.find(h => parseInt(h.hour) === i);
+    hourlyFilled.push(found ? parseInt(found.visits) : 0);
+}
+
+const hourlyChart = new Chart(hourlyCtx, {
+    type: 'bar',
+    data: {
+        labels: Array.from({length: 24}, (_, i) => i + ':00'),
+        datasets: [{
+            label: 'Visits by Hour',
+            data: hourlyFilled,
+            backgroundColor: infoColor,
+            borderColor: infoColor,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+
+// Weekday Distribution Chart
+const weekdayCtx = document.getElementById('weekdayChart').getContext('2d');
+const weekdayData = <?php echo json_encode($weekdayDistribution); ?>;
+
+const weekdayChart = new Chart(weekdayCtx, {
+    type: 'bar',
+    data: {
+        labels: weekdayData.map(d => d.day_name),
+        datasets: [{
+            label: 'Visits',
+            data: weekdayData.map(d => parseInt(d.visits)),
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba(255, 159, 64, 0.7)',
+                'rgba(199, 199, 199, 0.7)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+
+// Visitor Type Chart (New vs Returning)
+const visitorTypeCtx = document.getElementById('visitorTypeChart').getContext('2d');
+const visitorTypeChart = new Chart(visitorTypeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['New Visitors', 'Returning Visitors'],
+        datasets: [{
+            data: [<?php echo $stats['new_visitors']; ?>, <?php echo $stats['returning_visitors']; ?>],
+            backgroundColor: [successColor, warningColor],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+
+</div><!-- End main-content -->
+</body>
+</html>

@@ -3,7 +3,9 @@
  * Simplified Cart Operations
  * Handles all cart operations in one file
  */
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once('../../config/config.php');
 require_once('../../includes/Database.php');
 

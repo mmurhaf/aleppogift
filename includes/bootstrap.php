@@ -90,3 +90,22 @@ Security::logSecurityEvent('Application bootstrap completed', 'info', [
     'session_id' => session_id(),
     'user_ip' => isset($_SESSION['user_ip']) ? $_SESSION['user_ip'] : $client_ip
 ]);
+
+// =====================================================
+// VISITOR TRACKING
+// =====================================================
+// Load and initialize visitor tracking (for analytics)
+if (file_exists(__DIR__ . '/visitor_tracker.php')) {
+    require_once(__DIR__ . '/visitor_tracker.php');
+    
+    // Track visitor after database is available
+    // Note: Tracking is deferred until a database connection is made
+    // to avoid initializing DB just for tracking
+    register_shutdown_function(function() {
+        // Only track if a database connection was established during the request
+        global $db;
+        if (isset($db) && $db instanceof Database) {
+            trackVisitor($db);
+        }
+    });
+}

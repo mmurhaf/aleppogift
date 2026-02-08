@@ -13,20 +13,25 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// Additional debug information to track the issue
-error_log("Cart Preview Debug - Session ID: " . session_id());
-error_log("Cart Preview Debug - Request Time: " . date('Y-m-d H:i:s'));
-error_log("Cart Preview Debug - Cart data: " . print_r($_SESSION['cart'] ?? [], true));
-error_log("Cart Preview Debug - Session file: " . session_save_path() . '/sess_' . session_id());
+// Debug logging - only enabled when DEBUG_MODE is true
+if (defined('DEBUG_MODE') && DEBUG_MODE) {
+    error_log("Cart Preview Debug - Session ID: " . session_id());
+    error_log("Cart Preview Debug - Request Time: " . date('Y-m-d H:i:s'));
+    error_log("Cart Preview Debug - Cart data: " . print_r($_SESSION['cart'] ?? [], true));
+}
 
 // Ensure session is writable and readable
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
-    error_log("Cart Preview Debug - Initialized empty cart array");
 }
 
-// Embed a small timestamp marker in the returned HTML to help debug empty responses
-echo "<!-- CART_PREVIEW_TS: " . date('c') . " -->\n";
+// Quick validation - remove invalid items
+foreach ($_SESSION['cart'] as $key => $item) {
+    if (!isset($item['product_id']) || $item['product_id'] < 1) {
+        unset($_SESSION['cart'][$key]);
+    }
+}
+$_SESSION['cart'] = array_values($_SESSION['cart']);
 
 try {
     // Include cart helpers
@@ -108,15 +113,21 @@ try {
         $lineTotal = $item['quantity'] * $price;
         $total += $lineTotal;
         $total_items += $item['quantity'];
+        
+        // Use helper function to resolve image path
+        $resolved_image = function_exists('resolveImagePath') 
+            ? resolveImagePath($display_image) 
+            : ($display_image ?: 'uploads/default-product.jpg');
 ?>
 <div class="cart-item-preview d-flex align-items-center p-3 border-bottom" data-product-id="<?= $item['product_id'] ?>" style="gap: 12px;">
     <div class="item-image-small">
-        <img src="<?= htmlspecialchars(str_replace("../", "", $display_image ?: 'uploads/default-product.jpg')) ?>" 
+        <img src="<?= htmlspecialchars($resolved_image) ?>" 
              alt="<?= htmlspecialchars($product['name_en']) ?>"
              style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: <?= (!empty($variation) && !empty($variation['variant_image'])) ? '2px solid #E67B2E' : '1px solid #e9ecef' ?>;"
              <?php if (!empty($variation) && !empty($variation['variant_image'])): ?>
              title="Selected variant image"
-             <?php endif; ?>>
+             <?php endif; ?>
+             onerror="this.src='uploads/default-product.jpg'">
     </div>
     <div class="item-info flex-grow-1" style="min-width: 0;">
         <div class="item-name fw-semibold text-truncate" style="font-size: 0.9rem; color: #2c3e50;">

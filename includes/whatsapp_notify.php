@@ -1,12 +1,22 @@
 <?php
-function sendAdminWhatsApp($order_id, $name, $total, $method = 'COD') {
+function sendAdminWhatsApp($order_id, $name, $total, $method = 'COD', $customer_phone = '', $city = '', $country = '') {
     $phone = '971561125320';
     $apikey = '5574813';
 
     $methodLabel = ($method === 'COD') ? '💵 COD' : '💳 Paid';
 
     // Build plain message first (raw, with line breaks)
-    $message = "📦 New Order - AleppoGift\nOrder ID: #$order_id\n$methodLabel\nCustomer: $name\nTotal: AED $total";
+    $message = "📦 New Order - AleppoGift\nOrder ID: #$order_id\n$methodLabel\nCustomer: $name";
+    if ($customer_phone) {
+        $message .= "\nPhone: $customer_phone";
+    }
+    if ($city || $country) {
+        $location = trim(($city ? $city : '') . ($city && $country ? ', ' : '') . ($country ? $country : ''));
+        if ($location) {
+            $message .= "\nLocation: $location";
+        }
+    }
+    $message .= "\nTotal: AED $total";
 
     // URL-encode the whole message
     $messageEncoded = urlencode($message);

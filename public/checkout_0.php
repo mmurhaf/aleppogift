@@ -332,7 +332,7 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     
     try {
         // Send WhatsApp notification to admin
-        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
+        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method, $phone, $city, $country);
 
         // Generate and send invoice
         require_once('../includes/generate_invoice_pdf.php');

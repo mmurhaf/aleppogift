@@ -47,6 +47,42 @@ $variations = $db->query("
     WHERE pv.product_id = :id
     ORDER BY pi.display_order ASC, pv.id ASC
 ", ['id' => $product_id])->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch category information
+$category = $db->query("SELECT * FROM categories WHERE id = :id", ['id' => $product['category_id']])->fetch(PDO::FETCH_ASSOC);
+
+// Fetch brand information
+$brand = $db->query("SELECT * FROM brands WHERE id = :id", ['id' => $product['brand_id']])->fetch(PDO::FETCH_ASSOC);
+
+// Fetch related products from same category (3 products, excluding current)
+$related_by_category = $db->query("
+    SELECT p.*, pi.image_path 
+    FROM products p
+    LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
+    WHERE p.category_id = :category_id 
+    AND p.id != :product_id 
+    AND p.status = 1
+    ORDER BY RAND()
+    LIMIT 3
+", [
+    'category_id' => $product['category_id'],
+    'product_id' => $product_id
+])->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch related products from same brand (3 products, excluding current)
+$related_by_brand = $db->query("
+    SELECT p.*, pi.image_path 
+    FROM products p
+    LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = TRUE
+    WHERE p.brand_id = :brand_id 
+    AND p.id != :product_id 
+    AND p.status = 1
+    ORDER BY RAND()
+    LIMIT 3
+", [
+    'brand_id' => $product['brand_id'],
+    'product_id' => $product_id
+])->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -349,6 +385,20 @@ $variations = $db->query("
                 flex-direction: column;
             }
         }
+        
+        /* Related Products Styling */
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+        }
+        
+        .uae-symbol {
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -429,7 +479,7 @@ $variations = $db->query("
 
                             <div class="product-price">
                                 <span class="price-main">
-                                    <span class="uae-symbol">د.إ</span><?php echo number_format($product['price']); ?>
+                                    <span class="uae-symbol">AED</span><?php echo number_format($product['price']); ?>
                                 </span>
                                 <span class="price-usd">
                                     $<?php echo number_format($product['price']/3.68, 2); ?>
@@ -540,6 +590,156 @@ $variations = $db->query("
                     </div>
                 </div>
             </div>
+
+            <!-- Product Information Section -->
+            <div class="row mt-4 mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h4 class="mb-4"><i class="fas fa-info-circle me-2 text-primary"></i>Product Information</h4>
+                            
+                            <div class="row mb-4">
+                                <!-- Category Link -->
+                                <?php if ($category): ?>
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center p-3 bg-light rounded">
+                                        <i class="fas fa-folder-open fa-2x text-primary me-3"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Category</small>
+                                            <a href="index.php?category=<?php echo $category['id']; ?>" class="h6 mb-0 text-decoration-none">
+                                                <?php echo htmlspecialchars($category['name_en']); ?>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <!-- Brand Link -->
+                                <?php if ($brand): ?>
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center p-3 bg-light rounded">
+                                        <i class="fas fa-tag fa-2x text-success me-3"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Brand</small>
+                                            <a href="index.php?brand=<?php echo $brand['id']; ?>" class="h6 mb-0 text-decoration-none">
+                                                <?php echo htmlspecialchars($brand['name_en']); ?>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Products Section -->
+            <?php if (!empty($related_by_category) || !empty($related_by_brand)): ?>
+            <div class="row mt-4 mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h4 class="mb-4"><i class="fas fa-boxes me-2" style="color: #E67B2E;"></i>You May Also Like</h4>
+                            
+                            <!-- Related Products from Same Category -->
+                            <?php if (!empty($related_by_category)): ?>
+                            <div class="mb-4">
+                                <h5 class="text-muted mb-3">
+                                    <i class="fas fa-folder me-2"></i>More from 
+                                    <a href="index.php?category=<?php echo $category['id']; ?>" class="text-decoration-none">
+                                        <?php echo htmlspecialchars($category['name_en']); ?>
+                                    </a>
+                                </h5>
+                                <div class="row">
+                                    <?php foreach ($related_by_category as $related): ?>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100 shadow-sm hover-lift">
+                                            <a href="product.php?id=<?php echo $related['id']; ?>" class="text-decoration-none">
+                                                <div class="position-relative" style="height: 200px; overflow: hidden;">
+                                                    <?php if ($related['image_path']): ?>
+                                                        <img src="<?php echo str_replace('../', '', $related['image_path']); ?>" 
+                                                             class="card-img-top w-100 h-100" 
+                                                             style="object-fit: cover;"
+                                                             alt="<?php echo htmlspecialchars($related['name_en']); ?>">
+                                                    <?php else: ?>
+                                                        <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-dark mb-2" style="height: 40px; overflow: hidden;">
+                                                        <?php echo htmlspecialchars($related['name_en']); ?>
+                                                    </h6>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="text-primary fw-bold">
+                                                            <span class="uae-symbol">AED</span><?php echo number_format($related['price']); ?>
+                                                        </span>
+                                                        <small class="text-muted">
+                                                            $<?php echo number_format($related['price']/3.68, 2); ?>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Related Products from Same Brand -->
+                            <?php if (!empty($related_by_brand)): ?>
+                            <div>
+                                <h5 class="text-muted mb-3">
+                                    <i class="fas fa-tag me-2"></i>More from 
+                                    <a href="index.php?brand=<?php echo $brand['id']; ?>" class="text-decoration-none">
+                                        <?php echo htmlspecialchars($brand['name_en']); ?>
+                                    </a>
+                                </h5>
+                                <div class="row">
+                                    <?php foreach ($related_by_brand as $related): ?>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100 shadow-sm hover-lift">
+                                            <a href="product.php?id=<?php echo $related['id']; ?>" class="text-decoration-none">
+                                                <div class="position-relative" style="height: 200px; overflow: hidden;">
+                                                    <?php if ($related['image_path']): ?>
+                                                        <img src="<?php echo str_replace('../', '', $related['image_path']); ?>" 
+                                                             class="card-img-top w-100 h-100" 
+                                                             style="object-fit: cover;"
+                                                             alt="<?php echo htmlspecialchars($related['name_en']); ?>">
+                                                    <?php else: ?>
+                                                        <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-dark mb-2" style="height: 40px; overflow: hidden;">
+                                                        <?php echo htmlspecialchars($related['name_en']); ?>
+                                                    </h6>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="text-primary fw-bold">
+                                                            <span class="uae-symbol">AED</span><?php echo number_format($related['price']); ?>
+                                                        </span>
+                                                        <small class="text-muted">
+                                                            $<?php echo number_format($related['price']/3.68, 2); ?>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- Additional Information -->
             <div class="row mt-4">

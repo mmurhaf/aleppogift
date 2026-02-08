@@ -39,12 +39,25 @@ if (isset($_POST['add_to_cart'])) {
     exit;
 }
 
-// Handle Remove item
-if (isset($_GET['remove'])) {
-    $remove_key = (int)$_GET['remove'];
+// Generate CSRF token if not exists
+if (empty($_SESSION['cart_csrf_token'])) {
+    $_SESSION['cart_csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Handle Remove item (POST with CSRF protection)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_item'])) {
+    // Validate CSRF token
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['cart_csrf_token']) {
+        $_SESSION['cart_error'] = 'Invalid security token. Please try again.';
+        header("Location: cart.php");
+        exit;
+    }
+    
+    $remove_key = (int)$_POST['remove_item'];
     if (isset($_SESSION['cart'][$remove_key])) {
         unset($_SESSION['cart'][$remove_key]);
         $_SESSION['cart'] = array_values($_SESSION['cart']);
+        $_SESSION['cart_success'] = 'Item removed from cart.';
     }
     header("Location: cart.php");
     exit;
@@ -89,7 +102,7 @@ if (!empty($invalid_items)) {
     <title>Shopping Cart - AleppoGift</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
     
     <!-- Google Fonts for Enhanced Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -872,9 +885,34 @@ if (!empty($invalid_items)) {
             });
 
             // Enhanced quantity controls
+            // CSRF token for secure operations
+            const csrfToken = '<?= htmlspecialchars($_SESSION['cart_csrf_token'] ?? '') ?>';
+            
+            // Helper function to remove item via POST
+            function removeCartItem(itemKey) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'cart.php';
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                const removeInput = document.createElement('input');
+                removeInput.type = 'hidden';
+                removeInput.name = 'remove_item';
+                removeInput.value = itemKey;
+                form.appendChild(removeInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+            
             document.querySelectorAll('.update-qty').forEach(button => {
                 button.addEventListener('click', function() {
-                    const productId = this.dataset.id;
+                    const itemKey = this.dataset.id;
                     const action = this.dataset.action;
                     const quantityDisplay = this.closest('.quantity-control').querySelector('.quantity-display');
                     const currentQty = parseInt(quantityDisplay.textContent);
@@ -883,8 +921,8 @@ if (!empty($invalid_items)) {
                     
                     if (newQty < 1) {
                         if (confirm('Remove this item from cart?')) {
-                            // Handle remove
-                            window.location.href = `?remove=${productId}`;
+                            // Handle remove via POST with CSRF
+                            removeCartItem(itemKey);
                         }
                         return;
                     }
@@ -897,16 +935,16 @@ if (!empty($invalid_items)) {
                 });
             });
 
-            // Enhanced remove buttons
+            // Enhanced remove buttons - using POST with CSRF
             document.querySelectorAll('.remove-item').forEach(button => {
                 button.addEventListener('click', function() {
-                    const productId = this.dataset.id;
+                    const itemKey = this.dataset.id;
                     const itemElement = this.closest('.cart-item');
                     
                     if (confirm('Are you sure you want to remove this item from your cart?')) {
                         itemElement.style.animation = 'fadeOut 0.3s ease-out forwards';
                         setTimeout(() => {
-                            window.location.href = `?remove=${productId}`;
+                            removeCartItem(itemKey);
                         }, 300);
                     }
                 });

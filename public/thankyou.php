@@ -106,7 +106,7 @@ if (isset($_SESSION['temp_order'])) {
 
 // --- Confirmation function ---
 function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email, $customer_data = []) {
-    sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
+    sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method, $customer_phone ?? '', $customer_city ?? '', $customer_country ?? '');
 
     // Generate invoice PDF
     $fullPath = '';
@@ -452,7 +452,11 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
             </div>
             <div class="order-detail">
                 <span class="order-detail-label">Total Amount:</span>
-                <span class="order-detail-value text-success fw-bold">AED <?= number_format($order['total_amount'], 2); ?></span>
+                <?php 
+                $aed_to_usd = 0.27;
+                $total_usd = $order['total_amount'] * $aed_to_usd;
+                ?>
+                <span class="order-detail-value text-success fw-bold">AED <?= number_format($order['total_amount'], 2); ?> ($<?= number_format($total_usd, 2); ?>)</span>
             </div>
         </div>
 

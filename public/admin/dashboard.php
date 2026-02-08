@@ -201,6 +201,7 @@ function countOrderItems($order_id) {
         </div>
         <ul class="sidebar-menu">
             <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            <li><a href="analytics.php"><i class="fas fa-chart-line"></i> <span>Analytics</span></a></li>
             <li><a href="products.php"><i class="fas fa-box-open"></i> <span>Products</span></a></li>
             <li><a href="categories.php"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
             <li><a href="brands.php"><i class="fas fa-copyright"></i> <span>Brands</span></a></li>
@@ -210,7 +211,9 @@ function countOrderItems($order_id) {
             <li><a href="payment_links.php"><i class="fas fa-link"></i> <span>Payment Links</span></a></li>
             <li><a href="quick_payment_link.php"><i class="fas fa-bolt"></i> <span>Quick Payment</span></a></li>
             <li><a href="regenerate_invoice.php"><i class="fas fa-file-invoice-dollar"></i> <span>Regenerate Invoice</span></a></li>
+            <li><a href="edit_invoice.php"><i class="fas fa-file-invoice"></i> <span>Edit Invoice</span></a></li>
             <li><a href="customers.php"><i class="fas fa-users"></i> <span>Customers</span></a></li>
+            <li><a href="http://localhost:8501" target="_blank"><i class="fas fa-robot"></i> <span>Social Media Bot</span></a></li>
             <li><a href="../testing/" target="_blank"><i class="fas fa-flask"></i> <span>Testing Dashboard</span></a></li>
         </ul>
         <button class="logout-btn" onclick="window.location.href='logout.php'">
@@ -271,7 +274,20 @@ function countOrderItems($order_id) {
                     </div>
                 </div>
             </div>
+            
+            <div class="card" style="cursor: pointer; transition: transform 0.3s;" onclick="window.open('http://localhost:8501', '_blank')" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Social Media Bot</div>
+                        <div class="card-value" style="font-size: 1.2rem; color: #667eea;">Launch</div>
+                    </div>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                </div>
+            </div>
         </div>
+
 
         <!-- Additional content can be added here -->
         <div class="card">
@@ -337,12 +353,53 @@ function countOrderItems($order_id) {
                                         <a href="order_detail.php?id=<?php echo $order['id']; ?>" class="action-btn view">
                                             <i class="fas fa-eye"></i> View
                                         </a>
+                                        <a href="edit_invoice.php?id=<?php echo $order['id']; ?>" class="action-btn" style="background: #e67b2e;" title="Edit Invoice">
+                                            <i class="fas fa-file-invoice"></i> Edit Invoice
+                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Social Media Bot Instructions -->
+        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 30px;">
+            <div style="padding: 20px;">
+                <h3 style="color: white; margin-bottom: 15px;">
+                    <i class="fas fa-robot"></i> Social Media Bot - Quick Start
+                </h3>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="margin-bottom: 10px; font-weight: 500;">
+                        <i class="fas fa-info-circle"></i> To start the Social Media Automation System:
+                    </p>
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; margin-top: 10px;">
+                        <div style="margin-bottom: 8px;">
+                            <i class="fas fa-terminal" style="margin-right: 8px;"></i>
+                            <code style="color: #ffd700;">cd C:\xampp\htdocs\aleppogift\social_bot_local</code>
+                        </div>
+                        <div>
+                            <i class="fas fa-play-circle" style="margin-right: 8px;"></i>
+                            <code style="color: #7fff00;">streamlit run app.py</code>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <span style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                        <i class="fas fa-video"></i> Auto-Generate Videos
+                    </span>
+                    <span style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                        <i class="fab fa-tiktok"></i> TikTok
+                    </span>
+                    <span style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                        <i class="fab fa-instagram"></i> Instagram
+                    </span>
+                    <span style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                        <i class="fab fa-facebook"></i> Facebook
+                    </span>
                 </div>
             </div>
         </div>
