@@ -27,13 +27,14 @@ try {
     die("Database error: " . $e->getMessage());
 }
 
-// Fetch order items with product & variation - add error handling
+// Fetch order items with resilient fallbacks for mixed schemas/data
+$items = [];
 try {
     $items = $db->query("
         SELECT 
             oi.*, 
-            p.name_en AS product_name, 
-            p.id,
+            COALESCE(NULLIF(p.name_en, ''), NULLIF(oi.product_name, ''), NULLIF(p.name_ar, ''), 'Unknown Product') AS product_name,
+            p.id AS product_exists_id,
             pv.id AS variation_id_info,
             pv.size, 
             pv.color,
@@ -45,9 +46,48 @@ try {
         LEFT JOIN product_images pi_variant ON pv.image_id = pi_variant.id
         LEFT JOIN product_images pi_main ON p.id = pi_main.product_id AND pi_main.is_main = 1
         WHERE oi.order_id = :order_id
+        ORDER BY oi.id ASC
     ", ['order_id' => $order_id])->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
-    die("Database error fetching items: " . $e->getMessage());
+    error_log("Order detail advanced item query failed for order #{$order_id}: " . $e->getMessage());
+    try {
+        $items = $db->query("
+            SELECT 
+                oi.*, 
+                COALESCE(NULLIF(p.name_en, ''), NULLIF(oi.product_name, ''), NULLIF(p.name_ar, ''), 'Unknown Product') AS product_name,
+                p.id AS product_exists_id,
+                NULL AS variation_id_info,
+                NULL AS size,
+                NULL AS color,
+                NULL AS image_id,
+                pi_main.image_path AS image
+            FROM order_items oi
+            LEFT JOIN products p ON oi.product_id = p.id
+            LEFT JOIN product_images pi_main ON p.id = pi_main.product_id AND pi_main.is_main = 1
+            WHERE oi.order_id = :order_id
+            ORDER BY oi.id ASC
+        ", ['order_id' => $order_id])->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $fallbackException) {
+        die("Database error fetching items: " . $fallbackException->getMessage());
+    }
+}
+
+$orderBundles = [];
+$bundleNames = [];
+$bundleDiscountTotal = 0.0;
+try {
+    $orderBundles = $db->query(
+        "SELECT * FROM order_bundles WHERE order_id = :order_id ORDER BY id ASC",
+        ['order_id' => $order_id]
+    )->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($orderBundles as $orderBundle) {
+        $bundleDiscountTotal += (float)$orderBundle['discount_amount'];
+        if (!empty($orderBundle['bundle_id'])) {
+            $bundleNames[(int)$orderBundle['bundle_id']] = $orderBundle['bundle_name_en'];
+        }
+    }
+} catch (Exception $e) {
+    error_log("Order bundle lookup failed for order #{$order_id}: " . $e->getMessage());
 }
 
 // Fetch customer data with error handling
@@ -485,19 +525,20 @@ if (!empty($order['customer_id'])) {
                 <a href="edit_invoice.php?id=<?= htmlspecialchars($order['id']) ?>" class="btn btn-edit" title="Edit invoice with visual editor">
                     <i class="fas fa-edit"></i> Edit Invoice
                 </a>
+                <a href="packing_slip.php?id=<?= htmlspecialchars($order['id']) ?>" class="btn btn-generate" target="_blank">Packing slip</a>
                 <a href="generate_invoice.php?id=<?= htmlspecialchars($order['id']) ?>" class="btn btn-generate" target="_blank" title="View/Generate invoice">
                     <i class="fas fa-file-pdf"></i> View Invoice
                 </a>
                 <a href="#" class="btn btn-print" onclick="window.print()"><i class="fas fa-print"></i> Print Page</a>
-                <a href="dashboard.php" class="btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+                <a href="orders.php" class="btn"><i class="fas fa-arrow-left"></i> Back to Orders</a>
             </div>
         </div>
         
         <div class="card">
             <div class="card-header">
                 <h2><i class="fas fa-info-circle"></i> Order Information</h2>
-                <span class="status-badge status-<?= strtolower($order['payment_status']) ?>">
-                    <?= ucfirst($order['payment_status']) ?>
+                <span class="status-badge status-<?= strtolower((string)($order['payment_status'] ?? 'pending')) ?>">
+                    <?= ucfirst((string)($order['payment_status'] ?? 'pending')) ?>
                 </span>
             </div>
             
@@ -523,12 +564,12 @@ if (!empty($order['customer_id'])) {
                     
                     <div class="info-item">
                         <span class="info-label">Shipping Cost</span>
-                        <span class="info-value">AED <?= number_format($order['shipping_aed'], 2) ?></span>
+                        <span class="info-value">AED <?= number_format((float)($order['shipping_aed'] ?? 0), 2) ?></span>
                     </div>
                     
                     <div class="info-item">
                         <span class="info-label">Total Weight</span>
-                        <span class="info-value"><?= number_format($order['total_weight']) ?> g</span>
+                        <span class="info-value"><?= number_format((float)($order['total_weight'] ?? 0)) ?> g</span>
                     </div>
                     
                     <div class="info-item">
@@ -536,6 +577,12 @@ if (!empty($order['customer_id'])) {
                         <span class="info-value"><?= $order['coupon_code'] ?: '—' ?></span>
                     </div>
                     
+                    <?php if ($bundleDiscountTotal > 0): ?>
+                    <div class="info-item">
+                        <span class="info-label">Bundle discount</span>
+                        <span class="info-value">AED <?= number_format($bundleDiscountTotal, 2) ?></span>
+                    </div>
+                    <?php endif; ?>
                     <div class="info-item">
                         <span class="info-label">Discount</span>
                         <span class="info-value">
@@ -582,7 +629,7 @@ if (!empty($order['customer_id'])) {
                     
                     <div class="info-item">
                         <span class="info-label">Member Since</span>
-                        <span class="info-value"><?= $customer['created_at'] ? date('F j, Y', strtotime($customer['created_at'])) : '—' ?></span>
+                        <span class="info-value"><?= !empty($customer['created_at']) ? date('F j, Y', strtotime($customer['created_at'])) : '—' ?></span>
                     </div>
                 </div>
             </div>
@@ -738,10 +785,15 @@ if (!empty($order['customer_id'])) {
                             <tr>
                                 <td style="min-width: 250px;">
                                     <div style="display: flex; align-items: center; gap: 15px;">
+                                        <?php $hasCatalogProduct = !empty($item['product_exists_id']) && !empty($item['product_id']) && intval($item['product_id']) > 0; ?>
                                         <?php if (!empty($item['image'])): ?>
-                                            <a href="../product.php?id=<?= htmlspecialchars($item['product_id'] ?? '') ?>" target="_blank">
+                                            <?php if ($hasCatalogProduct): ?>
+                                                <a href="../product.php?id=<?= htmlspecialchars($item['product_id']) ?>" target="_blank">
+                                            <?php endif; ?>
                                             <img src="../<?= htmlspecialchars($item['image']) ?>" alt="" class="product-img" title="<?= !empty($item['variation_id']) ? 'Variant-specific image' : 'Main product image' ?>">
-                                            </a>
+                                            <?php if ($hasCatalogProduct): ?>
+                                                </a>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <div style="width: 60px; height: 60px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
                                                 <i class="fas fa-image" style="color: #6c757d;"></i>
@@ -749,13 +801,22 @@ if (!empty($order['customer_id'])) {
                                         <?php endif; ?>
                                         <div>
                                             <div style="font-weight: 500;">
-                                                <a href="../product.php?id=<?= htmlspecialchars($item['product_id'] ?? '') ?>" target="_blank" style="color: var(--primary-color); text-decoration: none;">
-                                                <?= htmlspecialchars($item['product_name'] ?? 'Unknown Product') ?>
-                                                </a>
+                                                <?php if ($hasCatalogProduct): ?>
+                                                    <a href="../product.php?id=<?= htmlspecialchars($item['product_id']) ?>" target="_blank" style="color: var(--primary-color); text-decoration: none;">
+                                                        <?= htmlspecialchars($item['product_name'] ?? 'Unknown Product') ?>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <?= htmlspecialchars($item['product_name'] ?? 'Unknown Product') ?>
+                                                <?php endif; ?>
                                             </div>
                                             <div style="font-size: 0.8rem; color: #6c757d;">
                                                 Product ID: <?= htmlspecialchars($item['product_id'] ?? '—') ?>
                                             </div>
+                                            <?php if (!empty($item['bundle_id']) && !empty($bundleNames[(int)$item['bundle_id']])): ?>
+                                                <div style="font-size: 0.8rem; color: #1a6b4a;">
+                                                    Bundle: <?= htmlspecialchars($bundleNames[(int)$item['bundle_id']]) ?>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </td>
@@ -774,7 +835,7 @@ if (!empty($order['customer_id'])) {
                                                 </div>
                                             <?php endif; ?>
                                             <div style="font-size: 0.75rem; color: #6c757d;">
-                                                Variant ID: <?= htmlspecialchars($item['variation_id']) ?>
+                                                Variant ID: <?= htmlspecialchars((string)($item['variation_id'] ?? '')) ?>
                                             </div>
                                             <?php if (!empty($item['image_id'])): ?>
                                                 <div style="font-size: 0.75rem; color: #28a745;">
@@ -803,7 +864,7 @@ if (!empty($order['customer_id'])) {
             <table class="summary-table">
                 <?php 
                 $aed_to_usd = 0.27;
-                $subtotal = ($order['total_amount'] ?? 0) - ($order['shipping_aed'] ?? 0) + ($order['discount_amount'] ?? 0);
+                $subtotal = ($order['total_amount'] ?? 0) - ($order['shipping_aed'] ?? 0) + ($order['discount_amount'] ?? 0) + $bundleDiscountTotal;
                 $subtotal_usd = $subtotal * $aed_to_usd;
                 $shipping_usd = ($order['shipping_aed'] ?? 0) * $aed_to_usd;
                 $total_usd = ($order['total_amount'] ?? 0) * $aed_to_usd;
@@ -812,6 +873,13 @@ if (!empty($order['customer_id'])) {
                     <td>Subtotal:</td>
                     <td style="text-align: right;">AED <?= number_format($subtotal, 2) ?> ($<?= number_format($subtotal_usd, 2) ?>)</td>
                 </tr>
+                <?php if ($bundleDiscountTotal > 0): ?>
+                <?php $bundle_discount_usd = $bundleDiscountTotal * $aed_to_usd; ?>
+                <tr>
+                    <td>Bundle discount:</td>
+                    <td style="text-align: right;">-AED <?= number_format($bundleDiscountTotal, 2) ?> (-$<?= number_format($bundle_discount_usd, 2) ?>)</td>
+                </tr>
+                <?php endif; ?>
                 <?php if (!empty($order['discount_amount'])): ?>
                 <?php $discount_usd = $order['discount_amount'] * $aed_to_usd; ?>
                 <tr>

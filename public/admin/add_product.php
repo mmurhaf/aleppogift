@@ -1,16 +1,22 @@
 <?php
 // File: admin/add_product.php
-require_once('../../config/config.php');
-require_once('../../includes/Database.php');
+$root_dir = dirname(dirname(__DIR__));
+require_once($root_dir . '/config/config.php');
+require_once($root_dir . '/includes/session_helper.php');
+require_once($root_dir . '/includes/Database.php');
+
+require_admin_login();
 
 $db = new Database();
 $error_message = '';
 $success_message = '';
+$has_cost_price = false;
 
 // Load categories and brands for form
 try {
     $categories = $db->query("SELECT id, name_en, name_ar FROM categories WHERE status = 1 ORDER BY name_en ASC")->fetchAll();
     $brands = $db->query("SELECT id, name_en, name_ar FROM brands WHERE status = 1 ORDER BY name_en ASC")->fetchAll();
+    $has_cost_price = (bool) $db->query("SHOW COLUMNS FROM products LIKE 'cost_price'")->fetch(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
     $categories = [];
@@ -28,8 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description_en = trim($_POST['description_en']);
         $description_ar = trim($_POST['description_ar']);
         $price = $_POST['price'];
-        $weight = $_POST['weight'];
-        $stock = $_POST['stock'];
+        $cost_price_input = trim($_POST['cost_price'] ?? '');
+        $cost_price = ($cost_price_input === '') ? null : $cost_price_input;
+        $weight_input = trim($_POST['weight'] ?? '');
+        $stock_input = trim($_POST['stock'] ?? '');
+        // Default values when optional fields are left empty.
+        $weight = ($weight_input === '') ? 2 : $weight_input;
+        $stock = ($stock_input === '') ? 10 : $stock_input;
         $featured = isset($_POST['featured']) ? 1 : 0;
         $status = $_POST['status'];
 
@@ -42,6 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Price must be a positive number.");
         }
 
+        if (!is_null($cost_price) && (!is_numeric($cost_price) || $cost_price < 0)) {
+            throw new Exception("Cost price must be a non-negative number.");
+        }
+
         if (!is_numeric($weight) || $weight <= 0) {
             throw new Exception("Weight must be a positive number.");
         }
@@ -51,8 +66,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Insert product
-        $product_id = $db->query("INSERT INTO products (name_en, name_ar, category_id, brand_id, description_en, description_ar, price, weight, stock, featured, status) 
-                    VALUES (:name_en, :name_ar, :category_id, :brand_id, :description_en, :description_ar, :price, :weight, :stock, :featured, :status)", [
+        $insert_fields = [
+            'name_en', 'name_ar', 'category_id', 'brand_id', 'description_en', 'description_ar',
+            'price', 'weight', 'stock', 'featured', 'status'
+        ];
+        $insert_placeholders = [
+            ':name_en', ':name_ar', ':category_id', ':brand_id', ':description_en', ':description_ar',
+            ':price', ':weight', ':stock', ':featured', ':status'
+        ];
+        $insert_params = [
             'name_en' => $name_en,
             'name_ar' => $name_ar,
             'category_id' => $category_id,
@@ -64,7 +86,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'stock' => $stock,
             'featured' => $featured,
             'status' => $status
-        ]);
+        ];
+
+        if ($has_cost_price) {
+            $insert_fields[] = 'cost_price';
+            $insert_placeholders[] = ':cost_price';
+            $insert_params['cost_price'] = $cost_price;
+        }
+
+        $db->query(
+            "INSERT INTO products (" . implode(', ', $insert_fields) . ") VALUES (" . implode(', ', $insert_placeholders) . ")",
+            $insert_params
+        );
 
         $product_id = $db->lastInsertId();
 
@@ -181,17 +214,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product - Admin Panel</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
+<?php
+$page_title = 'Add Product';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
+        .add-product-page {
             background-color: #f8f9fa;
             padding: 20px;
         }
@@ -260,8 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 10px;
         }
     </style>
-</head>
-<body>
+    <div class="add-product-page">
     <div class="form-container">
         <div class="form-header">
             <h2 class="mb-0">Add New Product</h2>
@@ -314,13 +341,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <input type="number" step="0.01" class="form-control" id="price" name="price" required>
                         </div>
                     </div>
+                    <?php if ($has_cost_price): ?>
                     <div class="col-md-6">
-                        <label for="weight" class="form-label">Weight (kg)</label>
-                        <input type="number" class="form-control" id="weight" name="weight" value="2">
+                        <label for="cost_price" class="form-label">Cost Price ($) <small class="text-muted">(Optional)</small></label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="cost_price" name="cost_price" placeholder="Internal cost only">
+                    </div>
+                    <?php endif; ?>
+                    <div class="col-md-6">
+                        <label for="weight" class="form-label">Weight (kg) <small class="text-muted">(Optional)</small></label>
+                        <input type="number" step="0.001" class="form-control" id="weight" name="weight" placeholder="Default: 2">
+                        <div class="form-text">Leave empty to use default weight (2 kg).</div>
                     </div>
                     <div class="col-md-6">
-                        <label for="stock" class="form-label">Stock Quantity</label>
-                        <input type="number" class="form-control" id="stock" name="stock" value="100" min="0">
+                        <label for="stock" class="form-label">Stock Quantity <small class="text-muted">(Optional)</small></label>
+                        <input type="number" class="form-control" id="stock" name="stock" placeholder="Default: 10" min="0">
+                        <div class="form-text">Leave empty to use default stock (10).</div>
                     </div>
                     <div class="col-md-6">
                         <label for="status" class="form-label">Status</label>
@@ -433,7 +468,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let variationCount = 0;
 
@@ -506,8 +540,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const nameAr = document.getElementById('name_ar').value.trim();
             const categoryId = document.getElementById('category_id').value;
             const price = document.getElementById('price').value;
-            const weight = document.getElementById('weight').value;
-            const stock = document.getElementById('stock').value;
+            const costPriceField = document.getElementById('cost_price');
+            const costPrice = costPriceField ? costPriceField.value.trim() : '';
+            const weight = document.getElementById('weight').value.trim();
+            const stock = document.getElementById('stock').value.trim();
             
             let errors = [];
             
@@ -515,8 +551,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!nameAr) errors.push('Arabic product name is required');
             if (!categoryId) errors.push('Category selection is required');
             if (!price || parseFloat(price) <= 0) errors.push('Valid price is required');
-            if (!weight || parseFloat(weight) <= 0) errors.push('Valid weight is required');
-            if (!stock || parseInt(stock) < 0) errors.push('Valid stock quantity is required');
+            if (costPrice && (isNaN(parseFloat(costPrice)) || parseFloat(costPrice) < 0)) errors.push('Cost price must be 0 or more when provided');
+            if (weight && parseFloat(weight) <= 0) errors.push('Weight must be greater than 0 when provided');
+            if (stock && parseInt(stock) < 0) errors.push('Stock cannot be negative when provided');
+
+            if (!weight) {
+                document.getElementById('weight').value = '2';
+            }
+            if (!stock) {
+                document.getElementById('stock').value = '10';
+            }
             
             if (errors.length > 0) {
                 e.preventDefault();
@@ -524,5 +568,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
     </script>
-</body>
-</html>
+    </div>
+    </div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

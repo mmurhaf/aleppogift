@@ -1,0 +1,7 @@
+DirectoryIndex index.php login.php
+Options -Indexes
+
+# If request is for the directory itself, serve index.php
+RewriteEngine On
+RewriteBase /admin/
+RewriteRule ^$ index.php [L,QSA]

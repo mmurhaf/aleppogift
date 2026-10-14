@@ -13,10 +13,10 @@ function sendOrderConfirmationEmail($toEmail, $toName, $order_id, $invoicePath) 
         // Server settings
         $mail->CharSet = 'UTF-8';
         $mail->isSMTP();
-        $mail->Host       = 'smtp.ipage.com';
+        $mail->Host       = 'smtp.hostinger.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'sales@aleppogift.com';
-        $mail->Password   = 'Salem1972#i';
+        $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = 465;
 
@@ -52,7 +52,7 @@ function sendOrderConfirmationEmail($toEmail, $toName, $order_id, $invoicePath) 
         $mail->send();
         // WhatsApp Notification
 $whatsappNumber = '971509687610'; // change to admin's full international number without '+' (e.g., UAE = 971xxxx)
-$apiKey = '5574813';
+$apiKey = defined('CALLMEBOT_API_KEY') ? CALLMEBOT_API_KEY : '';
 
 $message = urlencode("📦 New Order Received\nOrder #$order_id\nCustomer: $toName\nEmail: $toEmail\nView invoice: $invoiceLink");
 

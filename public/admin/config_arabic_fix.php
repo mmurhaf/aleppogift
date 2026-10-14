@@ -6,9 +6,9 @@
 
 // Database Configuration - Production
 define('DB_HOST', 'mmurhaf50350.ipagemysql.com');
-define('DB_NAME', 'u933234997_aleppogift');
+define('DB_NAME', 'aleppogift');
 define('DB_USER', 'mmurhaf');
-define('DB_PASS', 'Salem1972#i');
+define('DB_PASS', getenv('DB_PASS') ?: '');
 
 // Connection settings for remote database
 define('DB_CHARSET', 'utf8mb4');

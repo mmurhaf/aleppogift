@@ -10,10 +10,13 @@ require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
 
-// Require admin login
-require_admin_login();
-
+start_session_safely();
 header('Content-Type: application/json');
+
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 try {
     // Get JSON input
@@ -40,13 +43,15 @@ try {
             city,
             country
         FROM customers
-        WHERE fullname LIKE :search 
-           OR email LIKE :search 
-           OR phone LIKE :search
+        WHERE fullname LIKE :search_name 
+           OR email LIKE :search_email 
+           OR phone LIKE :search_phone
         ORDER BY fullname ASC
         LIMIT 15
     ", [
-        'search' => $searchTerm
+        'search_name' => $searchTerm,
+        'search_email' => $searchTerm,
+        'search_phone' => $searchTerm,
     ])->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([

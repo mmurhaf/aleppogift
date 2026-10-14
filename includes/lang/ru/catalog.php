@@ -1,0 +1,108 @@
+<?php
+return [
+    // Home meta
+    'catalog.home_title' => 'Aleppo Gift — посуда, кофейные чашки и товары для дома в ОАЭ',
+    'catalog.home_description' => 'Посуда, тарелки, бокалы, чашки, кружки, чашки для арабского кофе, чайные чашки, подносы, вазы, пледы, подушки и аксессуары для дома в магазине Aleppo Gift в ОАЭ.',
+    'catalog.home_og_title' => 'Aleppo Gift — посуда и товары для дома в ОАЭ',
+    'catalog.home_og_description' => 'Тарелки, бокалы, чашки, кружки, кофейные чашки, подносы, вазы, пледы, подушки и аксессуары для дома с доставкой по ОАЭ.',
+    'catalog.home_twitter_description' => 'Посуда, кофейные чашки, стеклянная посуда, подносы, вазы, пледы, подушки и аксессуары для дома в ОАЭ.',
+
+    // Home hero & notices
+    'catalog.hero_badge' => 'Посуда и подарки · ОАЭ',
+    'catalog.hero_title' => 'Искусство изысканного гостеприимства',
+    'catalog.hero_subtitle' => 'Тарелки, чашки, подносы и подарки для дома с оплатой при получении по всем ОАЭ.',
+    'catalog.shop_products' => 'Перейти к товарам',
+    'catalog.ask_whatsapp' => 'Спросить в WhatsApp',
+    'catalog.promises' => 'Наши преимущества',
+    'catalog.promise_currency' => 'Цены в вашей валюте',
+    'catalog.promise_cod' => 'Оплата при получении',
+    'catalog.promise_delivery' => 'Доставка по ОАЭ',
+    'catalog.promise_confirm' => 'Подтверждаем наличие',
+    'catalog.notice_title' => 'Наличие и оплата',
+    'catalog.notice_summary_availability' => 'Наличие всех товаров ограничено. Уточните его у нас в WhatsApp.',
+    'catalog.notice_summary_payment' => 'Цены показаны в вашей валюте, оплата списывается в AED. Рекомендуем оплату при получении.',
+    'catalog.notice_confirm_on' => 'Наличие всех товаров ограничено. Уточните его у нас в',
+    'catalog.whatsapp' => 'WhatsApp',
+    'catalog.notice_place_order' => 'Вы также можете оформить заказ, и мы подтвердим наличие и доставку.',
+    'catalog.notice_cod' => 'При оплате при получении вы платите только после доставки товаров.',
+
+    // Bundles
+    'catalog.bundles' => 'Наборы',
+    'catalog.bundles_subtitle' => 'Покупайте набор и получайте скидку',
+    'catalog.percent_off' => 'Скидка {percent}%',
+    'catalog.add_bundle' => 'Добавить набор в корзину',
+
+    // Listing & filters
+    'catalog.shop_collection' => 'Наша коллекция',
+    'catalog.shop_by_category' => 'Покупки по категориям',
+    'catalog.all' => 'Все',
+    'catalog.category' => 'Категория',
+    'catalog.brand' => 'Бренд',
+    'catalog.all_categories' => 'Все категории',
+    'catalog.all_brands' => 'Все бренды',
+    'catalog.reset' => 'Сбросить',
+    'catalog.clear_filters' => 'Сбросить все фильтры',
+    'catalog.export_pdf' => 'Экспортировать результаты в PDF',
+    'catalog.min_aed' => 'Мин. AED',
+    'catalog.max_aed' => 'Макс. AED',
+    'catalog.products_count' => 'Товаров: {count}',
+    'catalog.page_of' => 'Страница {page} из {pages}',
+    'catalog.products_found' => 'Найдено товаров: {count}',
+    'catalog.pagination' => 'Навигация по страницам товаров',
+    'catalog.previous' => 'Назад',
+    'catalog.next' => 'Вперёд',
+    'catalog.no_products' => 'Товары не найдены',
+    'catalog.no_products_hint' => 'Попробуйте другую категорию, бренд или поисковый запрос.',
+    'catalog.view_all' => 'Смотреть все товары',
+
+    // Product cards
+    'catalog.view_details' => 'Подробнее о товаре «{name}»',
+    'catalog.save_wishlist' => 'Добавить в избранное',
+    'catalog.save_item_wishlist' => 'Добавить «{name}» в избранное',
+    'catalog.add_item_cart' => 'Добавить «{name}» в корзину',
+    'catalog.ask_item_whatsapp' => 'Спросить о товаре «{name}» в WhatsApp',
+    'catalog.share' => 'Поделиться',
+    'catalog.share_item' => 'Поделиться товаром «{name}»',
+    'catalog.whatsapp_interest' => 'aleppogift: меня интересует этот товар: {name} - {url}',
+    'catalog.img_alt' => '{name} - {brand} {category} | Aleppo Gift ОАЭ',
+    'catalog.alt_brand_fallback' => 'Премиум',
+    'catalog.alt_category_fallback' => 'Подарок',
+    'catalog.share_text' => 'Посмотрите этот товар в Aleppo Gift: {name} - {price} AED - код товара: {id}',
+    'catalog.share_unsupported' => 'Этот браузер не поддерживает функцию «Поделиться». Скопируйте ссылку вручную:',
+
+    // PDF export
+    'catalog.pdf_generating' => 'Создаём PDF...',
+    'catalog.pdf_wait' => 'Пожалуйста, подождите, пока мы готовим документ',
+    'catalog.pdf_failed' => 'Не удалось загрузить товары',
+    'catalog.pdf_error' => 'Ошибка: {message}',
+    'catalog.pdf_error_generating' => 'Ошибка при создании PDF: {message}',
+
+    // Social proof
+    'catalog.customer_gallery' => 'Фото наших покупателей',
+    'catalog.real_proof' => 'Реальные отзывы покупателей',
+    'catalog.trust_title' => 'Покупатели доверяют Aleppo Gift ещё до оплаты',
+    'catalog.trust_text' => 'Мы публикуем настоящие отзывы, включая проверенные переписки в WhatsApp с довольными покупателями.',
+    'catalog.read_testimonials' => 'Читать все отзывы',
+    'catalog.chat_whatsapp' => 'Написать в WhatsApp',
+    'catalog.proof_alt' => 'Отзыв покупателя {name} в WhatsApp',
+    'catalog.privacy_protected' => 'Личные данные скрыты',
+
+    // Brands showcase
+    'catalog.shop_by_brand' => 'Покупки по брендам',
+    'catalog.brands_soon' => 'Бренды скоро появятся',
+
+    // Products page meta
+    'catalog.products_title' => 'Посуда и товары для дома | Aleppo Gift ОАЭ',
+    'catalog.products_description' => 'Посуда, тарелки, бокалы, чашки, кружки, чашки для арабского кофе, чайные чашки, подносы, вазы, пледы, подушки и аксессуары для дома с доставкой по ОАЭ.',
+    'catalog.products_lead' => 'Посуда, бокалы и кружки, кофейные чашки, подносы, вазы, пледы, подушки и аксессуары для дома.',
+    'catalog.category_lead' => 'Товары в категории «{name}».',
+    'catalog.brand_lead' => 'Товары бренда {name}.',
+    'catalog.search_title' => 'Поиск: {query}',
+    'catalog.search_lead' => 'Результаты по запросу «{query}».',
+    'catalog.category_meta_title' => '{name} | Aleppo Gift ОАЭ',
+    'catalog.category_meta_description' => '{name} в магазине Aleppo Gift. Посуда и аксессуары для дома с доставкой по всем ОАЭ.',
+    'catalog.brand_meta_title' => 'Товары {name} | Aleppo Gift ОАЭ',
+    'catalog.brand_meta_description' => 'Товары {name} в магазине Aleppo Gift: посуда, бокалы и кружки, сервировка и аксессуары для дома с доставкой по ОАЭ.',
+    'catalog.search_meta_title' => 'Поиск: {query} | Aleppo Gift ОАЭ',
+    'catalog.search_meta_description' => 'Результаты поиска по запросу «{query}» среди посуды, чашек, подносов, стеклянной посуды и аксессуаров для дома Aleppo Gift.',
+];

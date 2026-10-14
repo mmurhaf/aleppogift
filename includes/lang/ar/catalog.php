@@ -1,0 +1,108 @@
+<?php
+return [
+    // Home meta
+    'catalog.home_title' => 'Aleppo Gift - أدوات المائدة وفناجين القهوة والإكسسوارات المنزلية في الإمارات',
+    'catalog.home_description' => 'تسوّق أدوات المائدة والأطباق والكؤوس والأكواب والفناجين وفناجين القهوة العربية وأكواب الشاي والصواني والمزهريات والبطانيات والوسائد والإكسسوارات المنزلية من Aleppo Gift في الإمارات.',
+    'catalog.home_og_title' => 'Aleppo Gift - أدوات المائدة والإكسسوارات المنزلية في الإمارات',
+    'catalog.home_og_description' => 'اكتشف الأطباق والكؤوس والأكواب وفناجين القهوة والصواني والمزهريات والبطانيات والوسائد والإكسسوارات المنزلية مع التوصيل داخل الإمارات.',
+    'catalog.home_twitter_description' => 'تسوّق أدوات المائدة وفناجين القهوة والأواني الزجاجية والصواني والمزهريات والبطانيات والوسائد والإكسسوارات المنزلية في الإمارات.',
+
+    // Home hero & notices
+    'catalog.hero_badge' => 'أدوات المائدة والهدايا · الإمارات',
+    'catalog.hero_title' => 'فنّ الضيافة الأنيقة',
+    'catalog.hero_subtitle' => 'أطباق وأكواب وصوانٍ وهدايا منزلية، مع الدفع عند الاستلام في جميع أنحاء الإمارات.',
+    'catalog.shop_products' => 'تسوّق المنتجات',
+    'catalog.ask_whatsapp' => 'اسألنا عبر واتساب',
+    'catalog.promises' => 'مزايا التسوّق',
+    'catalog.promise_currency' => 'الأسعار بعملتك',
+    'catalog.promise_cod' => 'الدفع عند الاستلام',
+    'catalog.promise_delivery' => 'التوصيل داخل الإمارات',
+    'catalog.promise_confirm' => 'نؤكّد لك توفّر المنتجات',
+    'catalog.notice_title' => 'التوفّر والدفع',
+    'catalog.notice_summary_availability' => 'جميع المنتجات خاضعة للتوفر. أكّد التوفر معنا عبر واتساب.',
+    'catalog.notice_summary_payment' => 'الأسعار بعملتك والدفع بالدرهم، ويُفضّل الدفع عند الاستلام.',
+    'catalog.notice_confirm_on' => 'جميع المنتجات خاضعة للتوفر. أكّد التوفر معنا عبر',
+    'catalog.whatsapp' => 'واتساب',
+    'catalog.notice_place_order' => 'يمكن أيضاً إرسال الطلب وسنتواصل لتأكيد التوفر والتوصيل.',
+    'catalog.notice_cod' => 'مع الدفع عند الاستلام تدفع فقط عند وصول الطلب.',
+
+    // Bundles
+    'catalog.bundles' => 'المجموعات',
+    'catalog.bundles_subtitle' => 'اشترِ المجموعة كاملة واحصل على الخصم',
+    'catalog.percent_off' => 'خصم {percent}%',
+    'catalog.add_bundle' => 'أضف المجموعة إلى السلة',
+
+    // Listing & filters
+    'catalog.shop_collection' => 'تسوّق التشكيلة',
+    'catalog.shop_by_category' => 'تسوّق حسب الفئة',
+    'catalog.all' => 'الكل',
+    'catalog.category' => 'الفئة',
+    'catalog.brand' => 'العلامة التجارية',
+    'catalog.all_categories' => 'جميع الفئات',
+    'catalog.all_brands' => 'جميع العلامات التجارية',
+    'catalog.reset' => 'إعادة تعيين',
+    'catalog.clear_filters' => 'مسح جميع عوامل التصفية',
+    'catalog.export_pdf' => 'تصدير النتائج إلى PDF',
+    'catalog.min_aed' => 'أدنى سعر (AED)',
+    'catalog.max_aed' => 'أعلى سعر (AED)',
+    'catalog.products_count' => 'عدد المنتجات: {count}',
+    'catalog.page_of' => 'الصفحة {page} من {pages}',
+    'catalog.products_found' => 'المنتجات (تم العثور على {count})',
+    'catalog.pagination' => 'التنقل بين صفحات المنتجات',
+    'catalog.previous' => 'السابق',
+    'catalog.next' => 'التالي',
+    'catalog.no_products' => 'لم يتم العثور على منتجات',
+    'catalog.no_products_hint' => 'جرّب فئة أو علامة تجارية أخرى، أو ابحث بكلمة مختلفة.',
+    'catalog.view_all' => 'عرض جميع المنتجات',
+
+    // Product cards
+    'catalog.view_details' => 'عرض تفاصيل {name}',
+    'catalog.save_wishlist' => 'حفظ في قائمة الأمنيات',
+    'catalog.save_item_wishlist' => 'حفظ {name} في قائمة الأمنيات',
+    'catalog.add_item_cart' => 'إضافة {name} إلى السلة',
+    'catalog.ask_item_whatsapp' => 'استفسر عن {name} عبر واتساب',
+    'catalog.share' => 'مشاركة',
+    'catalog.share_item' => 'مشاركة {name}',
+    'catalog.whatsapp_interest' => 'aleppogift: أنا مهتم بهذا المنتج: {name} - {url}',
+    'catalog.img_alt' => '{name} - {brand} {category} | Aleppo Gift الإمارات',
+    'catalog.alt_brand_fallback' => 'فاخر',
+    'catalog.alt_category_fallback' => 'هدية',
+    'catalog.share_text' => 'شاهد هذا المنتج لدى Aleppo Gift: {name} - {price} AED - رمز المنتج: {id}',
+    'catalog.share_unsupported' => 'المشاركة غير مدعومة في هذا المتصفح. يرجى نسخ الرابط يدوياً:',
+
+    // PDF export
+    'catalog.pdf_generating' => 'جارٍ إنشاء ملف PDF...',
+    'catalog.pdf_wait' => 'يرجى الانتظار بينما نجهّز المستند',
+    'catalog.pdf_failed' => 'تعذّر جلب المنتجات',
+    'catalog.pdf_error' => 'خطأ: {message}',
+    'catalog.pdf_error_generating' => 'حدث خطأ أثناء إنشاء ملف PDF: {message}',
+
+    // Social proof
+    'catalog.customer_gallery' => 'معرض العملاء',
+    'catalog.real_proof' => 'آراء عملاء حقيقية',
+    'catalog.trust_title' => 'العملاء يثقون بـ Aleppo Gift قبل الدفع',
+    'catalog.trust_text' => 'نعرض آراء حقيقية، بما فيها محادثات واتساب مراجَعة من عملاء سعداء.',
+    'catalog.read_testimonials' => 'اقرأ جميع الآراء',
+    'catalog.chat_whatsapp' => 'تحدّث معنا عبر واتساب',
+    'catalog.proof_alt' => 'إثبات من محادثة واتساب مع العميل {name}',
+    'catalog.privacy_protected' => 'الخصوصية محمية',
+
+    // Brands showcase
+    'catalog.shop_by_brand' => 'تسوّق حسب العلامة التجارية',
+    'catalog.brands_soon' => 'العلامات التجارية قريباً',
+
+    // Products page meta
+    'catalog.products_title' => 'تسوّق أدوات المائدة والإكسسوارات المنزلية | Aleppo Gift الإمارات',
+    'catalog.products_description' => 'تصفّح أدوات المائدة والأطباق والكؤوس والأكواب والفناجين وفناجين القهوة العربية وأكواب الشاي والصواني والمزهريات والبطانيات والوسائد والإكسسوارات المنزلية مع التوصيل داخل الإمارات.',
+    'catalog.products_lead' => 'تصفّح أدوات المائدة وأواني المشروبات وفناجين القهوة والصواني والمزهريات والبطانيات والوسائد والإكسسوارات المنزلية.',
+    'catalog.category_lead' => 'قطع من فئة {name}.',
+    'catalog.brand_lead' => 'قطع من {name}.',
+    'catalog.search_title' => 'بحث: {query}',
+    'catalog.search_lead' => 'نتائج البحث عن «{query}».',
+    'catalog.category_meta_title' => '{name} | Aleppo Gift الإمارات',
+    'catalog.category_meta_description' => 'تصفّح {name} لدى Aleppo Gift. اكتشف قطع أدوات المائدة والإكسسوارات المنزلية مع التوصيل في جميع أنحاء الإمارات.',
+    'catalog.brand_meta_title' => 'منتجات {name} | Aleppo Gift الإمارات',
+    'catalog.brand_meta_description' => 'تصفّح منتجات {name} لدى Aleppo Gift، بما فيها أدوات المائدة وأواني المشروبات وقطع التقديم والإكسسوارات المنزلية مع التوصيل داخل الإمارات.',
+    'catalog.search_meta_title' => 'بحث: {query} | Aleppo Gift الإمارات',
+    'catalog.search_meta_description' => 'نتائج البحث عن «{query}» في أدوات المائدة والأكواب والصواني والأواني الزجاجية والإكسسوارات المنزلية لدى Aleppo Gift.',
+];

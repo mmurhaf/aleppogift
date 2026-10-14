@@ -71,7 +71,7 @@ If you still see database errors, verify these settings in `.env`:
 DB_HOST=srv948.hstgr.io
 DB_NAME=u933234997_aleppogift
 DB_USER=u933234997_mmurhaf
-DB_PASS=Salem1972#i
+DB_PASS=********
 ```
 
 You can verify these credentials in Hostinger:

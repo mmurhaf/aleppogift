@@ -104,10 +104,10 @@ if (class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
         // Same settings as in email_notifier.php
         $mail->CharSet = 'UTF-8';
         $mail->isSMTP();
-        $mail->Host = 'smtp.ipage.com';
+        $mail->Host = 'smtp.hostinger.com';
         $mail->SMTPAuth = true;
         $mail->Username = 'sales@aleppogift.com';
-        $mail->Password = 'Salem1972#i';
+        $mail->Password = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;
         $mail->Timeout = 30;

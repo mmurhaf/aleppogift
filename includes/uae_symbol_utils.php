@@ -14,14 +14,12 @@
  * @return string HTML img tag for UAE symbol
  */
 function getUAESymbolSVG($classes = 'uae-symbol', $style = '') {
-    $alt = 'AED';
-    $src = 'assets/svg/UAE_Dirham_Symbol.svg';
-    
-    if (!empty($style)) {
-        $style = ' style="' . htmlspecialchars($style) . '"';
-    }
-    
-    return '<img src="' . $src . '" alt="' . $alt . '" class="' . htmlspecialchars($classes) . '"' . $style . '>';
+    $src = function_exists('store_url')
+        ? store_url('assets/svg/UAE_Dirham_Symbol.svg')
+        : 'assets/svg/UAE_Dirham_Symbol.svg';
+    $style = 'width:0.9em;height:0.9em;vertical-align:-0.12em;display:inline-block;' . $style;
+
+    return '<img src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '" alt="AED" class="' . htmlspecialchars($classes, ENT_QUOTES, 'UTF-8') . '" style="' . htmlspecialchars($style, ENT_QUOTES, 'UTF-8') . '">';
 }
 
 /**
@@ -80,9 +78,16 @@ function formatPriceAED($price, $method = 'svg', $decimals = 0) {
  * @param string $method Symbol method for AED
  * @return string HTML with both currencies
  */
-function formatPriceDual($price, $exchangeRate = 3.68, $method = 'svg') {
+function formatPriceDual($price, $exchangeRate = null, $method = 'svg') {
     $aedPrice = formatPriceAED($price, $method);
-    $usdPrice = number_format($price / $exchangeRate, 2);
+    if ($exchangeRate === null) {
+        $rate = function_exists('getAedToUsdRate') ? getAedToUsdRate() : 0.2723;
+        $usdPrice = number_format($price * $rate, 2);
+    } elseif ($exchangeRate > 2) {
+        $usdPrice = number_format($price / $exchangeRate, 2);
+    } else {
+        $usdPrice = number_format($price * $exchangeRate, 2);
+    }
     
     return '<span class="price-current">' . $aedPrice . '</span>' .
            '<span class="price-usd">($' . $usdPrice . ')</span>';

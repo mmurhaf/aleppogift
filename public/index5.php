@@ -111,9 +111,9 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
     <!-- Index Page Specific Styles -->
     <link rel="stylesheet" href="assets/css/index.css">
     
-    <!-- Width Improvements -->
-    <link rel="stylesheet" href="assets/css/width-improvements.css">
-    
+    <!-- Header alignment fixes -->
+    <link rel="stylesheet" href="assets/css/header-fixes.css">
+
     <!-- Full Width Layout Fix -->
     <link rel="stylesheet" href="assets/css/full-width-fix.css">
 

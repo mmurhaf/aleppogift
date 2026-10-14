@@ -7,15 +7,21 @@ ob_start();
 require_once(__DIR__ . '/../includes/bootstrap.php');
 
 $db = new Database();
+$show_prices = get_site_setting($db, 'show_prices', '1') === '1';
 
 // Fetch categories 
-$categories = $db->query("SELECT * FROM categories WHERE status=1")->fetchAll(PDO::FETCH_ASSOC);
+$categories = array_values(array_filter(
+    $db->query("SELECT * FROM categories WHERE status=1")->fetchAll(PDO::FETCH_ASSOC),
+    function ($cat) {
+        return !is_placeholder_name($cat['name_en'] ?? '');
+    }
+));
 
 // Fetch brands
 $brands = $db->query("SELECT * FROM brands WHERE status=1")->fetchAll(PDO::FETCH_ASSOC);
 
 // Initialize filters once
-$where = ["p.status = 1"];
+$where = [published_product_sql('p')];
 $params = [];
 
 // Filter by category
@@ -45,12 +51,16 @@ if (isset($_GET['search'])) {
 
 if ($search !== '') {
     if (is_numeric($search)) {
-        $where[] = "p.id = :product_id";
+        $where[] = "(p.id = :product_id OR p.sku LIKE :search_sku)";
         $params['product_id'] = $search;
+        $params['search_sku'] = "%$search%";
     } else {
-        $where[] = "(p.name_en LIKE :search_en OR p.name_ar LIKE :search_ar)";
+        $where[] = "(p.name_en LIKE :search_en OR p.name_ar LIKE :search_ar OR p.name_ru LIKE :search_ru OR p.name_sp LIKE :search_sp OR p.sku LIKE :search_sku)";
         $params['search_en'] = "%$search%";
         $params['search_ar'] = "%$search%";
+        $params['search_ru'] = "%$search%";
+        $params['search_sp'] = "%$search%";
+        $params['search_sku'] = "%$search%";
     }
 }
 
@@ -67,7 +77,8 @@ $countSQL = "SELECT COUNT(*) as total FROM products p $whereSQL";
 $totalProducts = $db->query($countSQL, $params)->fetch(PDO::FETCH_ASSOC)['total'];
 
 // Pagination settings
-$perPage = 16;
+$sort = $_GET['sort'] ?? 'foryou';
+$perPage = max(1, (int)store_setting($db, 'products_per_page', '16'));
 $totalPages = ceil($totalProducts / $perPage);
 $currentPage = isset($_GET['page']) ? max(1, min($totalPages, intval($_GET['page']))) : 1;
 $offset = ($currentPage - 1) * $perPage;
@@ -78,13 +89,19 @@ $sql = "SELECT p.*,
          WHERE product_id = p.id AND is_main = 1 LIMIT 1) as main_image,
         b.name_en as brand_name_en,
         b.name_ar as brand_name_ar,
+        b.name_ru as brand_name_ru,
+        b.name_sp as brand_name_sp,
         c.name_en as category_name_en,
-        c.name_ar as category_name_ar
+        c.name_ar as category_name_ar,
+        c.name_ru as category_name_ru,
+        c.name_sp as category_name_sp,
+        " . review_stats_select('p') . ",
+        " . units_sold_select('p') . "
         FROM products p 
         LEFT JOIN brands b ON p.brand_id = b.id
         LEFT JOIN categories c ON p.category_id = c.id
         $whereSQL 
-        ORDER BY p.id DESC
+        ORDER BY " . catalog_order_sql($sort, 'p') . "
         LIMIT :limit OFFSET :offset";
 
 // Add pagination parameters as integers
@@ -93,35 +110,117 @@ $params['offset'] = (int)$offset;
 
 // Execute
 $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
+
+$featuredPhotos = [];
+try {
+    $featuredPhotos = $db->query("SELECT * FROM customer_photos WHERE is_approved = 1 AND is_featured = 1 ORDER BY id DESC LIMIT 4")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $featuredPhotos = [];
+}
+
+$featuredTestimonials = $db->query(
+        "SELECT *
+        FROM testimonials
+        WHERE is_approved = 1
+            AND (is_featured = 1 OR whatsapp_conversation = 1)
+        ORDER BY is_featured DESC, created_at DESC
+        LIMIT 3"
+)->fetchAll(PDO::FETCH_ASSOC);
+
+$webPath = function ($path) {
+    return implode('/', array_map('rawurlencode', explode('/', ltrim(str_replace(['\\', '../'], ['/', ''], (string)$path), '/'))));
+};
+
+$homeCategories = [];
+foreach ($categories as $cat) {
+    $tileImage = ltrim(str_replace('../', '', trim((string)($cat['picture'] ?? ''))), '/');
+    if ($tileImage === '' || stripos($tileImage, 'undefined') !== false || !is_file(__DIR__ . '/' . $tileImage)) {
+        $tileImage = (string)$db->query(
+            "SELECT pi.image_path FROM products p
+             INNER JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1
+             WHERE p.category_id = :category_id AND " . published_product_sql('p') . "
+             ORDER BY p.id DESC LIMIT 1",
+            ['category_id' => (int)$cat['id']]
+        )->fetchColumn();
+    }
+    if ($tileImage === '') {
+        continue;
+    }
+    $cat['tile_image'] = $webPath($tileImage);
+    $homeCategories[] = $cat;
+}
+
+$editorialCategory = null;
+foreach (['dinner', 'plate', 'coffee'] as $editorialNeedle) {
+    foreach ($homeCategories as $cat) {
+        if (stripos($cat['name_en'], $editorialNeedle) !== false) {
+            $editorialCategory = $cat;
+            break 2;
+        }
+    }
+}
+$editorialUrl = $editorialCategory ? 'products.php?category=' . (int)$editorialCategory['id'] : 'products.php';
+
+$newArrivals = $db->query(
+    "SELECT p.*,
+        (SELECT image_path FROM product_images WHERE product_id = p.id AND is_main = 1 LIMIT 1) AS main_image,
+        b.name_en AS brand_name_en, b.name_ar AS brand_name_ar, b.name_ru AS brand_name_ru, b.name_sp AS brand_name_sp,
+        c.name_en AS category_name_en, c.name_ar AS category_name_ar, c.name_ru AS category_name_ru, c.name_sp AS category_name_sp,
+        " . review_stats_select('p') . "
+     FROM products p
+     LEFT JOIN brands b ON p.brand_id = b.id
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE " . published_product_sql('p') . "
+     ORDER BY " . catalog_order_sql('newest', 'p') . "
+     LIMIT 12"
+)->fetchAll(PDO::FETCH_ASSOC);
+
+$canonical_query = [];
+if (isset($_GET['category']) && is_numeric($_GET['category'])) {
+    $canonical_query['category'] = (int)$_GET['category'];
+}
+if (isset($_GET['brand']) && is_numeric($_GET['brand'])) {
+    $canonical_query['brand'] = (int)$_GET['brand'];
+}
+if ($canonical_query) {
+    if ($currentPage > 1) {
+        $canonical_query['page'] = $currentPage;
+    }
+    $canonical_url = 'https://aleppogift.com/products.php?' . http_build_query($canonical_query);
+} else {
+    $canonical_url = 'https://aleppogift.com/' . ($currentPage > 1 ? '?page=' . $currentPage : '');
+}
+$robots_meta = $search !== '' ? 'noindex, follow' : 'index, follow';
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(store_lang_html()) ?>" dir="<?= store_lang_dir() ?>">
 <head>
+    <?php require_once(__DIR__ . '/../includes/google_tag.php'); ?>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0531879237494766" crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aleppo Gift - Premium Gifts & Home Decor UAE | Luxury Branded Gifts</title>
+    <title><?= te('catalog.home_title') ?></title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Shop premium gifts and home decor at Aleppo Gift. Discover unique luxury branded gifts for every occasion with fast delivery in UAE. Browse our exclusive collection today!">
-    <meta name="keywords" content="gifts UAE, luxury gifts, home decor, branded gifts, Aleppo Gift, premium gifts Dubai, gift shop UAE, luxury home decor">
+    <meta name="description" content="<?= te('catalog.home_description') ?>">
+    <meta name="keywords" content="tableware UAE, plates Dubai, glasses UAE, mugs Dubai, Arabic coffee cups UAE, tea cups Dubai, trays and vases UAE, blankets and pillows Dubai">
     <meta name="author" content="Aleppo Gift">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://aleppogift.com/">
+    <meta name="robots" content="<?= $robots_meta ?>">
+    <?= seo_lang_links($canonical_url) ?>
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Aleppo Gift - Premium Gifts & Home Decor UAE">
-    <meta property="og:description" content="Discover our unique collection of luxury and branded gifts with fast delivery in UAE">
+    <meta property="og:title" content="<?= te('catalog.home_og_title') ?>">
+    <meta property="og:description" content="<?= te('catalog.home_og_description') ?>">
     <meta property="og:image" content="https://aleppogift.com/assets/images/og-image.jpg">
-    <meta property="og:url" content="https://aleppogift.com/">
+    <meta property="og:url" content="<?= htmlspecialchars(seo_canonical_url($canonical_url)) ?>">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Aleppo Gift">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Aleppo Gift - Premium Gifts & Home Decor UAE">
-    <meta name="twitter:description" content="Discover our unique collection of luxury and branded gifts">
+    <meta name="twitter:title" content="<?= te('catalog.home_og_title') ?>">
+    <meta name="twitter:description" content="<?= te('catalog.home_twitter_description') ?>">
     <meta name="twitter:image" content="https://aleppogift.com/assets/images/og-image.jpg">
     
     <!-- Preconnect to External Resources -->
@@ -132,409 +231,366 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
     <link rel="dns-prefetch" href="https://code.jquery.com">
     
     <!-- Preload Critical Resources -->
-    <link rel="preload" href="assets/css/main.css" as="style">
-    <link rel="preload" href="assets/css/index.css" as="style">
+    <link rel="preload" href="assets/css/main.css?v=20261005" as="style">
+    <link rel="preload" href="assets/css/index.css?v=20261005" as="style">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style">
     
     <!-- Stylesheets -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-    
-    <!-- Google Fonts for Enhanced Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    
-    <!-- Modern CSS Architecture -->
-    <link rel="stylesheet" href="assets/css/main.css">
-    
-    <!-- Index Page Specific Styles -->
-    <link rel="stylesheet" href="assets/css/index.css">
-    
-    <!-- Header Design Fixes -->
-    <link rel="stylesheet" href="assets/css/header-fixes.css">
+    <?php require __DIR__ . '/../includes/storefront_assets.php'; ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars(store_url('assets/css/index.css')) ?>?v=20261007a">
+
 
 </head>
-<body>
+<body id="top">
 
     <?php require_once(__DIR__ . '/../includes/header.php'); ?>
 
-    <!-- Main Content -->
-    <main class="container my-4">
-        <!-- Hero Section -->
-        <section class="hero-section modern-hero text-center mb-5">
-            <div class="hero-content">
-                <div class="hero-badge">✨ New Collection</div>
-                <h1 class="hero-title" style="color : white;">Aleppo Gift - Premium Gifts</h1>
-                <p class="hero-subtitle">Discover our unique collection of luxury and branded gifts that bring joy and elegance to every occasion</p>
-                <div class="hero-actions">
-                    <a href="#products" class="btn btn-primary btn-hero">
-                        <i class="fas fa-shopping-bag me-2"></i>Shop Now
-                    </a>
-                    <a href="#categories" class="btn btn-outline btn-hero">
-                        <i class="fas fa-list me-2"></i>Browse Categories
+    <main class="store-home tg-home">
+        <section class="tg-hero">
+            <img class="tg-hero-media" src="assets/images/hero-bg.jpg" alt="" fetchpriority="high" width="1408" height="768">
+            <div class="tg-hero-copy">
+                <p class="tg-eyebrow"><?= te('catalog.hero_badge') ?></p>
+                <h1 class="tg-hero-title"><?= te('catalog.hero_title') ?></h1>
+                <p class="tg-hero-text"><?= te('catalog.hero_subtitle') ?></p>
+                <div class="tg-hero-actions">
+                    <a href="#products" class="tg-btn tg-btn-light"><?= te('catalog.shop_products') ?></a>
+                    <a href="https://wa.me/<?php echo WHATSAPP_NUMBER; ?>" class="tg-btn tg-btn-ghost-light" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-whatsapp" aria-hidden="true"></i><?= te('catalog.ask_whatsapp') ?>
                     </a>
                 </div>
             </div>
-            <div class="hero-decoration"></div>
-        </section>
-        <section id="categories" class="mb-5">
-            <?php //  require_once('../includes/categories.php') ;?>
-			<?php if(1==2){ ?>
-            <span class="brand-title">Shop by category: </span> &nbsp;
-			<?php foreach ($categories as $cat):?>
-			<span class="brand-title">	<a href="#&category=<?= $cat['id']; ?>">		<?= $cat['name_en']; ?> </a> </span> &nbsp;&nbsp;
-			<?php endforeach; }?>
-
-            <?php require_once('../includes/brands.php') ;?>
-        </section>
-        <!-- Enhanced Filter Section -->
-        <section id="products" class="mb-5">
-            <div class="filter-header mb-4">
-                <h2 class="filter-title">Find Your Perfect Gift</h2>
-                <p class="filter-subtitle">Use our advanced filters to discover exactly what you're looking for</p>
-            </div>
-            
-            <form method="get" action="" class="modern-filter-form">
-                <div class="filter-grid">
-                    <div class="filter-group">
-                        <label for="category" class="filter-label">
-                            <i class="fas fa-tags me-2"></i>Category
-                        </label>
-                        <select name="category" id="category" class="form-control modern-select">
-                            <option value="">All Categories</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?= $cat['id']; ?>" <?= (isset($_GET['category']) && $_GET['category'] == $cat['id']) ? 'selected' : ''; ?>>
-                                    <?= htmlspecialchars($cat['name_en']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label for="brand" class="filter-label">
-                            <i class="fas fa-star me-2"></i>Brand
-                        </label>
-                        <select name="brand" id="brand" class="form-control modern-select">
-                            <option value="">All Brands</option>
-                            <?php foreach ($brands as $brand): ?>
-                                <option value="<?= $brand['id']; ?>" <?= (isset($_GET['brand']) && $_GET['brand'] == $brand['id']) ? 'selected' : ''; ?>>
-                                    <?= htmlspecialchars($brand['name_en']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group search-group">
-                        <label for="search" class="filter-label">
-                            <i class="fas fa-search me-2"></i>Search
-                        </label>
-                        <div class="search-input-wrapper">
-                            <input type="text" name="search" id="search" class="form-control search-input" 
-                                   placeholder="Search products, brands, or codes..." 
-                                   value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                        </div>
-                    </div>
-                    
-                    <div class="filter-actions">
-                        <button type="submit" class="btn btn-primary filter-submit">
-                            <i class="fas fa-filter me-2"></i>Apply Filters
-                        </button>
-                        <a href="?" class="btn btn-outline reset-filters" title="Clear all filters">
-                            <i class="fas fa-undo me-2"></i>Reset
-                        </a>
-                    </div>
-                </div>
-            </form>
-        </section>
-                            
-        <!-- Pagination -->
-         <section class="mb-4">
-<!-- Pagination Section -->
- 
-            <div class="pagination-container" >
-                <div class="pagination-info">Products (<?= $totalProducts ?> found)</div>
-                
-                <nav class="pagination-nav">
-                    <ul class="pagination">
-                        <!-- Previous Page Link -->
-                        <li class="page-item <?= $currentPage == 1 ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $currentPage - 1])) ?>" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        
-                        <!-- First Page -->
-                        <?php if ($totalPages > 0): ?>
-                        <li class="page-item <?= $currentPage == 1 ? 'active' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>">1</a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <!-- Ellipsis and middle pages logic -->
-                        <?php if ($totalPages > 1): ?>
-                            <?php if ($currentPage > 3): ?>
-                                <li class="page-item disabled">
-                                    <span class="page-link">...</span>
-                                </li>
-                            <?php endif; ?>
-                            
-                            <?php for ($i = max(2, $currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1); $i++): ?>
-                                <li class="page-item <?= $currentPage == $i ? 'active' : '' ?>">
-                                    <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"><?= $i ?></a>
-                                </li>
-                            <?php endfor; ?>
-                            
-                            <?php if ($currentPage < $totalPages - 2): ?>
-                                <li class="page-item disabled">
-                                    <span class="page-link">...</span>
-                                </li>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                        
-                        <!-- Last Page -->
-                        <?php if ($totalPages > 1): ?>
-                        <li class="page-item <?= $currentPage == $totalPages ? 'active' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>"><?= $totalPages ?></a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <!-- Next Page Link -->
-                        <li class="page-item <?= $currentPage == $totalPages ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $currentPage + 1])) ?>" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
         </section>
 
-        <!-- Enhanced Products Grid -->
-        <div class="products-section">
-            <div class="products-header">
-                <h2 class="products-title">Our Featured Products</h2>
-                <p class="products-subtitle">Handpicked selection of premium gifts</p>
-            </div>
-            
-            <div class="product-grid">
-                <?php foreach ($products as $p): ?>
-                    <div class="product-card modern-product-card">
-                        <!-- Product Image -->
-                        <div class="product-image">
-                          
-                            
-                            <img src="<?= $p['main_image'] ?: 'assets/images/no-image.png'; ?>" 
-                                 alt="<?= htmlspecialchars($p['name_en']); ?>"
-                                 loading="lazy"
-                                 decoding="async"
-                                 width="320"
-                                 height="280">
-                            
-                            <!-- Product Badge -->
-                            <?php if (!empty($p['on_sale'])): ?>
-                                <span class="product-badge">Sale</span>
-                            <?php elseif (!empty($p['featured'])): ?>
-                                <span class="product-badge badge-featured">Featured</span>
-                            <?php endif; ?>
-                            
-                            <!-- Quick Actions Overlay -->
-                            <div class="product-overlay">
-                                <button class="quick-view-btn" 
-                                        data-id="<?= $p['id']; ?>" 
-                                        title="Quick View">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn-wishlist" 
-                                        data-id="<?= $p['id']; ?>" 
-                                        title="Add to Wishlist">
-                                    <i class="far fa-heart"></i>
-                                </button>
-                            </div>
-                        </div>
+        <div class="tg-container">
+            <?php if (!empty($homeCategories)): ?>
+            <section class="tg-section tg-categories" aria-labelledby="tg-categories-title">
+                <header class="tg-section-head is-center">
+                    <h2 id="tg-categories-title"><?= te('theme.our_categories') ?></h2>
+                    <p><?= te('theme.categories_lead') ?></p>
+                </header>
+                <div class="tg-carousel" data-tg-carousel>
+                    <button type="button" class="tg-carousel-btn is-prev" aria-label="<?= te('catalog.previous') ?>" data-tg-prev><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                    <div class="tg-carousel-track tg-category-track" data-tg-track>
+                        <?php foreach ($homeCategories as $cat): ?>
+                            <a class="tg-category-tile" href="<?= htmlspecialchars(store_url('products.php?category=' . (int)$cat['id'])) ?>">
+                                <span class="tg-category-media">
+                                    <img src="<?= htmlspecialchars($cat['tile_image']) ?>" alt="" loading="lazy" decoding="async" width="400" height="500">
+                                </span>
+                                <span class="tg-category-name"><?= htmlspecialchars(loc_field($cat, 'name')) ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="tg-carousel-btn is-next" aria-label="<?= te('catalog.next') ?>" data-tg-next><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+                </div>
+            </section>
+            <?php endif; ?>
 
-                        <!-- Product Content -->
-                    <div class="card-body d-flex flex-column">
-                    <!-- Product Title -->
-                    <h5 class="card-title product-name">
-                       <a href="https://aleppogift.com/product.php?id=<?= $p['id']; ?>" class="text-decoration-none"> 
-							<?= htmlspecialchars($p['name_en']); ?>
-					   </a> 
-                    </h5>
-                    <h6 class="product-name-ar mb-2">
-                        
-                         <?= htmlspecialchars($p['name_ar']); ?>
-                         
-                    </h6>
-                    
-                    <!-- Brand and Category Info -->
-                    <div class="product-meta mb-3">
-                        <?php if (!empty($p['brand_name_en'])): ?>
-                            <div class="meta-item mb-1">
-                                <i class="fas fa-star text-warning me-1"></i>
-                                <small>
-                                    <strong>Brand:</strong> 
-                                    <a href="?brand=<?= $p['brand_id']; ?>" class="text-decoration-none text-primary fw-semibold" title="View all <?= htmlspecialchars($p['brand_name_en']); ?> products">
-                                        <?= htmlspecialchars($p['brand_name_en']); ?>
-                                    </a>
-                                </small>
+            <?php if (!empty($newArrivals)): ?>
+            <section class="tg-section" aria-labelledby="tg-new-title">
+                <header class="tg-section-head is-row">
+                    <h2 id="tg-new-title"><?= te('theme.new_arrivals') ?></h2>
+                    <a class="tg-link" href="<?= htmlspecialchars(store_url('products.php?sort=newest')) ?>"><?= te('theme.view_all') ?></a>
+                </header>
+                <div class="tg-carousel" data-tg-carousel>
+                    <button type="button" class="tg-carousel-btn is-prev" aria-label="<?= te('catalog.previous') ?>" data-tg-prev><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                    <div class="tg-carousel-track" data-tg-track>
+                        <?php foreach ($newArrivals as $p): ?>
+                            <div class="tg-carousel-item">
+                                <?php include __DIR__ . '/../includes/product_card.php'; ?>
                             </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($p['category_name_en'])): ?>
-                            <div class="meta-item">
-                                <i class="fas fa-tag text-info me-1"></i>
-                                <small>
-                                    <strong>Category:</strong> 
-                                    <a href="?category=<?= $p['category_id']; ?>" class="text-decoration-none text-primary fw-semibold" title="View all <?= htmlspecialchars($p['category_name_en']); ?> products">
-                                        <?= htmlspecialchars($p['category_name_en']); ?>
-                                    </a>
-                                </small>
-                            </div>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
-                    
-                    <!-- Product Price -->
-                    <div class="product-price mb-3">
-                        <div class="price-main">
-                            <span class="price-current">
-                                <span class="uae-symbol">&#x00EA;</span><?= number_format($p['price']); ?>
-                            </span>
-                            <span class="price-usd">$<?= number_format($p['price']/3.68, 2); ?></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Product Actions - Optimized by Priority -->
-                    <div class="product-actions mt-auto">
-                        <!-- Primary Action: WhatsApp (Most Important) -->
-                        <div class="action-row-primary mb-2">
-                            <a class="btn btn-success w-100 whatsapp-btn-primary product-action-btn" 
-                               href="https://wa.me/971561125320?text=<?= urlencode('aleppogift: I am interested in this product: ' 
-                               . htmlspecialchars($p['name_en']) . ' - AED ' . number_format($p['price'], 0) . ' - https://aleppogift.com/product.php?id=' . $p['id']) ?>" 
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               title="Contact us on WhatsApp">
-                                <i class="fab fa-whatsapp me-2"></i>
-                                <!-- <span>WhatsApp Us</span> -->
-                            </a>
-                        </div>
-                        
-                        <!-- Secondary Actions Row -->
-                        <div class="action-row-secondary mb-2">
-                            <a href="https://aleppogift.com/product.php?id=<?= $p['id']; ?>" 
-                               class="btn btn-outline-primary product-action-btn"
-                               title="View Details">
-                                <i class="fas fa-eye me-1"></i>
-                                <!-- <span class="d-none d-md-inline">View</span> -->
-                            </a>
-                            
-                            <form class="add-to-cart-form" method="post" action="ajax/add_to_cart.php">
-                                <input type="hidden" name="product_id" value="<?= $p['id']; ?>">
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="btn btn-primary w-100 add-to-cart product-action-btn" 
-                                        data-id="<?= $p['id']; ?>" 
-                                        data-name="<?= htmlspecialchars($p['name_en']); ?>">
-                                    <i class="fas fa-shopping-cart me-1"></i>
-                                    <!-- <span class="d-none d-md-inline">Cart</span> -->
-                                </button>
-                            </form>
-                        </div>
-                        
-                        <!-- Tertiary Actions Row -->
-                        <div class="action-row-tertiary">
-                            <button class="btn btn-outline-secondary share-btn product-action-btn icon-only" 
-                                    title="Share Product"
-                                    onclick="shareProduct(
-                                        '<?= addslashes(htmlspecialchars($p['name_en'])) ?>', 
-                                        '<?= number_format($p['price'], 2) ?>', 
-                                        '<?= $p['id'] ?>',
-                                        'https://aleppogift.com/product.php?id=<?= $p['id'] ?>'
-                                    )">
-                                <i class="fas fa-share-alt"></i>
-                                <!-- <span class="d-none d-lg-inline">Share</span> -->
-                            </button>
-                            
-                            <button class="btn btn-outline-danger btn-wishlist product-action-btn icon-only" 
-                                    data-id="<?= $p['id']; ?>" 
-                                    title="Add to Wishlist">
-                                <i class="far fa-heart"></i>
-                                <!-- <span class="d-none d-lg-inline">Save</span> -->
-                            </button>
-                        </div>
-                    </div>
+                    <button type="button" class="tg-carousel-btn is-next" aria-label="<?= te('catalog.next') ?>" data-tg-next><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
                 </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-            
-            <div class="text-center mt-4">
-                <a href="#top" class="btn btn-secondary">Back to Top</a>
-            </div>
+            </section>
+            <?php endif; ?>
         </div>
 
-        <!-- Pagination at Bottom -->
-        <section class="mb-4">
-            <div class="pagination-container">
-                <div class="pagination-info">Products (<?= $totalProducts ?> found)</div>
-                
-                <nav class="pagination-nav">
-                    <ul class="pagination">
-                        <!-- Previous Page Link -->
-                        <li class="page-item <?= $currentPage == 1 ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $currentPage - 1])) ?>" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        
-                        <!-- First Page -->
-                        <?php if ($totalPages > 0): ?>
-                        <li class="page-item <?= $currentPage == 1 ? 'active' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>">1</a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <!-- Ellipsis and middle pages logic -->
-                        <?php if ($totalPages > 1): ?>
-                            <?php if ($currentPage > 3): ?>
-                                <li class="page-item disabled">
-                                    <span class="page-link">...</span>
-                                </li>
-                            <?php endif; ?>
-                            
-                            <?php for ($i = max(2, $currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1); $i++): ?>
-                                <li class="page-item <?= $currentPage == $i ? 'active' : '' ?>">
-                                    <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"><?= $i ?></a>
-                                </li>
-                            <?php endfor; ?>
-                            
-                            <?php if ($currentPage < $totalPages - 2): ?>
-                                <li class="page-item disabled">
-                                    <span class="page-link">...</span>
-                                </li>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                        
-                        <!-- Last Page -->
-                        <?php if ($totalPages > 1): ?>
-                        <li class="page-item <?= $currentPage == $totalPages ? 'active' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>"><?= $totalPages ?></a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <!-- Next Page Link -->
-                        <li class="page-item <?= $currentPage == $totalPages ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $currentPage + 1])) ?>" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+        <section class="tg-editorial" aria-labelledby="tg-editorial-title">
+            <div class="tg-editorial-copy">
+                <p class="tg-eyebrow is-dark"><?= $editorialCategory ? htmlspecialchars(loc_field($editorialCategory, 'name')) : te('shop') ?></p>
+                <h2 id="tg-editorial-title"><?= te('theme.editorial_title') ?></h2>
+                <p><?= te('theme.editorial_text') ?></p>
+                <a class="tg-btn" href="<?= htmlspecialchars(store_url($editorialUrl)) ?>"><?= te('theme.shop_now') ?></a>
             </div>
+            <a class="tg-editorial-media" href="<?= htmlspecialchars(store_url($editorialUrl)) ?>" tabindex="-1" aria-hidden="true">
+                <img src="assets/images/hero-bg0.jpg" alt="" loading="lazy" decoding="async" width="1024" height="576">
+            </a>
         </section>
+
+        <div class="tg-container">
+            <?php $homeBundles = loadHomeBundles($db); ?>
+            <?php if (!empty($homeBundles)): ?>
+            <section id="bundles" class="tg-section bundle-section">
+                <header class="tg-section-head is-center">
+                    <h2><?= te('catalog.bundles') ?></h2>
+                    <p><?= te('catalog.bundles_subtitle') ?></p>
+                </header>
+                <div class="bundle-grid">
+                    <?php foreach ($homeBundles as $bundle): ?>
+                        <?php
+                        $bundleImage = $bundle['image_path'] ?: ($bundle['items'][0]['image_path'] ?? '');
+                        $bundleImage = $bundleImage ? str_replace('../', '', $bundleImage) : 'assets/images/no-image.png';
+                        $canAdd = empty($bundle['unavailable']);
+                        ?>
+                        <article class="bundle-card">
+                            <div class="bundle-card-media">
+                                <img src="<?= htmlspecialchars($bundleImage) ?>" alt="<?= htmlspecialchars(loc_field($bundle, 'name')) ?>" loading="lazy">
+                                <span class="bundle-discount"><?= te('catalog.percent_off', ['percent' => rtrim(rtrim(number_format((float)$bundle['discount_percent'], 2, '.', ''), '0'), '.')]) ?></span>
+                            </div>
+                            <div class="bundle-card-body">
+                                <h3><?= htmlspecialchars(loc_field($bundle, 'name')) ?></h3>
+                                <?php if (!function_exists('is_placeholder_arabic_name') || !is_placeholder_arabic_name($bundle['name_ar'] ?? '')): ?>
+                                    <p class="bundle-name-ar" dir="rtl"><?= htmlspecialchars($bundle['name_ar']) ?></p>
+                                <?php endif; ?>
+                                <?php if (loc_field($bundle, 'description') !== ''): ?>
+                                    <p class="bundle-description"><?= htmlspecialchars(loc_field($bundle, 'description')) ?></p>
+                                <?php endif; ?>
+                                <ul class="bundle-items">
+                                    <?php foreach ($bundle['items'] as $bundleItem): ?>
+                                        <li><?= (int)$bundleItem['quantity'] ?> × <?= htmlspecialchars(loc_field($bundleItem, 'name')) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                                <?php if ($show_prices): ?>
+                                    <p class="bundle-prices">
+                                        <s><?= format_store_money((float)$bundle['catalog_total']) ?></s>
+                                        <strong><?= format_store_money((float)$bundle['discounted_total']) ?></strong>
+                                    </p>
+                                <?php endif; ?>
+                                <?php if ($canAdd): ?>
+                                    <form class="add-bundle-form" method="post" action="ajax/add_bundle_to_cart.php">
+                                        <input type="hidden" name="bundle_id" value="<?= (int)$bundle['id'] ?>">
+                                        <button type="submit" class="btn btn-primary"><?= te('catalog.add_bundle') ?></button>
+                                    </form>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-secondary" disabled><?= te('catalog.add_bundle') ?></button>
+                                    <p class="bundle-unavailable"><?= htmlspecialchars(implode('. ', $bundle['unavailable'])) ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <section id="products" class="tg-section products-section">
+                <header class="tg-section-head is-center">
+                    <h2><?= te('catalog.shop_collection') ?></h2>
+                    <p><?= te('catalog.products_count', ['count' => (int)$totalProducts]) ?></p>
+                </header>
+
+                <?php if (!empty($categories)): ?>
+                <nav class="category-rail" aria-label="<?= te('catalog.shop_by_category') ?>">
+                    <a class="category-chip<?= empty($_GET['category']) ? ' is-active' : '' ?>" href="<?= htmlspecialchars(store_url('#products')) ?>"><?= te('catalog.all') ?></a>
+                    <?php foreach ($categories as $cat): ?>
+                        <a class="category-chip<?= (isset($_GET['category']) && (string)$_GET['category'] === (string)$cat['id']) ? ' is-active' : '' ?>"
+                           href="<?= htmlspecialchars(store_url('?category=' . (int)$cat['id'] . '#products')) ?>">
+                            <?= htmlspecialchars(loc_field($cat, 'name')) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </nav>
+                <?php endif; ?>
+
+                <form method="get" action="#products" class="catalog-toolbar modern-filter-form">
+                    <div class="catalog-toolbar-grid">
+                        <div class="filter-group search-group">
+                            <label for="search" class="visually-hidden"><?= te('search') ?></label>
+                            <input type="text" name="search" id="search" class="form-control search-input"
+                                   placeholder="<?= te('header.search_products') ?>"
+                                   value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        </div>
+                        <div class="filter-group">
+                            <label for="category" class="visually-hidden"><?= te('catalog.category') ?></label>
+                            <select name="category" id="category" class="form-control modern-select">
+                                <option value=""><?= te('catalog.all_categories') ?></option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?= $cat['id']; ?>" <?= (isset($_GET['category']) && $_GET['category'] == $cat['id']) ? 'selected' : ''; ?>>
+                                        <?= htmlspecialchars(loc_field($cat, 'name')); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="brand" class="visually-hidden"><?= te('catalog.brand') ?></label>
+                            <select name="brand" id="brand" class="form-control modern-select">
+                                <option value=""><?= te('catalog.all_brands') ?></option>
+                                <?php foreach ($brands as $brand): ?>
+                                    <option value="<?= $brand['id']; ?>" <?= (isset($_GET['brand']) && $_GET['brand'] == $brand['id']) ? 'selected' : ''; ?>>
+                                        <?= htmlspecialchars(loc_field($brand, 'name')); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="catalog-toolbar-actions">
+                            <button type="submit" class="btn btn-primary filter-submit"><?= te('search') ?></button>
+                            <a href="?" class="btn reset-filters" title="<?= te('catalog.clear_filters') ?>"><?= te('catalog.reset') ?></a>
+                            <button type="button" class="btn catalog-pdf" onclick="exportSearchToPDF()" title="<?= te('catalog.export_pdf') ?>">PDF</button>
+                        </div>
+                    </div>
+                </form>
+
+                <details class="availability-notice">
+                    <summary>
+                        <span class="availability-notice-icon" aria-hidden="true"><i class="fas fa-circle-info"></i></span>
+                        <span class="notice-summary-copy">
+                            <strong><?= te('catalog.notice_title') ?></strong>
+                            <span><?= te('catalog.notice_summary_availability') ?></span>
+                            <span><?= te('catalog.notice_summary_payment') ?></span>
+                        </span>
+                    </summary>
+                    <div class="availability-notice-text">
+                        <span class="notice-lang-en">
+                            <?= te('catalog.notice_confirm_on') ?>
+                            <a href="https://wa.me/<?php echo WHATSAPP_NUMBER; ?>" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-whatsapp"></i> <?= te('catalog.whatsapp') ?>
+                            </a>.
+                            <?= te('catalog.notice_place_order') ?>
+                            <strong class="notice-cod-highlight"><?= te('catalog.notice_cod') ?></strong>
+                        </span>
+                    </div>
+                </details>
+
+                <div class="product-grid">
+                    <?php foreach ($products as $p): ?>
+                        <?php include __DIR__ . '/../includes/product_card.php'; ?>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+
+            <?php if ($totalPages > 1): ?>
+            <nav class="pagination-container" aria-label="<?= te('catalog.pagination') ?>">
+                <div class="pagination-info"><?= te('catalog.products_found', ['count' => (int)$totalProducts]) ?></div>
+                <ul class="pagination">
+                    <li class="page-item <?= $currentPage == 1 ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['page' => $currentPage - 1]))) ?>#products" aria-label="<?= te('catalog.previous') ?>">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item <?= $currentPage == 1 ? 'active' : '' ?>">
+                        <a class="page-link" href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['page' => 1]))) ?>#products">1</a>
+                    </li>
+                    <?php if ($currentPage > 3): ?>
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <?php endif; ?>
+                    <?php for ($i = max(2, $currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1); $i++): ?>
+                        <li class="page-item <?= $currentPage == $i ? 'active' : '' ?>">
+                            <a class="page-link" href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['page' => $i]))) ?>#products"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    <?php if ($currentPage < $totalPages - 2): ?>
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <?php endif; ?>
+                    <li class="page-item <?= $currentPage == $totalPages ? 'active' : '' ?>">
+                        <a class="page-link" href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['page' => $totalPages]))) ?>#products"><?= $totalPages ?></a>
+                    </li>
+                    <li class="page-item <?= $currentPage == $totalPages ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['page' => $currentPage + 1]))) ?>#products" aria-label="<?= te('catalog.next') ?>">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <?php endif; ?>
+
+            <section id="categories" class="tg-section home-brands">
+                <?php require_once(__DIR__ . '/../includes/brands.php'); ?>
+            </section>
+
+            <?php include(__DIR__ . '/../includes/social_proof_widgets.php'); ?>
+
+            <?php if (!empty($featuredPhotos)): ?>
+            <section class="tg-section home-gallery">
+                <header class="tg-section-head is-center">
+                    <h2><?= te('catalog.customer_gallery') ?></h2>
+                </header>
+                <div class="tg-gallery-grid">
+                    <?php foreach ($featuredPhotos as $photo): ?>
+                        <img src="<?= htmlspecialchars($photo['photo_path']) ?>" alt="<?= htmlspecialchars((string)$photo['customer_name']) ?>" loading="lazy"<?= !empty($photo['privacy_blurred']) ? ' class="is-blurred"' : '' ?>>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <?php if (!empty($featuredTestimonials)): ?>
+            <section class="tg-section trust-teaser">
+                <header class="tg-section-head is-center">
+                    <p class="tg-eyebrow is-dark"><i class="fab fa-whatsapp" aria-hidden="true"></i> <?= te('catalog.real_proof') ?></p>
+                    <h2><?= te('catalog.trust_title') ?></h2>
+                    <p><?= te('catalog.trust_text') ?></p>
+                </header>
+                <div class="tg-testimonial-grid">
+                    <?php foreach ($featuredTestimonials as $testimonial): ?>
+                    <article class="trust-proof-card">
+                        <?php if (!empty($testimonial['whatsapp_screenshot_path']) && !empty($testimonial['privacy_blurred'])): ?>
+                            <a href="<?= htmlspecialchars($testimonial['whatsapp_screenshot_path']) ?>" target="_blank" rel="noopener noreferrer">
+                                <img src="<?= htmlspecialchars($testimonial['whatsapp_screenshot_path']) ?>"
+                                     alt="<?= te('catalog.proof_alt', ['name' => $testimonial['customer_name']]) ?>"
+                                     class="trust-proof-media" loading="lazy">
+                            </a>
+                        <?php endif; ?>
+                        <div class="trust-proof-body">
+                            <p class="trust-proof-quote">&ldquo;<?= htmlspecialchars(mb_strimwidth(trim(preg_replace('/\s+/', ' ', $testimonial['testimonial_text'])), 0, 180, '...')) ?>&rdquo;</p>
+                            <p class="trust-proof-author">
+                                <strong><?= htmlspecialchars($testimonial['customer_name']) ?></strong>
+                                <?php if (!empty($testimonial['customer_location'])): ?>
+                                    <span><?= htmlspecialchars($testimonial['customer_location']) ?></span>
+                                <?php endif; ?>
+                            </p>
+                            <div class="trust-proof-badges">
+                                <?php if (!empty($testimonial['whatsapp_conversation'])): ?>
+                                    <span><i class="fab fa-whatsapp" aria-hidden="true"></i> WhatsApp</span>
+                                <?php endif; ?>
+                                <?php if (!empty($testimonial['privacy_blurred'])): ?>
+                                    <span><?= te('catalog.privacy_protected') ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </article>
+                    <?php endforeach; ?>
+                </div>
+                <div class="tg-center-actions">
+                    <a href="testimonials.php" class="tg-btn tg-btn-outline"><?= te('catalog.read_testimonials') ?></a>
+                    <a href="https://wa.me/971561125320" class="tg-btn" target="_blank" rel="noopener noreferrer"><?= te('catalog.chat_whatsapp') ?></a>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <section class="tg-section tg-services" aria-labelledby="tg-services-title">
+                <header class="tg-section-head is-center">
+                    <h2 id="tg-services-title"><?= te('theme.our_services') ?></h2>
+                </header>
+                <ul class="tg-services-grid">
+                    <li>
+                        <span class="tg-service-icon" aria-hidden="true"><i class="fas fa-hand-holding-dollar"></i></span>
+                        <h3><?= te('catalog.promise_cod') ?></h3>
+                        <p><?= te('theme.service_cod_text') ?></p>
+                    </li>
+                    <li>
+                        <span class="tg-service-icon" aria-hidden="true"><i class="fas fa-truck-fast"></i></span>
+                        <h3><?= te('catalog.promise_delivery') ?></h3>
+                        <p><?= te('theme.service_delivery_text') ?></p>
+                    </li>
+                    <li>
+                        <span class="tg-service-icon" aria-hidden="true"><i class="fab fa-whatsapp"></i></span>
+                        <h3><?= te('catalog.promise_confirm') ?></h3>
+                        <p><?= te('theme.service_whatsapp_text') ?></p>
+                    </li>
+                    <li>
+                        <span class="tg-service-icon" aria-hidden="true"><i class="fas fa-coins"></i></span>
+                        <h3><?= te('catalog.promise_currency') ?></h3>
+                        <p><?= te('theme.service_currency_text') ?></p>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="tg-seo-intro">
+                <h2><?= te('theme.intro_title') ?></h2>
+                <p><?= te('theme.intro_text') ?></p>
+            </section>
+        </div>
     </main>
 
-    <footer class="footer">
-        <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
-    </footer>  
+    <?php require_once(__DIR__ . '/../includes/footer.php'); ?>  
 
 
 
@@ -558,160 +614,85 @@ $products = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
     </script>
 
     <!-- JavaScript - jQuery loaded without defer since inline scripts depend on it -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="assets/js/catalog-pdf.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     
-    <!-- Simplified Cart Preview JavaScript -->
     <script>
-        // Simple cart preview toggle
-        function toggleCartPreview() {
-            const preview = document.getElementById('cartPreview');
-            if (preview.style.display === 'none' || preview.style.display === '') {
-                showCartPreview();
-            } else {
-                hideCartPreview();
-            }
-        }
-        
-        function showCartPreview() {
-            const preview = document.getElementById('cartPreview');
-            const container = document.getElementById('cart-items-container');
+        const CATALOG_I18N = <?= json_encode([
+            'generating' => t('catalog.pdf_generating'),
+            'wait' => t('catalog.pdf_wait'),
+            'failed' => t('catalog.pdf_failed'),
+            'error' => t('catalog.pdf_error'),
+            'errorGenerating' => t('catalog.pdf_error_generating'),
+        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+
+        function exportSearchToPDF() {
+            // Get current filter parameters
+            const params = new URLSearchParams(window.location.search);
+            params.delete('page'); // Remove pagination to get all results
             
-            // Show preview
-            preview.style.display = 'block';
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'pdf-loading-overlay';
+            loadingDiv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:99999;';
+            loadingDiv.innerHTML = '<div style="background:#fff;padding:36px 40px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.25);text-align:center;max-width:320px;width:90%;"><i class="fas fa-spinner fa-spin fa-3x mb-3" style="color:#007bff;"></i><h4 style="margin:16px 0 8px;"></h4><p style="margin:0;color:#666;"></p></div>';
+            loadingDiv.querySelector('h4').textContent = CATALOG_I18N.generating;
+            loadingDiv.querySelector('p').textContent = CATALOG_I18N.wait;
+            document.body.appendChild(loadingDiv);
             
-            // Load cart contents
-            fetch('ajax/simple_cart_preview.php')
-                .then(response => response.text())
-                .then(html => {
-                    container.innerHTML = html;
+            // Fetch all products for PDF
+            fetch('ajax/export_search_results_pdf.php?' + params.toString())
+                .then(response => {
+                    // Check if response is ok
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                    }
+                    // Check content type
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        return response.text().then(text => {
+                            console.error('Non-JSON response:', text);
+                            throw new Error('Server returned non-JSON response. Check browser console for details.');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(async data => {
+                    if (data.success) {
+                        await AleppoCatalogPdf.download({
+                            products: data.products,
+                            groups: data.groups,
+                            groupingType: data.grouping_type,
+                            groupNames: data.group_names || {},
+                            filters: data.filters,
+                            title: 'Search Results',
+                            filenamePrefix: 'AleppoGift_SearchResults'
+                        });
+                    } else {
+                        alert(CATALOG_I18N.error.replace('{message}', data.error || CATALOG_I18N.failed));
+                    }
+                    document.body.removeChild(loadingDiv);
                 })
                 .catch(error => {
-                    console.error('Error loading cart:', error);
-                    container.innerHTML = '<div class="text-center p-3 text-danger"><i class="fas fa-exclamation-triangle"></i><p class="mb-0 small">Error loading cart</p></div>';
+                    console.error('Error:', error);
+                    alert(CATALOG_I18N.errorGenerating.replace('{message}', error.message));
+                    if (loadingDiv.parentElement) {
+                        document.body.removeChild(loadingDiv);
+                    }
                 });
-                
-            // Auto-hide after 10 seconds
-            setTimeout(hideCartPreview, 10000);
         }
         
-        function hideCartPreview() {
-            document.getElementById('cartPreview').style.display = 'none';
-        }
-        
-        // Close cart preview when clicking outside
-        document.addEventListener('click', function(event) {
-            const preview = document.getElementById('cartPreview');
-            const cartButton = document.querySelector('button[onclick="toggleCartPreview()"]');
-            
-            if (preview && preview.style.display === 'block' && 
-                !preview.contains(event.target) && 
-                !cartButton.contains(event.target)) {
-                hideCartPreview();
-            }
-        });
-        
-        // Remove item from cart
-        function removeFromCart(productId) {
-            if (!confirm('Remove this item from cart?')) return;
-            
-            fetch('ajax/remove_from_cart.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'product_id=' + productId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update cart count
-                    document.getElementById('cart-count').textContent = data.cart_count || 0;
-                    // Refresh cart preview
-                    showCartPreview();
-                    // Show notification
-                    alert('Item removed from cart');
-                } else {
-                    alert('Error removing item from cart');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error removing item from cart');
-            });
-        }
-        
-        // Enhanced add to cart functionality with debouncing
-        $(document).ready(function() {
-            let cartSubmitting = false;
-            
-            // Handle add to cart form submission with debounce protection
-            $(document).on('submit', '.add-to-cart-form', function(e) {
-                e.preventDefault();
-                
-                // Prevent double submissions
-                if (cartSubmitting) {
-                    return false;
-                }
-                
-                const form = $(this);
-                const button = form.find('button[type="submit"]');
-                const originalText = button.html();
-                
-                // Set debounce flag
-                cartSubmitting = true;
-                
-                // Show loading state
-                button.prop('disabled', true);
-                button.html('<i class="fas fa-spinner fa-spin me-1"></i>Adding...');
-                
-                // Submit form
-                $.post('ajax/add_to_cart.php', form.serialize())
-                    .done(function(response) {
-                        if (response.success) {
-                            // Update cart count
-                            $('#cart-count').text(response.cart_count || 0);
-                            
-                            // Show success message
-                            button.html('<i class="fas fa-check me-1"></i>Added!');
-                            button.removeClass('btn-primary').addClass('btn-success');
-                            
-                            // Show cart preview briefly
-                            setTimeout(showCartPreview, 300);
-                            
-                            // Reset button after 2 seconds
-                            setTimeout(function() {
-                                button.html(originalText);
-                                button.removeClass('btn-success').addClass('btn-primary');
-                                button.prop('disabled', false);
-                                cartSubmitting = false;
-                            }, 2000);
-                            
-                        } else {
-                            throw new Error(response.message || 'Unknown error');
-                        }
-                    })
-                    .fail(function(xhr, status, error) {
-                        console.error('Add to cart error:', error);
-                        button.html('<i class="fas fa-exclamation-triangle me-1"></i>Error');
-                        button.removeClass('btn-primary').addClass('btn-danger');
-                        
-                        setTimeout(function() {
-                            button.html(originalText);
-                            button.removeClass('btn-danger').addClass('btn-primary');
-                            button.prop('disabled', false);
-                            cartSubmitting = false;
-                        }, 3000);
-                    });
-                
-                return false;
-            });
-        });
+        // Add to cart is handled by assets/js/storefront.js.
     </script>
     
-	<script defer src="assets/js/main.js"></script>
-	<script defer src="assets/js/enhanced-main.js"></script>
-	<script defer src="assets/js/enhanced-ui.js"></script>
+	<script defer src="<?= htmlspecialchars(store_url('assets/js/main.js')) ?>?v=20261012i18n"></script>
+	<script defer src="<?= htmlspecialchars(store_url('assets/js/enhanced-main.js')) ?>?v=20261012i18n"></script>
+	<script defer src="<?= htmlspecialchars(store_url('assets/js/enhanced-ui.js')) ?>?v=20261012i18n"></script>
     <!-- Index Page JavaScript -->
-    <script defer src="assets/js/index.js"></script>
+    <script defer src="<?= htmlspecialchars(store_url('assets/js/index.js')) ?>?v=20261012i18n"></script>
 </body>
 </html>
 <?php

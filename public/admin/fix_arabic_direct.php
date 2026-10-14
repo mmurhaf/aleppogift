@@ -90,7 +90,7 @@ try {
     $host = 'mmurhaf50350.ipagemysql.com';
     $dbname = 'aleppogift';
     $username = 'mmurhaf';
-    $password = 'Salem1972#i';
+    $password = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
     
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

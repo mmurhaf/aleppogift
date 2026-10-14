@@ -1,134 +1,58 @@
 <?php
-// JSON API for comprehensive system status check
-header('Content-Type: application/json');
-
-try {
-    require_once(__DIR__ . '/includes/bootstrap.php');
-    
-    $db = new Database();
-    $status = [];
-    
-    // 1. Check database connectivity
-    try {
-        $db->query("SELECT 1");
-        $status['database'] = ['status' => 'connected', 'message' => 'Database connection successful'];
-    } catch (Exception $e) {
-        $status['database'] = ['status' => 'error', 'message' => $e->getMessage()];
-    }
-    
-    // 2. Check products table
-    try {
-        $product_count = $db->query("SELECT COUNT(*) as count FROM products WHERE status = 'active'")->fetch()['count'];
-        $status['products'] = ['status' => 'ok', 'active_products' => $product_count];
-    } catch (Exception $e) {
-        $status['products'] = ['status' => 'error', 'message' => $e->getMessage()];
-    }
-    
-    // 3. Check product_images table
-    try {
-        $image_count = $db->query("SELECT COUNT(*) as count FROM product_images")->fetch()['count'];
-        $status['product_images'] = ['status' => 'ok', 'total_images' => $image_count];
-    } catch (Exception $e) {
-        $status['product_images'] = ['status' => 'error', 'message' => $e->getMessage()];
-    }
-    
-    // 4. Check coupons table and required columns
-    try {
-        $coupon_count = $db->query("SELECT COUNT(*) as count FROM coupons WHERE status = 'active'")->fetch()['count'];
-        $status['coupons'] = ['status' => 'ok', 'active_coupons' => $coupon_count];
-    } catch (Exception $e) {
-        $status['coupons'] = ['status' => 'error', 'message' => $e->getMessage()];
-    }
-    
-    // 5. Check orders table structure
-    try {
-        $orders_structure = $db->query("DESCRIBE orders")->fetchAll(PDO::FETCH_ASSOC);
-        $orders_columns = array_column($orders_structure, 'Field');
-        
-        $required_order_columns = ['order_date', 'coupon_code', 'discount_type', 'discount_value', 'discount_amount'];
-        $missing_columns = array_diff($required_order_columns, $orders_columns);
-        
-        if (empty($missing_columns)) {
-            $status['orders_structure'] = ['status' => 'ok', 'message' => 'All required columns present', 'columns' => $orders_columns];
-        } else {
-            $status['orders_structure'] = ['status' => 'warning', 'missing_columns' => $missing_columns, 'existing_columns' => $orders_columns];
-        }
-    } catch (Exception $e) {
-        $status['orders_structure'] = ['status' => 'error', 'message' => $e->getMessage()];
-    }
-    
-    // 6. Check key AJAX endpoints
-    $ajax_endpoints = [
-        'add_to_cart.php',
-        'get_product_details.php', 
-        'apply_coupon.php',
-        'cart_preview.php'
-    ];
-    
-    foreach ($ajax_endpoints as $endpoint) {
-        if (file_exists(__DIR__ . "/public/ajax/$endpoint")) {
-            $status["ajax_$endpoint"] = ['status' => 'ok', 'message' => 'File exists'];
-        } else {
-            $status["ajax_$endpoint"] = ['status' => 'error', 'message' => 'File missing'];
-        }
-    }
-    
-    // 7. Check session functionality
-    if (session_status() === PHP_SESSION_ACTIVE) {
-        $status['sessions'] = ['status' => 'ok', 'message' => 'Sessions are active'];
-    } else {
-        $status['sessions'] = ['status' => 'warning', 'message' => 'Sessions not active'];
-    }
-    
-    // 8. Test cart functionality
-    if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
-        $cart_items = count($_SESSION['cart']);
-        $status['cart_session'] = ['status' => 'ok', 'message' => "Cart session active with $cart_items items"];
-    } else {
-        $status['cart_session'] = ['status' => 'ok', 'message' => 'Cart session ready (empty)'];
-    }
-    
-    // Overall status
-    $error_count = 0;
-    $warning_count = 0;
-    
-    foreach ($status as $check) {
-        if (isset($check['status'])) {
-            if ($check['status'] === 'error') $error_count++;
-            if ($check['status'] === 'warning') $warning_count++;
-        }
-    }
-    
-    $overall_status = 'healthy';
-    if ($error_count > 0) {
-        $overall_status = 'critical';
-    } elseif ($warning_count > 0) {
-        $overall_status = 'needs_attention';
-    }
-    
-    echo json_encode([
-        'overall_status' => $overall_status,
-        'error_count' => $error_count,
-        'warning_count' => $warning_count,
-        'timestamp' => date('Y-m-d H:i:s'),
-        'system_health' => [
-            'cart_system' => 'operational',
-            'coupon_system' => 'operational', 
-            'checkout_system' => 'operational',
-            'quick_view' => 'operational'
-        ],
-        'detailed_status' => $status
-    ], JSON_PRETTY_PRINT);
-    
-} catch (Exception $e) {
-    echo json_encode([
-        'overall_status' => 'critical',
-        'error' => $e->getMessage(),
-        'timestamp' => date('Y-m-d H:i:s')
-    ], JSON_PRETTY_PRINT);
+$root_dir = dirname(dirname(__DIR__));
+require_once $root_dir . '/config/config.php';
+require_once $root_dir . '/includes/session_helper.php';
+require_once $root_dir . '/includes/Database.php';
+require_once $root_dir . '/includes/functions.php';
+require_once $root_dir . '/includes/store_features.php';
+require_admin_login();
+$db = new Database();
+$checks = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_email'])) {
+    $to = store_setting($db, 'admin_email', defined('EMAIL_FROM') ? EMAIL_FROM : '');
+    $ok = send_store_mail($to, 'Aleppo Gift mail test', '<p>This is a test message from the admin status page.</p>');
+    $checks[] = ['name' => 'Test message', 'ok' => $ok, 'error' => $ok ? '' : 'mail() returned false'];
 }
+$key = store_setting($db, 'ziina_api_key', defined('ZIINA_API_KEY') ? ZIINA_API_KEY : '');
+$ziinaOk = false;
+$ziinaError = '';
+if ($key === '') {
+    $ziinaError = 'No Ziina key is configured.';
+} elseif (function_exists('curl_init')) {
+    $ch = curl_init('https://api-v2.ziina.com/api/payment_intent');
+    curl_setopt_array($ch, [CURLOPT_NOBODY => true, CURLOPT_TIMEOUT => 12, CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $key]]);
+    curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $ziinaError = curl_error($ch);
+    curl_close($ch);
+    $ziinaOk = $code > 0 && $code < 500;
+    if (!$ziinaOk && $ziinaError === '') {
+        $ziinaError = 'HTTP ' . $code;
+    }
+} else {
+    $ziinaError = 'cURL is not available.';
+}
+$checks[] = ['name' => 'Ziina', 'ok' => $ziinaOk, 'error' => $ziinaOk ? '' : $ziinaError];
+$smtpHost = store_setting($db, 'smtp_host', defined('SMTP_HOST') ? SMTP_HOST : '');
+$smtpPort = (int)store_setting($db, 'smtp_port', defined('SMTP_PORT') ? (string)SMTP_PORT : '465');
+$errno = 0;
+$errstr = '';
+$socket = @fsockopen($smtpHost, $smtpPort, $errno, $errstr, 8);
+$smtpOk = is_resource($socket);
+if ($smtpOk) {
+    fclose($socket);
+}
+$checks[] = ['name' => 'SMTP ' . $smtpHost . ':' . $smtpPort, 'ok' => $smtpOk, 'error' => $smtpOk ? '' : ($errstr ?: 'Connection failed')];
+$page_title = 'API status';
+require __DIR__ . '/header.php';
 ?>
-
-
-
-
+<div class="container-fluid">
+    <?php foreach ($checks as $check): ?>
+        <div class="alert alert-<?= $check['ok'] ? 'success' : 'danger' ?>">
+            <?= htmlspecialchars($check['name']) ?>: <?= $check['ok'] ? 'reachable' : 'not reachable' ?>
+            <?php if ($check['error']): ?><div><?= htmlspecialchars($check['error']) ?></div><?php endif; ?>
+        </div>
+    <?php endforeach; ?>
+    <form method="post"><button class="btn btn-primary" name="test_email" value="1" type="submit">Send test message</button></form>
+</div>
+<?php require __DIR__ . '/includes/footer.php';

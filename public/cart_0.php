@@ -98,11 +98,11 @@ if (!empty($invalid_items)) {
     
     <!-- Main CSS files to match index.php -->
     <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/header.css">
     <link rel="stylesheet" href="assets/css/index.css">
-    <link rel="stylesheet" href="assets/css/enhanced-design.css">
+    <link rel="stylesheet" href="assets/css/header.css">
     <link rel="stylesheet" href="assets/css/components.css">
     <link rel="stylesheet" href="assets/css/ui-components.css">
+    <link rel="stylesheet" href="assets/css/header-fixes.css">
     <link rel="stylesheet" href="assets/css/cart.css">
 </head>
 <body>

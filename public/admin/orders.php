@@ -3,6 +3,7 @@ $root_dir = dirname(dirname(__DIR__));
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
+require_once($root_dir . '/includes/store_features.php');
 
 require_admin_login();
 
@@ -43,11 +44,16 @@ if (isset($_POST['bulk_delete']) && !empty($_POST['selected_orders'])) {
 if (isset($_POST['update_status'])) {
     $order_id = (int)$_POST['order_id'];
     $status = $_POST['payment_status'];
-    $db->query("UPDATE orders SET payment_status = :status WHERE id = :id", [
-        'status' => $status,
-        'id' => $order_id
-    ]);
-    $message = "Order payment status updated successfully!";
+    $stockError = apply_order_stock_for_status($db, $order_id, $status);
+    if ($stockError) {
+        $message = $stockError;
+    } else {
+        $db->query("UPDATE orders SET payment_status = :status WHERE id = :id", [
+            'status' => $status,
+            'id' => $order_id
+        ]);
+        $message = "Order payment status updated successfully!";
+    }
 }
 
 // Fetch orders with customer info
@@ -56,17 +62,11 @@ $sql = "SELECT o.*, c.fullname, c.email FROM orders o
         ORDER BY o.id DESC";
 $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orders Management - AleppoGift</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/admin-theme.css">
-    <style>
+<?php
+$page_title = 'Orders';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
         /* Orders page specific styles */
         body {
             background-color: var(--light-color);
@@ -157,8 +157,6 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             cursor: pointer;
         }
     </style>
-</head>
-<body>
     <div class="container-fluid py-4">
         <!-- Dashboard Header -->
         <div class="dashboard-header d-flex justify-content-between align-items-center">
@@ -242,9 +240,9 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                                         <span class="text-muted">No email</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo date('M j, Y', strtotime($order['order_date'])); ?></td>
-                                <td>AED <?php echo number_format($order['total_amount'], 2); ?></td>
-                                <td><?php echo ucwords(str_replace('_', ' ', $order['payment_method'])); ?></td>
+                                <td><?php echo !empty($order['order_date']) ? date('M j, Y', strtotime($order['order_date'])) : '—'; ?></td>
+                                <td>AED <?php echo number_format((float)($order['total_amount'] ?? 0), 2); ?></td>
+                                <td><?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string)($order['payment_method'] ?? '')))); ?></td>
                                 <td><code><?php echo $order['payment_reference']; ?></code></td>
                                 <td>
                                     <span class="status-badge badge-<?php echo $order['payment_status']; ?>">
@@ -258,6 +256,8 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                                             <option value="pending" <?php if($order['payment_status']=='pending') echo "selected"; ?>>Pending</option>
                                             <option value="paid" <?php if($order['payment_status']=='paid') echo "selected"; ?>>Paid</option>
                                             <option value="failed" <?php if($order['payment_status']=='failed') echo "selected"; ?>>Failed</option>
+                                            <option value="cancelled" <?php if($order['payment_status']=='cancelled') echo "selected"; ?>>Cancelled</option>
+                                            <option value="refunded" <?php if($order['payment_status']=='refunded') echo "selected"; ?>>Refunded</option>
                                         </select>
                                         <button type="submit" name="update_status" class="btn btn-sm btn-primary">
                                             <i class="fas fa-save"></i>
@@ -268,7 +268,7 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                                     <a href="edit_invoice.php?id=<?php echo $order['id']; ?>" class="invoice-link" title="Edit Invoice">
                                         <i class="fas fa-edit me-1"></i>Edit
                                     </a>
-                                    <a href="../download_invoice.php?id=<?php echo $order['id']; ?>" target="_blank" class="invoice-link">
+                                    <a href="generate_invoice.php?id=<?php echo $order['id']; ?>" target="_blank" class="invoice-link">
                                         <i class="fas fa-file-invoice me-1"></i>Invoice
                                     </a>
                                     <?php endif; ?>
@@ -283,7 +283,6 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-hide success message after 3 seconds
         setTimeout(() => {
@@ -332,5 +331,5 @@ $orders = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             }
         }
     </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

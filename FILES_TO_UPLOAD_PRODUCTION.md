@@ -1,191 +1,132 @@
-# Files to Upload to Production - Invoice Generation Fix
+# Files to Upload to Production - AJAX Shipping Fix
 
-## 🆕 NEW FILES CREATED (Must Upload)
+## 🔄 Modified Files (Must Upload)
 
-### 1. **Core Invoice Generator**
+### 1. **Core Configuration Files**
 ```
-includes/generate_invoice_pdf.php
+config/config.php
 ```
-**Description:** Main PDF invoice generator class using FPDF library
-- Creates actual PDF files instead of just HTML
-- Professional invoice layout with company branding
-- Complete order details, customer info, line items
-- Handles pricing, shipping, discounts properly
+**Changes:** Added guards to prevent duplicate constant definitions
+- Fixed `CURRENCY_SYMBOL` redefinition warnings
+- Protected other constants from redefinition
 
-### 2. **API Endpoint**
+### 2. **Shipping System Files**
 ```
-public/api_generate_invoice.php
+includes/shipping.php
 ```
-**Description:** JSON API endpoint for generating invoices via AJAX
-- Allows on-demand invoice generation
-- Returns detailed status and error information
-- Used by the "Generate Invoice Now" button
+**Changes:** Removed duplicate POST processing code
+- Cleaned up file to only contain `calculateShippingCost()` function
 
-## 🔄 EXISTING FILES MODIFIED (Must Upload)
-
-### 1. **Thank You Page**
+### 3. **AJAX Endpoint Files**
 ```
-public/thankyou.php
+public/ajax/calculate_shipping.php
 ```
-**Changes Made:**
-- Updated invoice generation to use new PDF generator
-- Added "Generate Invoice Now" button for missing invoices
-- Added JavaScript functions for AJAX invoice generation
-- Enhanced UI with better user feedback
-- Fixes "Invoice is being generated" issue
+**Changes:** Major enhancements for clean JSON output
+- Added output buffering (`ob_start`, `ob_clean`)
+- Suppressed PHP warnings for production
+- Enhanced error handling with try-catch blocks
+- Input validation improvements
 
-### 2. **Checkout Files (All 3 versions)**
+### 4. **Checkout System Files**
 ```
 public/checkout.php
-public/checkout_00.php
 public/checkout_0.php
+public/checkout_00.php
 ```
-**Changes Made:**
-- Updated all checkout processes to use new PDF generator
-- Enhanced error handling and logging
-- Ensures PDF files are actually created during order completion
-- Prevents future invoice generation issues
+**Changes:** Improved JavaScript AJAX error handling
+- Added HTTP status code checking
+- Added JSON parsing error protection
+- Added fallback to default shipping (30 AED) on failures
+- Better console logging for debugging
+
+## 🆕 New Files (Optional - For Testing)
+
+### Testing & Diagnostic Tools
+```
+public/ajax/ajax_test_simple.php
+test_ajax_shipping_live.html
+diagnostic_shipping.php
+AJAX_SHIPPING_FIX_DOCUMENTATION.md
+FILES_TO_UPLOAD_PRODUCTION.md (this file)
+```
+**Note:** These are testing/diagnostic files and not required for production
 
 ## 📋 Upload Priority
 
-### **CRITICAL (Upload Immediately):**
-1. `includes/generate_invoice_pdf.php` ⭐ **MOST IMPORTANT - Core generator**
-2. `public/thankyou.php` ⭐ **FIXES ORDER #97 ISSUE**
-3. `public/api_generate_invoice.php` ⭐ **ENABLES SELF-SERVICE FIX**
+### **CRITICAL (Upload First):**
+1. `config/config.php` - Fixes duplicate constant warnings
+2. `public/ajax/calculate_shipping.php` - Core AJAX endpoint fix
+3. `includes/shipping.php` - Cleaned shipping function
 
-### **IMPORTANT (Upload Soon):**
+### **IMPORTANT (Upload Second):**
 4. `public/checkout.php` - Main checkout page
-5. `public/checkout_00.php` - Checkout backup version
-6. `public/checkout_0.php` - Checkout backup version
+5. `public/checkout_0.php` - Checkout backup version
+6. `public/checkout_00.php` - Checkout backup version
+
+### **OPTIONAL (Testing Only):**
+7. `public/ajax/ajax_test_simple.php` - Simple test endpoint
+8. `test_ajax_shipping_live.html` - Live testing tool
+9. `diagnostic_shipping.php` - Diagnostic script
 
 ## 🚀 Deployment Steps
 
-### Step 1: Backup Current Files (IMPORTANT!)
+### Step 1: Backup Current Files
 Before uploading, backup these production files:
-```bash
-# Backup these files:
-public/thankyou.php
-public/checkout.php
-public/checkout_00.php  
-public/checkout_0.php
-```
+- `config/config.php`
+- `includes/shipping.php`
+- `public/ajax/calculate_shipping.php`
+- `public/checkout.php`
 
-### Step 2: Upload Core Files First
-```bash
-# Upload in this exact order:
-1. includes/generate_invoice_pdf.php    # Core PDF generator
-2. public/api_generate_invoice.php      # API endpoint  
-3. public/thankyou.php                  # Updated thank you page
-```
+### Step 2: Upload in Order
+1. **Upload config files first:**
+   ```
+   config/config.php
+   ```
 
-### Step 3: Test Immediate Fix
-After uploading the first 3 files:
-1. Visit: `https://aleppogift.com/thankyou.php?order=97`
-2. Should show "Generate Invoice Now" button
-3. Click button to test invoice generation
-4. Verify PDF download works
+2. **Upload core shipping files:**
+   ```
+   includes/shipping.php
+   public/ajax/calculate_shipping.php
+   ```
 
-### Step 4: Upload Remaining Files
-```bash
-# Complete the deployment:
-4. public/checkout.php
-5. public/checkout_00.php
-6. public/checkout_0.php
-```
+3. **Upload checkout pages:**
+   ```
+   public/checkout.php
+   public/checkout_0.php
+   public/checkout_00.php
+   ```
 
-## 🧪 Testing Checklist
+### Step 3: Test After Upload
+1. Test checkout page shipping calculation
+2. Check browser console for errors
+3. Verify clean JSON responses (no PHP warnings)
 
-### Immediate Test (Order #97):
-- [ ] Visit `thankyou.php?order=97`
-- [ ] See "Generate Invoice Now" button (not "Invoice is being generated")
-- [ ] Click button and get successful generation message
-- [ ] Download link works and PDF opens correctly
-- [ ] Invoice contains correct order details
+## 🧪 Quick Test Commands
 
-### Future Orders Test:
-- [ ] Complete a test order
-- [ ] Invoice PDF automatically generated
-- [ ] Thank you page shows download link immediately
-- [ ] No "Invoice is being generated" message
-
-## 📁 File Structure After Upload
-
-```
-/includes/
-├── generate_invoice_pdf.php     # ← NEW FILE (PDF generator)
-└── generate_invoice.php         # ← Keep existing (HTML generator)
-
-/public/
-├── api_generate_invoice.php     # ← NEW FILE (API endpoint)
-├── thankyou.php                 # ← UPDATED (with new features)
-├── checkout.php                 # ← UPDATED (uses PDF generator)
-├── checkout_00.php              # ← UPDATED (uses PDF generator)
-└── checkout_0.php               # ← UPDATED (uses PDF generator)
-
-/invoice/
-└── invoice_97.pdf               # ← Will be created after fix
-```
-
-## ⚠️ Dependencies & Requirements
-
-### Already Available on Server:
-- ✅ FPDF library (`/vendor/fpdf/fpdf.php`)
-- ✅ PHP PDO extension
-- ✅ Write permissions on `/invoice/` directory
-- ✅ All required PHP functions
-
-### No Additional Setup Needed!
+After upload, test these scenarios:
+1. **UAE Shipping:** Should show "30.00 AED"
+2. **Oman Shipping:** Should calculate correctly based on weight
+3. **Error Handling:** Should fallback to "30.00 AED" if API fails
 
 ## ⚠️ Rollback Plan
 
-If issues occur after upload:
+If issues occur, restore these backup files:
+- `config/config.php` (most critical)
+- `public/ajax/calculate_shipping.php`
+- `includes/shipping.php`
 
-### Quick Rollback:
-```bash
-# Restore from backup:
-1. Restore public/thankyou.php from backup
-2. Restore checkout files from backup  
-3. Remove includes/generate_invoice_pdf.php
-4. Remove public/api_generate_invoice.php
+The JavaScript changes in checkout files are safe improvements and shouldn't cause issues.
+
+## 📊 Expected Results
+
+**Before Fix:**
+```
+Raw response: <br /><b>Warning</b>: Constant CURRENCY_SYMBOL already defined...{"success":true...}
+Result: JSON parse error, "Calculating..." persists
 ```
 
-### Fallback Behavior:
-- System reverts to "Invoice is being generated" message
-- No functionality breaks
-- Existing orders remain accessible
-- New orders continue to work (just without PDF invoices)
-
-## 🎯 Expected Results
-
-### Before Fix (Current Issue):
+**After Fix:**
 ```
-Order #97 Thank You Page:
-❌ "Invoice is being generated. Please refresh the page in a moment."
-❌ Customer cannot download invoice
-❌ PDF file doesn't exist: /invoice/invoice_97.pdf
+Raw response: {"success":true,"country":"United Arab Emirates","city":"Dubai","totalWeight":2.5,"shippingAED":"30.00","shippingCost":30,"currency":"AED","timestamp":"2025-11-05 02:50:40"}
+Result: Clean JSON, shipping cost displays correctly
 ```
-
-### After Fix (Expected Result):
-```
-Order #97 Thank You Page:
-✅ "Generate Invoice Now" button appears
-✅ Button click → Invoice generated successfully
-✅ PDF file created: /invoice/invoice_97.pdf  
-✅ "Download Invoice" link works
-✅ Professional PDF with all order details
-```
-
-## 🚨 URGENT: Files to Upload NOW for Order #97
-
-**Upload these 3 files immediately to fix the customer issue:**
-
-1. `includes/generate_invoice_pdf.php` ⚠️ **UPDATED - Fixed database compatibility**
-2. `public/api_generate_invoice.php` 
-3. `public/thankyou.php`
-
-**Then test:** https://aleppogift.com/thankyou.php?order=97
-
-### ⚠️ IMPORTANT: Database Fix Applied
-- Fixed SQL query to remove non-existent `sku` and `weight` columns
-- Uses product ID instead of SKU in invoice
-- Compatible with your current database structure

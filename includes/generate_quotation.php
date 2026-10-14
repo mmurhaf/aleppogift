@@ -1,209 +1,116 @@
-<?php
+﻿<?php
 session_start();
-require_once  '../vendor/fpdf/fpdf.php';
-require_once '../config/config.php';
-require_once . 'Database.php';
 
-define('PAYMENT_STATUS_QUOTATION', 'quotation');
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/ArabicPdfRenderer.php';
+require_once __DIR__ . '/ProductImageResolver.php';
 
 $db = new Database();
-
-
-// --- GET ORDER ITEMS FROM SESSION (or DB if saved) ---
 $order_items = $_SESSION['cart'] ?? [];
-
-// --- SHIPPING INFO ---
 $country = $_SESSION['shipping_country'] ?? 'Not specified';
 $city = $_SESSION['shipping_city'] ?? 'Not specified';
-$totalWeight = $_SESSION['total_weight'] ?? 0;
-
-// --- OTHER INFO ---
+$totalWeight = (float)($_SESSION['total_weight'] ?? 0);
 $note = $_SESSION['customer_note'] ?? '';
-$shippingAED = 0.00; // Placeholder or calculate dynamically
+$shippingAED = 0.00;
+$aedToUsdRate = 0.2723;
 
-// --- GRAND TOTAL ---
+$formatAedUsd = static function ($amount) use ($aedToUsdRate) {
+    $amount = (float)$amount;
+    $usd = $amount * $aedToUsdRate;
+    return number_format($amount, 2) . ' AED (USD ' . number_format($usd, 2) . ')';
+};
 
-$quotationDir = '../public/quotations';
-if (!is_dir($quotationDir)) mkdir($quotationDir, 0755, true);
+$quotationDir = __DIR__ . '/../public/quotations';
+if (!is_dir($quotationDir)) {
+    mkdir($quotationDir, 0755, true);
+}
 
-$uniqueId = time() . '_' . substr(session_id(), 0, 8); 
-$quotationPath = "$quotationDir/quotation_$uniqueId.pdf";
-$publicQuotationPath = "$quotationDir/quotation_$uniqueId.pdf";
+$uniqueId = time() . '_' . substr(session_id(), 0, 8);
+$quotationPath = $quotationDir . '/quotation_' . $uniqueId . '.pdf';
+$publicQuotationPath = '../public/quotations/quotation_' . $uniqueId . '.pdf';
 
-
-
-// Create PDF
-$pdf = new FPDF();
-$pdf->AddPage();
-$pdf->SetAutoPageBreak(true, 20);
-
-// Colors
-$primaryColor = array(230, 123, 46); // Dubai Gift orange
-$headerColor = array(44, 62, 80); // Dark blue
-$lightColor = array(245, 245, 245); // Light gray
-$borderColor = array(220, 220, 220); // Border gray
-
-// Set document properties
-$pdf->SetTitle('Invoice #' . $uniqueId);
-$pdf->SetAuthor('AleppoGift.com');
-
-// Header Section
-$pdf->SetFont('Arial', 'B', 16);
-$pdf->SetTextColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
-$pdf->Image(__DIR__ . '/../public/assets/images/logo.png', 15, 15, 45);
-$pdf->Cell(0, 10, 'QUOTATION', 0, 1, 'R');
-$pdf->SetFont('Arial', '', 10);
-$pdf->SetTextColor(100);
-$pdf->Cell(0, 5, 'AleppoGift.com | Your Trusted Gift Shop', 0, 1, 'R');
-$pdf->SetFont('Arial', 'B', 10);
-$pdf->Cell(0, 5, 'Date: ' . date('Y-m-d'), 0, 1, 'R');
-$pdf->Cell(0, 5, 'Quotation #' . $uniqueId, 0, 1, 'R');
-$pdf->Cell(0, 5, 'Valid until: ' . date('Y-m-d', strtotime('+7 days')), 0, 1, 'R');
-$pdf->Ln(12);
-
-// Company and Customer Info
-$pdf->SetFont('Arial', 'B', 11);
-$pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
-$pdf->Cell(95, 7, 'FROM:', 0, 0);
-$pdf->Cell(95, 7, 'BILL TO:', 0, 1);
-$pdf->SetFont('Arial', '', 10);
-$pdf->SetTextColor(60);
-
-// Company info
-$pdf->Cell(95, 6, 'Dubai Gift Trading LLC', 0, 0);
-$pdf->Cell(95, 6, 'customer_name', 0, 1);
-$pdf->Cell(95, 6, 'Dubai, United Arab Emirates', 0, 0);
-$pdf->Cell(95, 6, 'customer_address', 0, 1);
-$pdf->Cell(95, 6, 'Phone: +971 56 112 5320', 0, 0);
-$pdf->Cell(95, 6, 'Phone: ' . 'customer_phone', 0, 1);
-$pdf->Cell(95, 6, 'Email: info@aleppogift.com', 0, 0);
-$pdf->Cell(95, 6, 'Email: ' . 'customer_email', 0, 1);
-$pdf->Ln(15);
-
-// Shipping Information
-$pdf->SetFont('Arial', 'B', 10);
-$pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
-$pdf->Cell(0, 6, 'SHIPPING INFORMATION', 0, 1);
-$pdf->SetFont('Arial', '', 9);
-$pdf->SetTextColor(60);
-$pdf->Cell(0, 5, 'Country: ' . htmlspecialchars($country), 0, 1);
-$pdf->Cell(0, 5, 'City: ' . htmlspecialchars($city), 0, 1);
-$pdf->Cell(0, 5, 'Total Weight: ' . number_format($totalWeight, 2) . ' kg', 0, 1);
-$pdf->Ln(10);
-
-// Items Table Header
-$pdf->SetFillColor($headerColor[0], $headerColor[1], $headerColor[2]);
-$pdf->SetTextColor(255);
-$pdf->SetFont('Arial', 'B', 10);
-$pdf->Cell(15, 10, '#', 1, 0, 'C', true);
-$pdf->Cell(85, 10, 'PRODUCT DESCRIPTION', 1, 0, 'L', true);
-$pdf->Cell(20, 10, 'QTY', 1, 0, 'C', true);
-$pdf->Cell(30, 10, 'UNIT PRICE', 1, 0, 'R', true);
-$pdf->Cell(30, 10, 'TOTAL', 1, 1, 'R', true);
-
-// Items Table Rows
-$pdf->SetTextColor(60);
-$pdf->SetFont('Arial', '', 9);
+$rows = '';
+$grandTotal = 0.0;
 $index = 1;
-$rowHeight = 7;
-$grand_Total = 0;
-foreach ($order_items as $item) {
-        $product = $db->query("SELECT name_en, price FROM products WHERE id = :id", ['id' => $item['product_id']])->fetch();
-    $price = $product['price'];
-    $variationName = '';
 
-    if (!empty($item['variation_id'])) {
-        $variation = $db->query("SELECT additional_price FROM product_variations WHERE id = :id", ['id' => $item['variation_id']])->fetch();
-        $price += $variation['additional_price'] ?? 0;
+foreach ($order_items as $item) {
+    $product = $db->query("SELECT name_en, price, (SELECT pi.image_path FROM product_images pi WHERE pi.product_id = products.id AND pi.is_main = 1 ORDER BY pi.id ASC LIMIT 1) AS main_image FROM products WHERE id = :id", ['id' => $item['product_id']])->fetch(PDO::FETCH_ASSOC);
+    if (!$product) {
+        continue;
     }
 
-    $line_total = $price * $item['quantity'];
-    $grand_Total = $grand_Total + $line_total ;
-    // Alternate row color
-    $pdf->SetFillColor($index % 2 ? 255 : $lightColor[0], $index % 2 ? 255 : $lightColor[1], $index % 2 ? 255 : $lightColor[2]);
-    
-    // Calculate needed height
-    $productName = $product['name_en'];
-    $nameWidth = 85;
-    $nameLength = $pdf->GetStringWidth($productName);
-    $lines = ceil($nameLength / $nameWidth);
-    $currentRowHeight = max($rowHeight, $rowHeight * $lines);
-    
-    // Row cells
-    $pdf->Cell(15, $currentRowHeight, $index++, 1, 0, 'C', true);
-    
-    // Product name with multi-line support
-    $pdf->MultiCell(85, $rowHeight, $productName, 1, 'L', true);
-    $pdf->SetXY($pdf->GetX() + 100, $pdf->GetY() - $currentRowHeight);
-    
-    $pdf->Cell(20, $currentRowHeight, $item['quantity'], 1, 0, 'C', true);
-    $pdf->Cell(30, $currentRowHeight, number_format($price, 2), 1, 0, 'R', true);
-    $pdf->Cell(30, $currentRowHeight, number_format($line_total, 2), 1, 1, 'R', true);
+    $price = (float)$product['price'];
+    $selectedImage = (string)($product['main_image'] ?? '');
+    if (!empty($item['variation_id'])) {
+        $variation = $db->query("SELECT pv.additional_price, pi.image_path AS variant_image FROM product_variations pv LEFT JOIN product_images pi ON pv.image_id = pi.id WHERE pv.id = :id", ['id' => $item['variation_id']])->fetch(PDO::FETCH_ASSOC);
+        $price += (float)($variation['additional_price'] ?? 0);
+        if (!empty($variation['variant_image'])) {
+            $selectedImage = (string)$variation['variant_image'];
+        }
+    }
+
+    $qty = (int)($item['quantity'] ?? 0);
+    $lineTotal = $price * $qty;
+    $grandTotal += $lineTotal;
+
+    $nameEn = htmlspecialchars((string)($product['name_en'] ?? 'Product'), ENT_QUOTES, 'UTF-8');
+
+    $imageDataUri = ProductImageResolver::resolveAsDataUri(
+        $selectedImage,
+        [
+            __DIR__ . '/../',
+            __DIR__ . '/../public/',
+            __DIR__ . '/../public/uploads/products/'
+        ]
+    );
+    $imageHtml = $imageDataUri
+        ? '<img class="product-image" src="' . htmlspecialchars($imageDataUri, ENT_QUOTES, 'UTF-8') . '" alt="Product image">'
+        : '<span class="muted">No image</span>';
+
+    $rows .= '<tr>'
+        . '<td class="center">' . $index++ . '</td>'
+        . '<td class="center">' . $imageHtml . '</td>'
+        . '<td><div>' . $nameEn . '</div></td>'
+        . '<td class="center">' . $qty . '</td>'
+        . '<td class="num">' . $formatAedUsd($price) . '</td>'
+        . '<td class="num">' . $formatAedUsd($lineTotal) . '</td>'
+        . '</tr>';
 }
 
-// Summary Section
-$pdf->Ln(10);
-$pdf->SetFont('Arial', 'B', 12);
-$pdf->SetFillColor($headerColor[0], $headerColor[1], $headerColor[2]);
-$pdf->SetTextColor(255);
-$pdf->Cell(140, 10, 'ORDER SUMMARY', 0, 0, 'L', true);
-$pdf->Cell(40, 10, 'AED', 0, 1, 'R', true);
-
-// Add Note
+$notesHtml = '';
 if (!empty($note)) {
-    $pdf->Ln(5);
-    $pdf->SetFont('Arial', 'B', 12);
-    $pdf->Cell(0, 8, 'Customer Note:', 0, 1);
-    $pdf->SetFont('Arial', '', 12);
-    $pdf->MultiCell(0, 8, $note);
+    $notesHtml = '<div class="section-title">Customer Note</div><div class="notes">' . nl2br(htmlspecialchars((string)$note, ENT_QUOTES, 'UTF-8')) . '</div>';
 }
 
-// Summary Rows
-$pdf->SetFont('Arial', '', 11);
-$pdf->SetTextColor(60);
-$pdf->SetFillColor(255);
+$html = '<!doctype html><html><head><meta charset="UTF-8"><style>'
+    . '@page { margin: 16mm 12mm; }'
+    . 'body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #2f2f2f; }'
+    . '.title { color: #e67b2e; font-size: 22px; font-weight: 700; text-align: right; }'
+    . '.meta { text-align: right; color: #555; line-height: 1.5; margin-bottom: 10px; }'
+    . '.table { width: 100%; border-collapse: collapse; margin-top: 10px; }'
+    . '.table th, .table td { border: 1px solid #ddd; padding: 6px; vertical-align: top; }'
+    . '.table th { background: #2c3e50; color: #fff; }'
+    . '.product-image { width: 40px; height: 40px; object-fit: cover; border-radius: 2px; }'
+    . '.center { text-align: center; } .num { text-align: right; }'
+    . '.muted { color: #7a7a7a; font-size: 9px; }'
+    . '.summary { width: 280px; margin-left: auto; margin-top: 10px; border-collapse: collapse; }'
+    . '.summary td { border: 1px solid #ddd; padding: 6px; }'
+    . '.summary .grand { background: #e67b2e; color: #fff; font-weight: 700; }'
+    . '.notes, .shipping { border: 1px solid #ddd; padding: 8px; margin-top: 10px; line-height: 1.5; }'
+    . '.section-title { margin-top: 10px; font-weight: 700; color: #2c3e50; }'
+    . '</style></head><body>'
+    . '<div class="title">QUOTATION</div>'
+    . '<div class="meta">AleppoGift.com | Your Trusted Gift Shop<br>Date: ' . date('Y-m-d') . '<br>Quotation #: ' . htmlspecialchars($uniqueId, ENT_QUOTES, 'UTF-8') . '<br>Valid until: ' . date('Y-m-d', strtotime('+7 days')) . '</div>'
+    . '<div class="shipping"><strong>Shipping Information</strong><br>Country: ' . htmlspecialchars($country, ENT_QUOTES, 'UTF-8') . '<br>City: ' . htmlspecialchars($city, ENT_QUOTES, 'UTF-8') . '<br>Total Weight: ' . number_format($totalWeight, 2) . ' kg</div>'
+    . '<table class="table"><tr><th style="width:8%">#</th><th style="width:12%">Image</th><th style="width:40%">Product Description</th><th style="width:10%">Qty</th><th style="width:15%">Unit Price</th><th style="width:15%">Total</th></tr>'
+    . $rows
+    . '</table>'
+    . '<table class="summary"><tr><td>Shipping</td><td class="num">' . $formatAedUsd($shippingAED) . '</td></tr><tr><td class="grand">GRAND TOTAL</td><td class="num grand">' . $formatAedUsd($grandTotal) . '</td></tr></table>'
+    . $notesHtml
+    . '<div class="notes">Note: Shipping cost is not included in this quotation. It will be calculated at checkout after selecting your country and city.</div>'
+    . '</body></html>';
 
-// Shipping
-$pdf->Cell(140, 8, 'Shipping:', 0, 0, 'R');
-$pdf->Cell(40, 8, number_format($shippingAED, 2), 0, 1, 'R');
-
-// VAT
-$vat = 0;
-// $vat = $grand_Total * 0.05;
-// $pdf->Cell(140, 8, 'VAT (5%):', 0, 0, 'R');
-// $pdf->Cell(40, 8, number_format($vat, 2), 0, 1, 'R');
-
-// Grand Total
-$pdf->SetFont('Arial', 'B', 14);
-$pdf->SetTextColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
-$pdf->Cell(140, 10, 'GRAND TOTAL:', 0, 0, 'R');
-$pdf->Cell(40, 10, number_format($grand_Total + $vat, 2), 0, 1, 'R');
-$pdf->Ln(15);
-
-// Footer Notes
-$pdf->SetFont('Arial', 'I', 9);
-$pdf->SetTextColor(100);
-$pdf->MultiCell(0, 5, "Payment Terms: Due upon receipt\nAll amounts are in UAE Dirhams (AED)", 0, 'C');
-
-$pdf->MultiCell(0, 5, "Note: Shipping cost is not included in this quotation. It will be calculated at checkout after selecting your country and city.\nYou can review our shipping rates at: https://www.aleppogift.com/shipping.php", 0, 'L');
-
-$pdf->Ln(10);
-$pdf->SetFont('Arial', 'I', 9);
-$pdf->SetTextColor(100);
-$pdf->MultiCell(0, 5, "This is a preliminary quotation, not an invoice.\nPrices may change until order confirmation.", 0, 'C');
-$pdf->Cell(0, 5, 'Contact us at: sales@aleppogift.com', 0, 1, 'C');
-
-
-// Legal text
-$pdf->SetFont('Arial', '', 7);
-$pdf->SetTextColor(150);
-$pdf->Cell(0, 4, 'This is a computer-generated document. No signature is required.', 0, 1, 'C');
-$pdf->Ln(5);
-
-// Output PDF
-// Add after PDF creation:
-$pdf->Output('F', $quotationPath);
-
-// Redirect to download
-header("Location: $publicQuotationPath");
+ArabicPdfRenderer::saveToFile($html, $quotationPath);
+header('Location: ' . $publicQuotationPath);
 exit;

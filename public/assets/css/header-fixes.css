@@ -1,21 +1,29 @@
 /* HEADER DESIGN FIXES - Enhanced Buttons, Icons, and Menus */
 
 /* ========================================
-   HEADER CONTAINER
+   HEADER CONTAINER - ANTI-FLICKER FIX
    ======================================== */
 .modern-header {
     position: sticky;
     top: 0;
     z-index: 1040;
-    transition: box-shadow 0.3s ease, background 0.3s ease;
-    /* Prevent any transform animations that could cause blinking */
-    transform: none !important;
-    will-change: box-shadow;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
 }
 
-/* Prevent the header from being hidden */
-.modern-header.hidden {
+/* Prevent any blinking/flickering on page load */
+header,
+.navbar,
+.modern-header {
+    animation: none !important;
     transform: none !important;
+}
+
+/* Ensure header is always visible during page load */
+body > header:first-of-type,
+body > .navbar:first-of-type,
+body > .modern-header:first-of-type {
     opacity: 1 !important;
     visibility: visible !important;
 }
@@ -62,8 +70,8 @@
 /* Active menu item */
 .navbar-nav .nav-link.active,
 .navbar-nav .nav-link[aria-current="page"] {
-    color: #007bff !important;
-    background: rgba(0, 123, 255, 0.1);
+    color: var(--primary-600) !important;
+    background: rgba(184, 98, 10, 0.1);
 }
 
 /* ========================================
@@ -108,13 +116,13 @@ a i.fa {
 /* Focus states for accessibility */
 .btn:focus,
 .btn:focus-visible {
-    outline: 2px solid #007bff;
+    outline: 2px solid var(--primary-500);
     outline-offset: 2px;
 }
 
 .btn-outline-primary:focus,
 .btn-outline-secondary:focus {
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(184, 98, 10, 0.25);
 }
 
 /* ========================================
@@ -152,8 +160,8 @@ a i.fa {
 
 /* Search button hover */
 #search-bar .btn-primary:hover {
-    background: #0056b3;
-    border-color: #0056b3;
+    background: var(--primary-700);
+    border-color: var(--primary-700);
     transform: translateY(-1px);
 }
 
@@ -165,6 +173,16 @@ a i.fa {
    MOBILE OPTIMIZATIONS
    ======================================== */
 @media (max-width: 991px) {
+    /* Always bind mobile menu visibility to Bootstrap collapse state */
+    .navbar-collapse:not(.show) .navbar-nav {
+        display: none !important;
+    }
+
+    .navbar-collapse.show .navbar-nav {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
     .navbar-nav {
         padding: 1rem 0;
         gap: 0.25rem;
@@ -237,7 +255,9 @@ a i.fa {
 
 /* Cart preview header gradient */
 #cartPreview .card-header {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    background: #fff !important;
+    color: #2c1505 !important;
+    padding: 0.9rem 1rem !important;
 }
 
 /* Empty cart state */
@@ -249,7 +269,7 @@ a i.fa {
    OFFCANVAS CART
    ======================================== */
 .offcanvas-header {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
 }
 
 /* Offcanvas scrollbar */
@@ -281,15 +301,51 @@ a i.fa {
     opacity: 0.8;
 }
 
-.navbar-toggler-icon {
-    width: 1.5em;
-    height: 1.5em;
-    transition: transform 0.3s ease;
+/* Deterministic hamburger geometry (loaded last to avoid cross-file overrides) */
+.navbar-toggler .navbar-toggler-icon {
+    background-image: none !important;
+    width: 24px !important;
+    height: 3px !important;
+    display: block !important;
+    position: relative;
+    background: #1f2937 !important;
+    border-radius: 2px;
+    transition: all 0.25s ease;
 }
 
-/* Hamburger animation */
+.navbar-toggler .navbar-toggler-icon::before,
+.navbar-toggler .navbar-toggler-icon::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 24px;
+    height: 3px;
+    background: #1f2937;
+    border-radius: 2px;
+    transition: all 0.25s ease;
+}
+
+.navbar-toggler .navbar-toggler-icon::before {
+    top: -8px;
+}
+
+.navbar-toggler .navbar-toggler-icon::after {
+    top: 8px;
+}
+
+/* Keep icon animation in sync with Bootstrap collapse state */
 .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
-    transform: rotate(90deg);
+    background: transparent;
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
+    top: 0;
+    transform: rotate(45deg);
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
+    top: 0;
+    transform: rotate(-45deg);
 }
 
 /* ========================================
@@ -344,7 +400,7 @@ a i.fa {
 
 /* Focus visible for keyboard navigation */
 *:focus-visible {
-    outline: 2px solid #007bff;
+    outline: 2px solid var(--primary-500);
     outline-offset: 2px;
 }
 

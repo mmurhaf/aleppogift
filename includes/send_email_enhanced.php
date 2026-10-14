@@ -8,7 +8,7 @@
  * Test SMTP connection with multiple password attempts
  */
 function testSMTPCredentials() {
-    $passwords = ['Salem1972#i', 'Salem1972#a'];
+    $passwords = array_filter([defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '']);
     $working_password = null;
     
     foreach ($passwords as $password) {
@@ -34,7 +34,7 @@ function testSMTPConnection($password) {
     ]);
     
     $socket = @stream_socket_client(
-        'ssl://smtp.ipage.com:465',
+        'ssl://smtp.hostinger.com:465',
         $errno,
         $errstr,
         10,

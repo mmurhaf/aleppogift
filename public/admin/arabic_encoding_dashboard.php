@@ -7,14 +7,14 @@
  * Host: mmurhaf50350.ipagemysql.com
  * Database: aleppogift
  * User: mmurhaf
- * Password: Salem1972#i
+ * Password: ********
  */
 
 // Database configuration - Production settings
 $db_host = 'mmurhaf50350.ipagemysql.com';
 $db_name = 'aleppogift';
 $db_user = 'mmurhaf';
-$db_pass = 'Salem1972#i';
+$db_pass = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
 
 // You can override these for local testing
 if (isset($_GET['use_local']) && $_GET['use_local'] === 'true') {

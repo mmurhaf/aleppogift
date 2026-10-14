@@ -87,7 +87,7 @@ if (isset($_SESSION['temp_order'])) {
 
 // --- Confirmation function ---
 function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email) {
-        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method, $customer_phone ?? '', $customer_city ?? '', $customer_country ?? '');
+        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
 
         require_once('../includes/generate_invoice_pdf.php');
         $generator = new PDFInvoiceGenerator();
@@ -120,10 +120,11 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
      <!--<link rel="stylesheet" href="assets/css/style.css">-->
-	<link rel="stylesheet" href="assets/css/index.css">
-	<link rel="stylesheet" href="assets/css/enhanced-design.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/index.css">
 	<link rel="stylesheet" href="assets/css/components.css">
 	<link rel="stylesheet" href="assets/css/ui-components.css">
+    <link rel="stylesheet" href="assets/css/header-fixes.css">
 	
 	<!-- Google Fonts for Enhanced Typography -->
 	<link rel="preconnect" href="https://fonts.googleapis.com">

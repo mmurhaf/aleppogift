@@ -9,6 +9,15 @@ ini_set('log_errors', 1);
 require_once('../config/config.php');
 require_once('../includes/Database.php');
 require_once('../includes/generate_payment_link.php');
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!function_exists('store_url')) {
+    require_once __DIR__ . '/../includes/functions.php';
+}
+if (!function_exists('loc_field')) {
+    require_once __DIR__ . '/../includes/store_features.php';
+}
 
 $db = new Database();
 $paymentLinkGen = new PaymentLinkGenerator($db);
@@ -24,11 +33,11 @@ $orderItems = [];
 
 // Validate order and token
 if ($orderId <= 0 || empty($token)) {
-    $error = "Invalid payment link. Please contact support.";
+    $error = t('order.err_invalid_link');
 } else {
     // Verify token
     if (!$paymentLinkGen->verifyPaymentToken($orderId, $token)) {
-        $error = "This payment link has expired or is invalid. Please contact support.";
+        $error = t('order.err_expired_link');
     } else {
         // Get order details
         try {
@@ -40,9 +49,9 @@ if ($orderId <= 0 || empty($token)) {
             ", [$orderId])->fetch(PDO::FETCH_ASSOC);
             
             if (!$order) {
-                $error = "Order not found.";
+                $error = t('order.err_not_found');
             } elseif ($order['payment_status'] === 'paid') {
-                $error = "This order has already been paid.";
+                $error = t('order.err_already_paid');
             } else {
                 // Get order items
                 $orderItems = $db->query("
@@ -50,6 +59,8 @@ if ($orderId <= 0 || empty($token)) {
                         oi.*,
                         p.name_en,
                         p.name_ar,
+                        p.name_ru,
+                        p.name_sp,
                         (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1) as image_path
                     FROM order_items oi
                     LEFT JOIN products p ON oi.product_id = p.id
@@ -58,7 +69,7 @@ if ($orderId <= 0 || empty($token)) {
             }
         } catch (Exception $e) {
             error_log("Payment page error: " . $e->getMessage());
-            $error = "An error occurred. Please try again later.";
+            $error = t('order.err_try_later');
         }
     }
 }
@@ -78,11 +89,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
                 WHERE id = ?
             ", [$orderId]);
             
-            header("Location: thankyou.php?order_id=" . $orderId);
+            if (!function_exists('reserve_order_stock')) {
+                require_once __DIR__ . '/../includes/store_features.php';
+            }
+            reserve_order_stock($db, $orderId);
+
+            if (!function_exists('sendConfirmedOrderEmail')) {
+                require_once __DIR__ . '/../includes/order_email_layout.php';
+                require_once __DIR__ . '/../includes/send_email_simple.php';
+            }
+            if (!function_exists('sendAdminWhatsApp')) {
+                require_once __DIR__ . '/../includes/whatsapp_notify.php';
+            }
+            $customerData = [
+                'fullname' => $order['fullname'] ?? '',
+                'phone' => $order['phone'] ?? '',
+                'address' => $order['address'] ?? '',
+                'city' => $order['city'] ?? '',
+                'country' => $order['country'] ?? '',
+            ];
+            $customerEmail = trim((string)($order['email'] ?? ''));
+            sendAdminWhatsApp($orderId, $customerData['fullname'], $order['total_amount'] ?? 0, 'COD');
+            sendAdminOrderNotification($orderId, $customerData['fullname'], $order['total_amount'] ?? 0, 'COD', $customerData);
+            if ($customerEmail !== '') {
+                sendConfirmedOrderEmail($customerEmail, $orderId, $customerData['fullname'], $customerData);
+            }
+            $_SESSION['confirmed_order_' . $orderId] = true;
+            header("Location: thankyou.php?order=" . $orderId);
             exit;
         } catch (Exception $e) {
             error_log("COD confirmation error: " . $e->getMessage());
-            $error = "Failed to confirm order. Please try again.";
+            $error = t('order.err_confirm_failed');
         }
     } elseif ($paymentMethod === 'online') {
         // Redirect to payment gateway
@@ -93,18 +130,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(store_lang_html()) ?>" dir="<?= store_lang_dir() ?>">
 <head>
+    <?php require_once(__DIR__ . '/../includes/google_tag.php'); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Payment - Order #<?php echo $orderId; ?> - AleppoGift</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title><?php echo te('order.payment_title', ['id' => $orderId]); ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <?php require __DIR__ . '/../includes/storefront_assets.php'; ?>
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #fff8ee;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Inter, "Segoe UI", system-ui, sans-serif;
+            color: #23170d;
         }
         
         .payment-container {
@@ -121,16 +162,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
         }
         
         .payment-header {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
+            background: linear-gradient(140deg, #fff5df 0%, #fbe5bc 100%);
+            color: #2c1505;
             padding: 2rem;
             text-align: center;
         }
         
         .payment-header h1 {
             margin: 0;
+            font-family: "Playfair Display", Georgia, serif;
             font-size: 2rem;
-            font-weight: bold;
+            font-weight: 700;
+            color: #2c1505;
         }
         
         .payment-body {
@@ -171,13 +214,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
         }
         
         .payment-method-card:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #d4840e;
+            background: #fff8ee;
         }
         
         .payment-method-card.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #d4840e;
+            background: #fff8ee;
         }
         
         .payment-method-card input[type="radio"] {
@@ -188,23 +231,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
         .total-amount {
             font-size: 2rem;
             font-weight: bold;
-            color: #667eea;
+            color: #9a3412;
         }
         
         .btn-pay {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #d4840e 0%, #b8620a 100%);
             border: none;
             color: white;
             padding: 1rem 3rem;
             font-size: 1.2rem;
-            border-radius: 50px;
+            border-radius: 12px;
             font-weight: bold;
             width: 100%;
         }
         
         .btn-pay:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 20px rgba(184, 98, 10, 0.28);
             color: white;
         }
         
@@ -222,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
         .invoice-link {
             display: inline-block;
             margin-top: 1rem;
-            color: #667eea;
+            color: #8a4b08;
             text-decoration: none;
         }
         
@@ -232,60 +275,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
     </style>
 </head>
 <body>
+    <?php require_once __DIR__ . '/../includes/header.php'; ?>
     <div class="payment-container">
         <div class="payment-card">
             <?php if ($error): ?>
                 <div class="payment-header">
-                    <h1><i class="fas fa-exclamation-triangle"></i> Payment Error</h1>
+                    <h1><i class="fas fa-exclamation-triangle"></i> <?php echo te('order.payment_error'); ?></h1>
                 </div>
                 <div class="payment-body">
                     <div class="error-container">
                         <div class="error-icon">
                             <i class="fas fa-times-circle"></i>
                         </div>
-                        <h3>Oops! Something went wrong</h3>
+                        <h3><?php echo te('order.oops'); ?></h3>
                         <p class="text-muted"><?php echo htmlspecialchars($error); ?></p>
-                        <a href="<?php echo SITE_URL; ?>" class="btn btn-primary mt-3">
-                            <i class="fas fa-home me-2"></i> Back to Home
+                        <a href="<?php echo htmlspecialchars(store_url()); ?>" class="btn btn-primary mt-3">
+                            <i class="fas fa-home me-2"></i> <?php echo te('order.back_home'); ?>
                         </a>
                     </div>
                 </div>
             <?php else: ?>
                 <div class="payment-header">
-                    <h1><i class="fas fa-shopping-bag me-2"></i> Complete Your Order</h1>
-                    <p class="mb-0">Order #<?php echo $orderId; ?></p>
+                    <h1><i class="fas fa-shopping-bag me-2"></i> <?php echo te('order.complete_order'); ?></h1>
+                    <p class="mb-0"><?php echo te('order.order_hash', ['id' => $orderId]); ?></p>
                 </div>
                 
                 <div class="payment-body">
                     <!-- Customer Info -->
                     <div class="mb-4">
-                        <h5><i class="fas fa-user me-2"></i> Customer Information</h5>
+                        <h5><i class="fas fa-user me-2"></i> <?php echo te('order.customer_info'); ?></h5>
                         <div class="bg-light p-3 rounded">
-                            <p class="mb-1"><strong>Name:</strong> <?php echo htmlspecialchars($order['fullname']); ?></p>
-                            <p class="mb-1"><strong>Email:</strong> <?php echo htmlspecialchars($order['email']); ?></p>
-                            <p class="mb-1"><strong>Phone:</strong> <?php echo htmlspecialchars($order['phone']); ?></p>
-                            <p class="mb-0"><strong>City:</strong> <?php echo htmlspecialchars($order['city'] ?? 'N/A'); ?></p>
+                            <p class="mb-1"><strong><?php echo te('order.name'); ?></strong> <?php echo htmlspecialchars($order['fullname']); ?></p>
+                            <p class="mb-1"><strong><?php echo te('order.email'); ?></strong> <?php echo htmlspecialchars($order['email']); ?></p>
+                            <p class="mb-1"><strong><?php echo te('order.phone'); ?></strong> <?php echo htmlspecialchars($order['phone']); ?></p>
+                            <p class="mb-0"><strong><?php echo te('order.city'); ?></strong> <?php echo htmlspecialchars($order['city'] ?? t('order.not_available')); ?></p>
                         </div>
                     </div>
                     
                     <!-- Order Items -->
                     <div class="mb-4">
-                        <h5><i class="fas fa-box me-2"></i> Order Items</h5>
+                        <h5><i class="fas fa-box me-2"></i> <?php echo te('order.order_items'); ?></h5>
                         <?php foreach ($orderItems as $item): ?>
+                            <?php $itemName = loc_field($item, 'name'); ?>
                             <div class="product-item">
                                 <?php if ($item['image_path']): ?>
-                                    <img src="<?php echo htmlspecialchars($item['image_path']); ?>" class="product-image" alt="<?php echo htmlspecialchars($item['name_en']); ?>">
+                                    <img src="<?php echo htmlspecialchars($item['image_path']); ?>" class="product-image" alt="<?php echo htmlspecialchars($itemName); ?>">
                                 <?php else: ?>
                                     <div class="product-image bg-secondary d-flex align-items-center justify-content-center">
                                         <i class="fas fa-image text-white"></i>
                                     </div>
                                 <?php endif; ?>
                                 <div class="flex-grow-1">
-                                    <strong><?php echo htmlspecialchars($item['name_en']); ?></strong><br>
-                                    <small class="text-muted">Quantity: <?php echo $item['quantity']; ?> × AED <?php echo number_format($item['price'], 2); ?></small>
+                                    <strong><?php echo htmlspecialchars($itemName); ?></strong><br>
+                                    <small class="text-muted"><?php echo te('order.quantity_line', ['qty' => $item['quantity'], 'price' => number_format($item['price'], 2)]); ?></small>
                                 </div>
                                 <div>
-                                    <strong>AED <?php echo number_format($item['quantity'] * $item['price'], 2); ?></strong>
+                                    <strong><?php echo te('order.amount_aed', ['amount' => number_format($item['quantity'] * $item['price'], 2)]); ?></strong>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -294,40 +339,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
                     <!-- Order Summary -->
                     <div class="order-summary">
                         <?php 
-                        $aed_to_usd = 0.27;
+                        $aed_to_eur = 0.23;
                         $subtotal = $order['total_amount'] - ($order['shipping_aed'] ?? 0);
-                        $subtotal_usd = $subtotal * $aed_to_usd;
-                        $shipping_usd = ($order['shipping_aed'] ?? 0) * $aed_to_usd;
-                        $total_usd = $order['total_amount'] * $aed_to_usd;
+                        $subtotal_eur = $subtotal * $aed_to_eur;
+                        $shipping_eur = ($order['shipping_aed'] ?? 0) * $aed_to_eur;
+                        $total_eur = $order['total_amount'] * $aed_to_eur;
                         ?>
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal:</span>
-                            <strong>AED <?php echo number_format($subtotal, 2); ?> ($<?php echo number_format($subtotal_usd, 2); ?>)</strong>
+                            <span><?php echo te('order.subtotal'); ?></span>
+                            <strong>AED <?php echo number_format($subtotal, 2); ?> (€<?php echo number_format($subtotal_eur, 2); ?>)</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
-                            <span>Shipping:</span>
-                            <strong>AED <?php echo number_format($order['shipping_aed'] ?? 0, 2); ?> ($<?php echo number_format($shipping_usd, 2); ?>)</strong>
+                            <span><?php echo te('order.shipping_label'); ?></span>
+                            <strong>AED <?php echo number_format($order['shipping_aed'] ?? 0, 2); ?> (€<?php echo number_format($shipping_eur, 2); ?>)</strong>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="h5 mb-0">Total Amount:</span>
-                            <span class="total-amount">AED <?php echo number_format($order['total_amount'], 2); ?> ($<?php echo number_format($total_usd, 2); ?>)</span>
+                            <span class="h5 mb-0"><?php echo te('order.total_amount'); ?></span>
+                            <span class="total-amount">AED <?php echo number_format($order['total_amount'], 2); ?> (€<?php echo number_format($total_eur, 2); ?>)</span>
                         </div>
                     </div>
                     
-                    <!-- Invoice Download -->
-                    <?php if (!empty($order['invoice_pdf'])): ?>
+                    <!-- Invoice Download: hidden until a cash-on-delivery order is paid -->
+                    <?php
+                    $paymentMethodShown = strtolower(trim((string)($order['payment_method'] ?? '')));
+                    $paymentStatusShown = strtolower(trim((string)($order['payment_status'] ?? '')));
+                    $codUnpaid = in_array($paymentMethodShown, ['cod', 'cash', 'cash on delivery', 'cash_on_delivery'], true)
+                        && !in_array($paymentStatusShown, ['paid', 'completed'], true);
+                    ?>
+                    <?php if (!empty($order['invoice_pdf']) && !$codUnpaid): ?>
                         <div class="text-center mb-4">
-                            <a href="../invoice/<?php echo htmlspecialchars($order['invoice_pdf']); ?>" 
+                            <?php
+                            $invoiceBase = preg_replace('#/public$#', '', store_base_path());
+                            $invoiceHref = ($invoiceBase === '' ? '' : $invoiceBase) . '/invoice/' . rawurlencode(basename((string)$order['invoice_pdf']));
+                            ?>
+                            <a href="<?php echo htmlspecialchars($invoiceHref); ?>" 
                                class="invoice-link" target="_blank">
-                                <i class="fas fa-file-pdf me-2"></i> Download Invoice (PDF)
+                                <i class="fas fa-file-pdf me-2"></i> <?php echo te('order.download_invoice_pdf'); ?>
                             </a>
                         </div>
                     <?php endif; ?>
                     
                     <!-- Payment Methods -->
                     <form method="POST" id="paymentForm">
-                        <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i> Select Payment Method</h5>
+                        <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i> <?php echo te('order.select_payment'); ?></h5>
                         
                         <div class="payment-method-card" onclick="selectPaymentMethod('online')">
                             <div class="d-flex align-items-center">
@@ -335,8 +390,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
                                 <div class="flex-grow-1">
                                     <label for="online" class="mb-0" style="cursor: pointer;">
                                         <i class="fas fa-credit-card fa-2x text-primary me-3"></i>
-                                        <strong>Online Payment</strong>
-                                        <p class="text-muted mb-0 small">Pay securely with credit/debit card</p>
+                                        <strong><?php echo te('order.online_payment'); ?></strong>
+                                        <p class="text-muted mb-0 small"><?php echo te('order.online_payment_desc'); ?></p>
                                     </label>
                                 </div>
                             </div>
@@ -348,8 +403,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
                                 <div class="flex-grow-1">
                                     <label for="cod" class="mb-0" style="cursor: pointer;">
                                         <i class="fas fa-money-bill-wave fa-2x text-success me-3"></i>
-                                        <strong>Cash on Delivery (COD)</strong>
-                                        <p class="text-muted mb-0 small">Pay when you receive your order</p>
+                                        <strong><?php echo te('order.cod'); ?></strong>
+                                        <p class="text-muted mb-0 small"><?php echo te('order.cod_desc'); ?></p>
                                     </label>
                                 </div>
                             </div>
@@ -357,16 +412,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
                         
                         <div class="text-center mt-4">
                             <button type="submit" class="btn btn-pay" id="submitBtn" disabled>
-                                <i class="fas fa-lock me-2"></i> Proceed to Payment
+                                <i class="fas fa-lock me-2"></i> <?php echo te('order.proceed_payment'); ?>
                             </button>
                         </div>
                     </form>
                     
                     <div class="text-center mt-4">
                         <small class="text-muted">
-                            <i class="fas fa-shield-alt me-1"></i> Secure Payment | 
-                            <i class="fas fa-truck me-1"></i> Fast Delivery | 
-                            <i class="fas fa-headset me-1"></i> 24/7 Support
+                            <i class="fas fa-shield-alt me-1"></i> <?php echo te('order.secure_payment'); ?> | 
+                            <i class="fas fa-truck me-1"></i> <?php echo te('order.fast_delivery'); ?> | 
+                            <i class="fas fa-headset me-1"></i> <?php echo te('order.support_247'); ?>
                         </small>
                     </div>
                 </div>
@@ -374,6 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
         </div>
     </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function selectPaymentMethod(method) {
             document.getElementById(method).checked = true;
@@ -394,8 +450,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error && $order) {
         document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> ' + <?php echo json_encode(te('order.processing'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>;
         });
     </script>
+    <?php require_once __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

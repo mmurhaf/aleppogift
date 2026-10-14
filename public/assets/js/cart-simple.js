@@ -4,6 +4,12 @@
  * Fixed: Consolidated cart logic, improved event handling
  */
 
+var __ = function (k, p, fallback) {
+    var s = (window.AG_I18N && window.AG_I18N[k]) || fallback || k;
+    if (p) { for (var n in p) { s = s.split('{' + n + '}').join(p[n]); } }
+    return s;
+};
+
 // Prevent duplicate initialization
 if (window.cartInitialized) {
     console.log('Cart already initialized, skipping...');
@@ -57,7 +63,7 @@ function createToastContainer() {
 function addToCart(productId, quantity = 1, eventObj = null) {
     // Basic validation
     if (!productId || productId < 1) {
-        showToast('Invalid product', 'error');
+        showToast(__('invalid_product', null, 'Invalid product'), 'error');
         return;
     }
     
@@ -71,7 +77,7 @@ function addToCart(productId, quantity = 1, eventObj = null) {
     // Show loading state
     if (button) {
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + __('adding', null, 'Adding...');
     }
     
     // AJAX request
@@ -90,13 +96,13 @@ function addToCart(productId, quantity = 1, eventObj = null) {
             refreshCartPreview();
             
             // Show success message
-            showToast(data.message || 'Added to cart!');
+            showToast(data.message || __('added_to_cart', null, 'Added to cart!'));
             
             // Button success state - Fixed: store and restore original classes
             if (button) {
                 button.classList.remove('btn-primary', 'btn-outline-primary');
                 button.classList.add('btn-success');
-                button.innerHTML = '<i class="fas fa-check me-2"></i>Added!';
+                button.innerHTML = '<i class="fas fa-check me-2"></i>' + __('added_excl', null, 'Added!');
                 
                 setTimeout(() => {
                     button.className = originalClasses;
@@ -105,7 +111,7 @@ function addToCart(productId, quantity = 1, eventObj = null) {
                 }, 1500);
             }
         } else {
-            throw new Error(data.message || 'Failed to add to cart');
+            throw new Error(data.message || __('failed_to_add', null, 'Failed to add to cart'));
         }
     })
     .catch(error => {
@@ -173,7 +179,7 @@ function cartOperation(action, productId, eventObj = null) {
             
             showToast(data.message);
         } else {
-            throw new Error(data.message || 'Operation failed');
+            throw new Error(data.message || __('operation_failed', null, 'Operation failed'));
         }
     })
     .catch(error => {
@@ -433,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (target.classList.contains('remove-item')) {
             e.preventDefault();
             const productId = target.dataset.id;
-            if (productId && confirm('Remove this item from cart?')) {
+            if (productId && confirm(__('confirm_remove_item', null, 'Remove this item from cart?'))) {
                 cartOperation('remove', productId, e);
             }
         }

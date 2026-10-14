@@ -24,8 +24,8 @@
         <div class="success">
             <h3>✅ Confirmed Working Configuration:</h3>
             <strong>Username:</strong> sales@aleppogift.com<br>
-            <strong>Password:</strong> Salem1972#a<br>
-            <strong>SMTP Host:</strong> smtp.ipage.com<br>
+            <strong>Password:</strong> ********<br>
+            <strong>SMTP Host:</strong> smtp.hostinger.com<br>
             <strong>SMTP Port:</strong> 465<br>
             <strong>Encryption:</strong> SSL
         </div>
@@ -90,7 +90,7 @@
                     $mail->Host = SMTP_HOST;
                     $mail->SMTPAuth = true;
                     $mail->Username = SMTP_USERNAME; // sales@aleppogift.com
-                    $mail->Password = SMTP_PASSWORD; // Salem1972#a
+                    $mail->Password = SMTP_PASSWORD;
                     $mail->SMTPSecure = 'ssl';
                     $mail->Port = SMTP_PORT;
                     $mail->SMTPDebug = 0;
@@ -163,9 +163,9 @@
         
         <div class="test-result">
             <h3>📋 Your SMTP Test Results Summary:</h3>
-            <p><strong>✅ Working:</strong> sales@aleppogift.com + Salem1972#a</p>
+            <p><strong>✅ Working:</strong> sales@aleppogift.com + ********</p>
             <p><strong>❌ Failed:</strong> sales (without domain) + any password</p>
-            <p><strong>❌ Failed:</strong> sales@aleppogift.com + Salem1972#i</p>
+            <p><strong>❌ Failed:</strong> sales@aleppogift.com + ********</p>
             <p><strong>🎯 Conclusion:</strong> Your current configuration in config/config.php is correct!</p>
         </div>
         

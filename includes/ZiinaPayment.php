@@ -9,6 +9,21 @@ class ZiinaPayment {
         $this->apiUrl = defined('ZIINA_API_URL') ? ZIINA_API_URL : 'https://api-v2.ziina.com/api/payment_intent';
         $this->secretKey = defined('ZIINA_API_KEY') ? ZIINA_API_KEY : '';
         $this->testMode = defined('ZIINA_TEST_MODE') ? ZIINA_TEST_MODE : false;
+        try {
+            if (class_exists('Database') && function_exists('get_site_setting')) {
+                $settingsDb = new Database();
+                $savedKey = get_site_setting($settingsDb, 'ziina_api_key', '');
+                if ($savedKey !== '') {
+                    $this->secretKey = $savedKey;
+                }
+                $sandbox = get_site_setting($settingsDb, 'ziina_sandbox', '');
+                if ($sandbox !== '') {
+                    $this->testMode = $sandbox === '1';
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('Ziina settings lookup failed: ' . $e->getMessage());
+        }
         
         // Validate that we have the required API key
         if (empty($this->secretKey)) {
@@ -26,14 +41,16 @@ class ZiinaPayment {
             return ['success' => false, 'error' => 'Invalid amount'];
         }
         
-        // Prepare payload
+        // Prepare payload. Use the canonical site host so the return
+        // request matches the session cookie (www redirects, but the cookie does not).
+        $siteBase = function_exists('getBaseUrl') ? getBaseUrl() : 'https://aleppogift.com';
         $payload = [
             "amount" => (int) round($amountAED * 100), // Convert to cents
             "currency_code" => "AED",
             "message" => "$message #$order_id",
-            "success_url" => "https://www.aleppogift.com/thankyou.php?order=$order_id",
-            "cancel_url"  => "https://www.aleppogift.com/checkout.php?order=$order_id",
-            "failure_url" => "https://www.aleppogift.com/checkout.php?order=$order_id",
+            "success_url" => $siteBase . "/thankyou.php?order=$order_id",
+            "cancel_url"  => $siteBase . "/checkout.php?order=$order_id",
+            "failure_url" => $siteBase . "/checkout.php?order=$order_id",
             "test" => $this->testMode,
             "transaction_source" => "directApi",
             "expiry" => (string)(round(microtime(true) * 1000) + 86400000), // 24h in ms

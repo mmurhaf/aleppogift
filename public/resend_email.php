@@ -85,15 +85,8 @@ try {
     $error_message = '';
     
     try {
-        // Start with simple email method that's more likely to work
-        error_log("📧 Trying sendOrderEmail for Order #$order_id");
-        $status = sendOrderEmail($email, $order_id, $fullname);
-        
-        if (!$status && function_exists('sendEnhancedOrderEmail')) {
-            error_log("📧 Basic email failed, trying enhanced email for Order #$order_id");
-            $status = sendEnhancedOrderEmail($email, $order_id, $fullname, $customer_data, null);
-        }
-        
+        error_log("📧 Resending confirmation for Order #$order_id");
+        $status = sendConfirmedOrderEmail($email, $order_id, $fullname, $customer_data, true);
     } catch (Exception $email_error) {
         error_log("❌ Email sending exception: " . $email_error->getMessage());
         $error_message = "Email system error: " . $email_error->getMessage();

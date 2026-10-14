@@ -2,11 +2,36 @@
 /**
  * Simple Email Functions
  * Basic email functionality without external dependencies
- * 
+ *
  * @author aleppogift Development Team
  * @version 1.0
  * @date August 12, 2025
  */
+
+require_once __DIR__ . '/order_email_layout.php';
+
+/**
+ * Send admin notification email when a new order is placed
+ */
+function sendAdminOrderNotification($order_id, $customer_name, $grand_total, $payment_method, $customer_data = []) {
+    if (!defined('EMAIL_FROM') || !defined('EMAIL_FROM_NAME') || !defined('ADMIN_EMAIL')) {
+        error_log("❌ Admin email constants not defined — skipping admin notification");
+        return false;
+    }
+
+    $admin_email = ADMIN_EMAIL;
+    $subject = "New order #$order_id — AleppoGift";
+    $message = ag_build_admin_order_html($order_id, $customer_name, $grand_total, $payment_method, $customer_data);
+    $success = ag_send_html_mail($admin_email, $subject, $message);
+
+    if ($success) {
+        error_log("✅ Admin notification email sent to $admin_email for order #$order_id");
+    } else {
+        error_log("❌ Failed to send admin notification email for order #$order_id");
+    }
+
+    return $success;
+}
 
 /**
  * Send order confirmation email
@@ -28,64 +53,13 @@ function sendOrderEmail($to, $order_id, $customer_name = '') {
         error_log("📧 EMAIL_FROM: " . EMAIL_FROM);
         error_log("📧 SITE_URL: " . SITE_URL);
         
-        $subject = "Order Confirmation #$order_id - aleppogift";
-        
-        $message = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <title>Order Confirmation</title>
-        </head>
-        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-            <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                <h2 style='color: #d4af37;'>Thank you for your order!</h2>
-                
-                <p>Dear " . htmlspecialchars($customer_name) . ",</p>
-                
-                <p>Your order <strong>#$order_id</strong> has been received and is being processed.</p>
-                
-                <div style='background: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px;'>
-                    <h3 style='margin-top: 0;'>What happens next?</h3>
-                    <ul>
-                        <li>📦 We'll prepare your order with care</li>
-                        <li>🚚 You'll receive tracking information when it ships</li>
-                        <li>💬 Our team is here if you need any help</li>
-                    </ul>
-                </div>
-                
-                <p>If you have any questions, please contact us:</p>
-                <ul>
-                    <li>📧 Email: " . EMAIL_FROM . "</li>
-                    <li>📱 WhatsApp: +971 56 112 5320</li>
-                    <li>🌐 Website: " . SITE_URL . "</li>
-                </ul>
-                
-                <p>Thank you for choosing aleppogift!</p>
-                
-                <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
-                <p style='color: #666; font-size: 12px;'>
-                    aleppogift - Luxury Gifts & Home Decor<br>
-                    " . SITE_URL . "
-                </p>
-            </div>
-        </body>
-        </html>
-        ";
+        $subject = "Order confirmation #$order_id — AleppoGift";
+        $message = ag_build_simple_confirmation_html($order_id, (string)$customer_name);
         
         error_log("📧 Email content prepared for Order #$order_id");
-        
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-        $headers .= "From: " . EMAIL_FROM_NAME . " <" . EMAIL_FROM . ">\r\n";
-        $headers .= "Reply-To: " . EMAIL_FROM . "\r\n";
-        $headers .= "Cc: sales@aleppogift.com\r\n";
-        $headers .= "X-Mailer: aleppogift\r\n";
-        
-        error_log("📧 Email headers prepared for Order #$order_id");
         error_log("📧 Sending email via mail() function...");
         
-        $success = mail($to, $subject, $message, $headers);
+        $success = ag_send_html_mail($to, $subject, $message);
         
         if ($success) {
             error_log("✅ Order email sent successfully to $to for order #$order_id");
@@ -110,7 +84,7 @@ function sendOrderEmail($to, $order_id, $customer_name = '') {
 /**
  * Send enhanced order confirmation email with cart contents, shipping details, and PDF attachment
  */
-function sendEnhancedOrderEmail($to, $order_id, $customer_name = '', $customer_data = [], $pdf_path = null) {
+function sendEnhancedOrderEmail($to, $order_id, $customer_name = '', $customer_data = [], $pdf_path = null, $forceInvoice = false) {
     error_log("📧 Starting sendEnhancedOrderEmail for Order #$order_id to $to");
     
     try {
@@ -132,182 +106,59 @@ function sendEnhancedOrderEmail($to, $order_id, $customer_name = '', $customer_d
             error_log("❌ Order #$order_id not found in database");
             return false;
         }
+
+        $invoiceAllowed = $forceInvoice || ag_order_invoice_allowed($order);
+        if (!$invoiceAllowed) {
+            $pdf_path = null;
+            error_log("📄 Invoice omitted for unpaid cash-on-delivery order #$order_id");
+        }
         
         // Get order items
-        $order_items = $db->query(
-            "SELECT oi.*, p.name_en, p.name_ar, pv.size, pv.color, pv.additional_price 
-             FROM order_items oi 
-             JOIN products p ON oi.product_id = p.id 
-             LEFT JOIN product_variations pv ON oi.variation_id = pv.id 
-             WHERE oi.order_id = :order_id",
-            ['order_id' => $order_id]
-        )->fetchAll(PDO::FETCH_ASSOC);
+        $itemsSql = "SELECT oi.*, COALESCE(NULLIF(oi.product_name, ''), p.name_en, 'Item') AS display_name,
+                    p.name_en, p.name_ar, pv.size, pv.color,
+                    COALESCE(pi_variant.image_path, pi_main.image_path) AS image_path
+             FROM order_items oi
+             LEFT JOIN products p ON oi.product_id = p.id
+             LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+             LEFT JOIN product_images pi_variant ON pv.image_id = pi_variant.id
+             LEFT JOIN product_images pi_main ON p.id = pi_main.product_id AND pi_main.is_main = 1
+             WHERE oi.order_id = :order_id";
+        try {
+            $order_items = $db->query($itemsSql, ['order_id' => $order_id])->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            error_log('Order email item images unavailable: ' . $e->getMessage());
+            $order_items = $db->query(
+                "SELECT oi.*, COALESCE(NULLIF(oi.product_name, ''), p.name_en, 'Item') AS display_name,
+                        p.name_en, p.name_ar, pv.size, pv.color
+                 FROM order_items oi
+                 LEFT JOIN products p ON oi.product_id = p.id
+                 LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+                 WHERE oi.order_id = :order_id",
+                ['order_id' => $order_id]
+            )->fetchAll(PDO::FETCH_ASSOC);
+        }
         
         error_log("✅ Email constants check passed");
         error_log("📧 Found " . count($order_items) . " items for order #$order_id");
         
-        $subject = "Order Confirmation #$order_id - AleppoGift";
+        $subject = "Order confirmation #$order_id — AleppoGift";
         
-        // Generate cart items HTML
-        $cart_items_html = generateCartItemsHTML($order_items);
-        
-        // Generate order summary HTML
-        $order_summary_html = generateOrderSummaryHTML($order);
-        
-        // Generate shipping details HTML
-        $shipping_html = generateShippingDetailsHTML($order, $customer_data);
-        
-        // Generate PDF download link
-        $pdf_download_link = '';
-        if ($pdf_path && file_exists($pdf_path)) {
-            $filename = basename($pdf_path);
-            $pdf_download_link = "
-            <div style='background: #e3f2fd; padding: 15px; margin: 20px 0; border-radius: 5px; text-align: center;'>
-                <h3 style='margin-top: 0; color: #1976d2;'>📄 Invoice Download</h3>
-                <p>Your invoice is ready for download:</p>
-                <a href='" . SITE_URL . "/download_invoice.php?id=$order_id' style='background: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                    📥 Download Invoice PDF
-                </a>
-                <p style='font-size: 12px; color: #666; margin-top: 10px;'>
-                    Or right-click the link above and select 'Save link as...' to download
-                </p>
-            </div>";
-        }
-        
-        $message = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <title>Order Confirmation</title>
-            <style>
-                .email-container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .header { background: linear-gradient(135deg, #d4af37, #f4e5a1); padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
-                .header h1 { color: #fff; margin: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
-                .content { background: #fff; padding: 20px; }
-                .order-info { background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #d4af37; }
-                .cart-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                .cart-table th { background: #d4af37; color: white; padding: 12px; text-align: left; }
-                .cart-table td { padding: 10px; border-bottom: 1px solid #ddd; }
-                .cart-table tr:nth-child(even) { background: #f9f9f9; }
-                .summary-box { background: #f0f8ff; padding: 15px; margin: 20px 0; border-radius: 8px; border: 2px solid #d4af37; }
-                .shipping-box { background: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 8px; }
-                .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; color: #666; }
-                .btn { background: #d4af37; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
-                .btn:hover { background: #b8941f; }
-            </style>
-        </head>
-        <body>
-            <div class='email-container'>
-                <div class='header'>
-                    <h1>🎉 Thank You for Your Order!</h1>
-                </div>
-                
-                <div class='content'>
-                    <p>Dear " . htmlspecialchars($customer_name) . ",</p>
-                    
-                    <p>Your order <strong>#$order_id</strong> has been received and is being processed.</p>
-                    
-                    <div class='order-info'>
-                        <h3 style='margin-top: 0; color: #d4af37;'>📋 Order Information</h3>
-                        <p><strong>Order Number:</strong> #$order_id</p>
-                        <p><strong>Order Date:</strong> " . date('F j, Y g:i A', strtotime($order['order_date'])) . "</p>
-                        <p><strong>Payment Method:</strong> " . htmlspecialchars($order['payment_method']) . "</p>
-                        <p><strong>Payment Status:</strong> " . ucfirst($order['payment_status']) . "</p>
-                    </div>
-                    
-                    $cart_items_html
-                    
-                    $order_summary_html
-                    
-                    $shipping_html
-                    
-                    $pdf_download_link
-                    
-                    <div style='background: #e8f5e8; padding: 15px; margin: 20px 0; border-radius: 5px;'>
-                        <h3 style='margin-top: 0; color: #2e7d32;'>🚀 What happens next?</h3>
-                        <ul style='margin: 10px 0;'>
-                            <li>📦 We'll carefully prepare your order</li>
-                            <li>🏷️ Quality check and secure packaging</li>
-                            <li>🚚 You'll receive tracking information when it ships</li>
-                            <li>💬 Our team is here if you need any help</li>
-                        </ul>
-                    </div>
-                    
-                    <div style='background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;'>
-                        <h3 style='margin-top: 0; color: #856404;'>📞 Need Help?</h3>
-                        <p>If you have any questions about your order, please contact us:</p>
-                        <ul style='list-style: none; padding: 0;'>
-                            <li>📧 <strong>Email:</strong> " . EMAIL_FROM . "</li>
-                            <li>📱 <strong>WhatsApp:</strong> +971 56 112 5320</li>
-                            <li>🌐 <strong>Website:</strong> " . SITE_URL . "</li>
-                        </ul>
-                    </div>
-                    
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='" . SITE_URL . "' class='btn'>🛍️ Continue Shopping</a>
-                    </div>
-                </div>
-                
-                <div class='footer'>
-                    <p><strong>AleppoGift - Luxury Gifts & Home Decor</strong></p>
-                    <p>" . SITE_URL . "</p>
-                    <p style='font-size: 12px; margin-top: 15px;'>
-                        Thank you for choosing AleppoGift. We appreciate your business!
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>";
+        $attachInvoice = $invoiceAllowed && $pdf_path && is_file($pdf_path);
+        $message = ag_build_order_confirmation_html(
+            $order,
+            $order_items,
+            (string)$customer_name,
+            is_array($customer_data) ? $customer_data : [],
+            $attachInvoice
+        );
         
         error_log("📧 Email content prepared for Order #$order_id");
-        
-        // Prepare headers for multipart email (to support PDF attachment)
-        $boundary = md5(time());
-        
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "From: " . EMAIL_FROM_NAME . " <" . EMAIL_FROM . ">\r\n";
-        $headers .= "Reply-To: " . EMAIL_FROM . "\r\n";
-        $headers .= "Cc: sales@aleppogift.com\r\n";
-        $headers .= "X-Mailer: AleppoGift\r\n";
-        
-        if ($pdf_path && file_exists($pdf_path)) {
-            // Multipart email with PDF attachment
-            $headers .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
-            
-            $body = "--$boundary\r\n";
-            $body .= "Content-Type: text/html; charset=UTF-8\r\n";
-            $body .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
-            $body .= $message . "\r\n";
-            
-            // Add PDF attachment
-            $file_content = file_get_contents($pdf_path);
-            $file_content = chunk_split(base64_encode($file_content));
-            $filename = basename($pdf_path);
-            
-            $body .= "--$boundary\r\n";
-            $body .= "Content-Type: application/pdf; name=\"$filename\"\r\n";
-            $body .= "Content-Transfer-Encoding: base64\r\n";
-            $body .= "Content-Disposition: attachment; filename=\"$filename\"\r\n\r\n";
-            $body .= $file_content . "\r\n";
-            $body .= "--$boundary--";
-            
-            error_log("📎 PDF attachment prepared: $filename");
-            
-        } else {
-            // Simple HTML email without attachment
-            $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-            $body = $message;
-            
-            if ($pdf_path) {
-                error_log("⚠️ PDF file not found: $pdf_path");
-            }
+        if ($attachInvoice) {
+            error_log("📎 Attaching invoice: " . basename($pdf_path));
         }
-        
-        error_log("📧 Email headers prepared for Order #$order_id");
         error_log("📧 Sending email via mail() function...");
         
-        $success = mail($to, $subject, $body, $headers);
+        $success = ag_send_html_mail($to, $subject, $message, $attachInvoice ? $pdf_path : null);
         
         if ($success) {
             error_log("✅ Enhanced order email sent successfully to $to for order #$order_id");
@@ -327,6 +178,185 @@ function sendEnhancedOrderEmail($to, $order_id, $customer_name = '', $customer_d
         error_log("📍 Fatal error location: " . $e->getFile() . " at line " . $e->getLine());
         return false;
     }
+}
+
+/**
+ * Send the order confirmation once. Paid orders include the invoice.
+ * Unpaid cash on delivery never includes an invoice.
+ */
+function sendConfirmedOrderEmail($to, $order_id, $customer_name = '', $customer_data = [], $force = false) {
+    global $db;
+    $order_id = (int)$order_id;
+
+    if (!$force && $db && ag_confirmation_already_sent($db, $order_id)) {
+        error_log("📧 Confirmation email already sent for order #$order_id");
+        return true;
+    }
+
+    $pdf = null;
+    $order = null;
+    if ($db) {
+        try {
+            $order = $db->query('SELECT * FROM orders WHERE id = :id', ['id' => $order_id])->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            $order = null;
+        }
+    }
+    if ($order && ag_order_invoice_allowed($order)) {
+        $candidate = ag_invoice_file_path($order_id);
+        if (is_file($candidate)) {
+            $pdf = $candidate;
+        }
+    }
+
+    $status = false;
+    if (function_exists('sendEnhancedOrderEmail')) {
+        $status = sendEnhancedOrderEmail($to, $order_id, $customer_name, $customer_data, $pdf, false);
+    }
+    if (!$status) {
+        $status = sendOrderEmail($to, $order_id, $customer_name);
+    }
+    if ($status && $db) {
+        ag_mark_confirmation_sent($db, $order_id);
+    }
+    return $status;
+}
+
+/**
+ * Email an invoice the customer asked for, including unpaid cash on delivery.
+ */
+function sendRequestedInvoiceEmail($to, $order_id, $customer_name, $pdf_path) {
+    if (!$pdf_path || !is_file($pdf_path)) {
+        return false;
+    }
+    if (!defined('EMAIL_FROM') || !defined('EMAIL_FROM_NAME')) {
+        return false;
+    }
+    global $db;
+    $order = ['id' => (int)$order_id, 'payment_method' => 'COD', 'payment_status' => 'pending'];
+    if ($db) {
+        try {
+            $loaded = $db->query('SELECT * FROM orders WHERE id = :id', ['id' => (int)$order_id])->fetch(PDO::FETCH_ASSOC);
+            if ($loaded) {
+                $order = $loaded;
+            }
+        } catch (Throwable $e) {
+            error_log('Requested invoice order lookup: ' . $e->getMessage());
+        }
+    }
+    $html = ag_build_invoice_request_html($order, (string)$customer_name);
+    return ag_send_html_mail($to, 'Your invoice for order #' . (int)$order_id . ' — AleppoGift', $html, $pdf_path);
+}
+
+function customerMayRequestInvoice($order_id, array $order): bool
+{
+    $order_id = (int)$order_id;
+    if (!empty($_SESSION['confirmed_order_' . $order_id])) {
+        return true;
+    }
+    if (function_exists('current_customer_id')) {
+        $customerId = (int)current_customer_id();
+        if ($customerId > 0 && $customerId === (int)($order['customer_id'] ?? 0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Tell the store that a customer asked for an invoice on an unpaid delivery order.
+ * The invoice itself is not created or sent to the customer.
+ */
+function sendAdminInvoiceRequest(array $order): bool
+{
+    if (!defined('ADMIN_EMAIL') || !defined('EMAIL_FROM') || !defined('EMAIL_FROM_NAME')) {
+        error_log('Admin invoice request skipped: email constants missing');
+        return false;
+    }
+    $orderId = (int)($order['id'] ?? 0);
+    $html = ag_build_admin_invoice_request_html($order);
+    $sent = ag_send_html_mail(
+        ADMIN_EMAIL,
+        'Invoice request for unpaid order #' . $orderId . ' — AleppoGift',
+        $html
+    );
+    error_log($sent
+        ? "Admin invoice request sent for order #$orderId"
+        : "Admin invoice request failed for order #$orderId");
+    return $sent;
+}
+
+/**
+ * Paid orders can receive an invoice. Unpaid cash on delivery only notifies the store.
+ */
+function fulfillCustomerInvoiceRequest($order_id): array
+{
+    global $db;
+    $order_id = (int)$order_id;
+    if (!$db) {
+        $db = new Database();
+    }
+
+    $order = $db->query(
+        "SELECT o.*, c.fullname AS customer_name, c.email AS customer_email,
+                c.phone AS customer_phone, c.address AS customer_address,
+                c.city AS customer_city, c.country AS customer_country
+         FROM orders o
+         LEFT JOIN customers c ON o.customer_id = c.id
+         WHERE o.id = :id",
+        ['id' => $order_id]
+    )->fetch(PDO::FETCH_ASSOC);
+
+    if (!$order) {
+        return ['success' => false, 'error' => 'Order not found'];
+    }
+    if (!customerMayRequestInvoice($order_id, $order)) {
+        return ['success' => false, 'error' => 'You cannot request an invoice for this order'];
+    }
+
+    if (!ag_order_invoice_allowed($order)) {
+        $sent = sendAdminInvoiceRequest($order);
+        if (!$sent) {
+            return ['success' => false, 'error' => 'The store could not be notified. Please try again.'];
+        }
+        $_SESSION['invoice_requested_' . $order_id] = true;
+        return [
+            'success' => true,
+            'admin_only' => true,
+            'order_id' => $order_id,
+            'emailed' => true,
+        ];
+    }
+
+    require_once __DIR__ . '/generate_invoice_pdf.php';
+    $generator = new PDFInvoiceGenerator();
+    $result = $generator->generateInvoicePDF($order_id);
+    if (empty($result['success']) || empty($result['file_path']) || !is_file($result['file_path'])) {
+        return ['success' => false, 'error' => $result['error'] ?? 'Invoice could not be created'];
+    }
+
+    $_SESSION['valid_invoice_' . $order_id] = true;
+    $_SESSION['invoice_requested_' . $order_id] = true;
+
+    $emailed = false;
+    $email = trim((string)($order['customer_email'] ?? ''));
+    if ($email !== '') {
+        $emailed = sendRequestedInvoiceEmail(
+            $email,
+            $order_id,
+            (string)($order['customer_name'] ?? ''),
+            $result['file_path']
+        );
+    }
+
+    return [
+        'success' => true,
+        'order_id' => $order_id,
+        'invoice_number' => $result['invoice_number'] ?? ('INV-' . str_pad((string)$order_id, 6, '0', STR_PAD_LEFT)),
+        'file_path' => $result['file_path'],
+        'download_url' => 'download_invoice.php?id=' . $order_id,
+        'emailed' => $emailed,
+    ];
 }
 
 /**
@@ -392,8 +422,11 @@ function sendContactEmail($name, $email, $subject, $message) {
     
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: " . htmlspecialchars($name) . " <" . $email . ">\r\n";
-    $headers .= "Reply-To: " . $email . "\r\n";
+    // Sanitize name and email to prevent email header injection
+    $safe_name = str_replace(["\r", "\n", ":", ","], '', $name);
+    $safe_email = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : EMAIL_FROM;
+    $headers .= "From: " . $safe_name . " <" . $safe_email . ">\r\n";
+    $headers .= "Reply-To: " . $safe_email . "\r\n";
     $headers .= "X-Mailer: aleppogift\r\n";
     
     $success = mail($to, $email_subject, $email_message, $headers);
@@ -500,7 +533,10 @@ function generateCartItemsHTML($order_items) {
  * Generate HTML for order summary
  */
 function generateOrderSummaryHTML($order) {
-    $subtotal = $order['total_amount'] - $order['shipping_aed'];
+    // Calculate pre-discount subtotal: total_amount = (cart_subtotal - discount) + shipping
+    // So: cart_subtotal = total_amount - shipping + discount
+    $discount = (float)($order['discount_amount'] ?? 0);
+    $pre_discount_subtotal = $order['total_amount'] - $order['shipping_aed'] + $discount;
     
     $html = "
     <div class='summary-box'>
@@ -508,18 +544,18 @@ function generateOrderSummaryHTML($order) {
         <table style='width: 100%; border-collapse: collapse;'>
             <tr>
                 <td style='padding: 8px 0; border-bottom: 1px solid #ddd;'><strong>Subtotal:</strong></td>
-                <td style='padding: 8px 0; text-align: right; border-bottom: 1px solid #ddd;'>AED " . number_format($subtotal, 2) . "</td>
+                <td style='padding: 8px 0; text-align: right; border-bottom: 1px solid #ddd;'>AED " . number_format($pre_discount_subtotal, 2) . "</td>
             </tr>
             <tr>
                 <td style='padding: 8px 0; border-bottom: 1px solid #ddd;'><strong>Shipping:</strong></td>
                 <td style='padding: 8px 0; text-align: right; border-bottom: 1px solid #ddd;'>AED " . number_format($order['shipping_aed'], 2) . "</td>
             </tr>";
     
-    if (!empty($order['discount_amount']) && $order['discount_amount'] > 0) {
+    if ($discount > 0) {
         $html .= "
             <tr>
                 <td style='padding: 8px 0; border-bottom: 1px solid #ddd; color: #28a745;'><strong>Discount:</strong></td>
-                <td style='padding: 8px 0; text-align: right; border-bottom: 1px solid #ddd; color: #28a745;'>-AED " . number_format($order['discount_amount'], 2) . "</td>
+                <td style='padding: 8px 0; text-align: right; border-bottom: 1px solid #ddd; color: #28a745;'>-AED " . number_format($discount, 2) . "</td>
             </tr>";
     }
     

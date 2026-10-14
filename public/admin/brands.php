@@ -1,28 +1,52 @@
 ﻿<?php
 require_once('../../config/config.php');
 require_once('../../includes/Database.php');
+require_once('../../includes/functions.php');
 require_once('../../includes/session_helper.php');
 //require_admin_login();
 
 $db = new Database();
 $message = "";
 
+function brand_status_uses_enum(Database $db): bool {
+    static $uses_enum = null;
+
+    if ($uses_enum !== null) {
+        return $uses_enum;
+    }
+
+    try {
+        $status_column = $db->query("SHOW COLUMNS FROM brands LIKE 'status'")->fetch(PDO::FETCH_ASSOC);
+        $uses_enum = isset($status_column['Type']) && stripos($status_column['Type'], 'enum(') !== false;
+    } catch (Throwable $e) {
+        $uses_enum = false;
+    }
+
+    return $uses_enum;
+}
+
+function normalize_brand_status_value($raw_status, bool $uses_enum) {
+    $is_active = in_array(strtolower((string)$raw_status), ['1', 'active', 'on'], true);
+    return $uses_enum ? ($is_active ? 'active' : 'inactive') : ($is_active ? 1 : 0);
+}
+
+function is_brand_active($status): bool {
+    return in_array(strtolower((string)$status), ['1', 'active'], true);
+}
+
 // Handle Add Brand
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_brand'])) {
-    $name_ar = trim($_POST['name_ar']);
-    $name_en = trim($_POST['name_en']);
-    $status = isset($_POST['status']) ? (int)$_POST['status'] : 1;
+    $name_ar = trim($_POST['name_ar'] ?? '');
+    $name_en = trim($_POST['name_en'] ?? '');
+    $status = normalize_brand_status_value($_POST['status'] ?? 1, brand_status_uses_enum($db));
     $logo_filename = null;
-    $error = false;
 
-    // Validate inputs
-    if (empty($name_en) || empty($name_ar)) {
-        $message = "Both English and Arabic names are required.";
-        $error = true;
+    if ($name_en === '' || $name_ar === '') {
+        $message = "Please enter both Arabic and English brand names.";
     }
 
     // Handle logo upload
-    if (!$error && isset($_FILES['brand_logo']) && $_FILES['brand_logo']['error'] == 0) {
+    if ($message === '' && isset($_FILES['brand_logo']) && $_FILES['brand_logo']['error'] == 0) {
         $upload_dir = '../uploads/brands/';
         
         // Create directory if it doesn't exist
@@ -33,24 +57,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_brand'])) {
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
         $file_type = $_FILES['brand_logo']['type'];
         
-        if (in_array($file_type, $allowed_types)) {
+        if (in_array($file_type, $allowed_types, true)) {
             $file_extension = pathinfo($_FILES['brand_logo']['name'], PATHINFO_EXTENSION);
             $logo_filename = 'brand_' . time() . '_' . uniqid() . '.' . $file_extension;
             $upload_path = $upload_dir . $logo_filename;
             
             if (!move_uploaded_file($_FILES['brand_logo']['tmp_name'], $upload_path)) {
-                $message = "Error uploading logo file. Please check directory permissions.";
+                $message = "Error uploading logo file.";
                 $logo_filename = null;
-                $error = true;
             }
         } else {
             $message = "Invalid file type. Please upload JPG, PNG, GIF, SVG, or WEBP images only.";
-            $error = true;
         }
     }
 
-    // Insert into database if no errors
-    if (!$error) {
+    if ($message === '') {
         try {
             $db->query("INSERT INTO brands (name_ar, name_en, status, logo) VALUES (:name_ar, :name_en, :status, :logo)", [
                 'name_ar' => $name_ar,
@@ -60,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_brand'])) {
             ]);
 
             $message = "Brand added successfully!";
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $message = "Error adding brand: " . $e->getMessage();
         }
     }
@@ -74,8 +95,8 @@ if (isset($_GET['delete'])) {
     $brand = $db->query("SELECT logo FROM brands WHERE id = :id", ['id' => $id])->fetch(PDO::FETCH_ASSOC);
     
     if ($brand && !empty($brand['logo'])) {
-        $logo_path = '../uploads/brands/' . $brand['logo'];
-        if (file_exists($logo_path)) {
+        $logo_path = brand_logo_filesystem_path($brand['logo']);
+        if ($logo_path && file_exists($logo_path)) {
             unlink($logo_path);
         }
     }
@@ -88,31 +109,35 @@ if (isset($_GET['delete'])) {
 // Handle Status Toggle
 if (isset($_GET['toggle_status'])) {
     $id = (int)$_GET['toggle_status'];
-    $db->query("UPDATE brands SET status = 1 - status WHERE id = :id", ['id' => $id]);
+
+    if (brand_status_uses_enum($db)) {
+        $current_status = $db->query("SELECT status FROM brands WHERE id = :id", ['id' => $id])->fetchColumn();
+        $new_status = is_brand_active($current_status) ? 'inactive' : 'active';
+        $db->query("UPDATE brands SET status = :status WHERE id = :id", [
+            'status' => $new_status,
+            'id' => $id
+        ]);
+    } else {
+        $current_status = $db->query("SELECT status FROM brands WHERE id = :id", ['id' => $id])->fetchColumn();
+        $new_status = is_brand_active($current_status) ? 0 : 1;
+        $db->query("UPDATE brands SET status = :status WHERE id = :id", [
+            'status' => $new_status,
+            'id' => $id
+        ]);
+    }
+
     header("Location: brands.php");
     exit;
 }
 
-// Fetch brands with product count
-$brands = $db->query("
-    SELECT b.*, COUNT(p.id) as product_count 
-    FROM brands b 
-    LEFT JOIN products p ON b.id = p.brand_id 
-    GROUP BY b.id 
-    ORDER BY b.id DESC
-")->fetchAll(PDO::FETCH_ASSOC);
+// Fetch brands
+$brands = $db->query("SELECT * FROM brands ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brands Management - AleppoGift</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/admin-theme.css">
-    <style>
+<?php
+$page_title = 'Brands';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
         
         body {
             background-color: var(--light-bg);
@@ -180,8 +205,6 @@ $brands = $db->query("
             to { opacity: 0; }
         }
     </style>
-</head>
-<body>
     <div class="container-fluid py-4">
         <!-- Dashboard Header -->
         <div class="dashboard-header">
@@ -205,9 +228,10 @@ $brands = $db->query("
 
         <!-- Message Alert -->
         <?php if($message): ?>
-        <div class="message-alert alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>
-            <?php echo $message; ?>
+        <?php $is_error_message = stripos($message, 'error') === 0 || stripos($message, 'please ') === 0; ?>
+        <div class="message-alert alert <?php echo $is_error_message ? 'alert-danger' : 'alert-success'; ?> alert-dismissible fade show" role="alert">
+            <i class="fas <?php echo $is_error_message ? 'fa-exclamation-circle' : 'fa-check-circle'; ?> me-2"></i>
+            <?php echo htmlspecialchars($message); ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         <?php endif; ?>
@@ -273,9 +297,10 @@ $brands = $db->query("
                         </thead>
                         <tbody>
                             <?php foreach ($brands as $brand): ?>
+                            <?php $is_active = is_brand_active($brand['status']); ?>
                             <tr>
                                 <td>
-                                    <img src="<?php echo isset($brand['logo']) && !empty($brand['logo']) ? '../uploads/brands/'.$brand['logo'] : '../assets/images/logo.png'; ?>" 
+                                    <img src="<?php echo isset($brand['logo']) && !empty($brand['logo']) ? htmlspecialchars(store_url(brand_logo_web_path($brand['logo']))) : htmlspecialchars(store_url('assets/images/logo.png')); ?>" 
                                          alt="<?php echo htmlspecialchars($brand['name_en']); ?>" 
                                          class="brand-logo">
                                 </td>
@@ -283,7 +308,7 @@ $brands = $db->query("
                                 <td><?php echo htmlspecialchars($brand['name_en']); ?></td>
                                 <td class="rtl-text"><?php echo htmlspecialchars($brand['name_ar']); ?></td>
                                 <td>
-                                    <?php if ($brand['status'] == 1): ?>
+                                    <?php if ($is_active): ?>
                                         <span class="badge bg-success">Active</span>
                                     <?php else: ?>
                                         <span class="badge bg-warning">Inactive</span>
@@ -297,9 +322,9 @@ $brands = $db->query("
                                 </td>
                                 <td>
                                     <a href="brands.php?toggle_status=<?php echo $brand['id']; ?>" 
-                                       class="btn btn-sm <?php echo $brand['status'] == 1 ? 'btn-warning' : 'btn-success'; ?> action-btn" 
-                                       title="<?php echo $brand['status'] == 1 ? 'Deactivate' : 'Activate'; ?>">
-                                        <i class="fas <?php echo $brand['status'] == 1 ? 'fa-eye-slash' : 'fa-eye'; ?>"></i>
+                                       class="btn btn-sm <?php echo $is_active ? 'btn-warning' : 'btn-success'; ?> action-btn" 
+                                       title="<?php echo $is_active ? 'Deactivate' : 'Activate'; ?>">
+                                        <i class="fas <?php echo $is_active ? 'fa-eye-slash' : 'fa-eye'; ?>"></i>
                                     </a>
                                     <a href="edit_brand.php?id=<?php echo $brand['id']; ?>" 
                                        class="btn btn-sm btn-primary action-btn" 
@@ -337,7 +362,6 @@ $brands = $db->query("
         </nav>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-hide success message after 3 seconds
         setTimeout(() => {
@@ -357,5 +381,5 @@ $brands = $db->query("
             });
         });
     </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

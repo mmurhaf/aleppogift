@@ -3,6 +3,12 @@
    Modern JavaScript for improved user experience
    ========================================================================== */
 
+var __ = function (k, p, fallback) {
+    var s = (window.AG_I18N && window.AG_I18N[k]) || fallback || k;
+    if (p) { for (var n in p) { s = s.split('{' + n + '}').join(p[n]); } }
+    return s;
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // ========================================
@@ -12,19 +18,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const navbarNav = document.querySelector('#navbarNav');
     
     if (mobileToggle && navbarNav) {
-        // Bootstrap will handle the collapse, but we can add custom behavior
-        mobileToggle.addEventListener('click', function() {
-            // Animate hamburger icon
-            const icon = mobileToggle.querySelector('.navbar-toggler-icon');
-            if (icon) {
-                icon.classList.toggle('active');
-            }
-        });
-        
         // Close mobile menu when clicking on a nav link
         const navLinks = navbarNav.querySelectorAll('.nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', function() {
+                if (this.getAttribute('data-bs-toggle') === 'dropdown') {
+                    return;
+                }
                 const bsCollapse = bootstrap.Collapse.getInstance(navbarNav);
                 if (bsCollapse) {
                     bsCollapse.hide();
@@ -37,19 +37,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // SEARCH TOGGLE
     // ========================================
     const searchToggle = document.getElementById('search-toggle');
+    const searchToggleMobile = document.getElementById('search-toggle-mobile');
     const searchBar = document.getElementById('search-bar');
     const searchClose = document.getElementById('search-close');
     const searchInput = searchBar?.querySelector('input[name="search"]');
-    
+
+    function openSearch(e) {
+        e.preventDefault();
+        searchBar.classList.remove('d-none');
+        searchBar.style.display = 'block';
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }
+
     if (searchToggle && searchBar) {
-        searchToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            searchBar.classList.remove('d-none');
-            searchBar.style.display = 'block';
-            if (searchInput) {
-                searchInput.focus();
-            }
-        });
+        searchToggle.addEventListener('click', openSearch);
+    }
+
+    if (searchToggleMobile && searchBar) {
+        searchToggleMobile.addEventListener('click', openSearch);
     }
     
     if (searchClose && searchBar) {
@@ -139,9 +146,9 @@ document.addEventListener('DOMContentLoaded', function() {
             cartPreviewContent.innerHTML = `
                 <div class="text-center p-4">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">${__('loading', null, 'Loading...')}</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading cart...</p>
+                    <p class="mt-2 text-muted">${__('loading_cart', null, 'Loading cart...')}</p>
                 </div>
             `;
             
@@ -155,9 +162,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Error loading cart:', error);
                     cartPreviewContent.innerHTML = `
                         <div class="text-center p-4">
-                            <p class="text-muted">Unable to load cart</p>
+                            <p class="text-muted">${__('unable_to_load_cart', null, 'Unable to load cart')}</p>
                             <button class="btn btn-sm btn-outline-primary" onclick="window.loadCartPreview()">
-                                Try Again
+                                ${__('try_again', null, 'Try Again')}
                             </button>
                         </div>
                     `;
@@ -173,9 +180,9 @@ document.addEventListener('DOMContentLoaded', function() {
             cartOffcanvasContent.innerHTML = `
                 <div class="text-center p-4">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">${__('loading', null, 'Loading...')}</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading cart...</p>
+                    <p class="mt-2 text-muted">${__('loading_cart', null, 'Loading cart...')}</p>
                 </div>
             `;
             
@@ -189,9 +196,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Error loading cart:', error);
                     cartOffcanvasContent.innerHTML = `
                         <div class="text-center p-4">
-                            <p class="text-muted">Unable to load cart</p>
+                            <p class="text-muted">${__('unable_to_load_cart', null, 'Unable to load cart')}</p>
                             <button class="btn btn-sm btn-outline-primary" onclick="window.loadCartOffcanvas()">
-                                Try Again
+                                ${__('try_again', null, 'Try Again')}
                             </button>
                         </div>
                     `;
@@ -255,12 +262,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add loading state
                 const originalContent = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + __('adding', null, 'Adding...');
                 button.disabled = true;
                 
                 // Simulate API call (replace with actual AJAX)
                 setTimeout(() => {
-                    button.innerHTML = '<i class="fas fa-check me-2"></i>Added!';
+                    button.innerHTML = '<i class="fas fa-check me-2"></i>' + __('added_excl', null, 'Added!');
                     button.classList.add('btn-success');
                     
                     // Update cart count (example)
@@ -339,6 +346,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const cartPreview = document.getElementById('cartPreview');
         const cartButton = document.querySelector('.cart-button-header');
         
+        if (e.target.closest && e.target.closest('.add-to-cart, .card-float-cart, .add-to-cart-form')) {
+            return;
+        }
         if (cartPreview && cartButton) {
             if (!cartPreview.contains(e.target) && !cartButton.contains(e.target)) {
                 window.hideCartPreview();

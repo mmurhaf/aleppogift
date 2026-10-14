@@ -97,19 +97,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
     }
 }
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Category - AleppoGift Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/admin-theme.css">
-    <style>
-        body { background-color: #f8f9fc; }
+<?php
+$page_title = 'Edit Category';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
+        .edit-category-page { background-color: #f8f9fc; }
         .edit-card { background: #fff; border-radius: 0.35rem; box-shadow: 0 0.15rem 1.75rem rgba(58,59,69,.15); padding: 2rem; }
         .rtl-text { direction: rtl; text-align: right; }
         .preview-img { 
@@ -190,43 +183,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
             color: white;
         }
     </style>
-</head>
-<body>
 
-<!-- Mobile Menu Toggle Button -->
-<button class="mobile-menu-toggle" onclick="toggleSidebar()">
-    <i class="fas fa-bars"></i>
-</button>
-
-<!-- Sidebar Overlay for Mobile -->
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-<!-- Sidebar Navigation -->
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h2><i class="fas fa-gifts"></i> <span>AleppoGift</span></h2>
-    </div>
-    <ul class="sidebar-menu">
-        <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-        <li><a href="products.php"><i class="fas fa-box-open"></i> <span>Products</span></a></li>
-        <li><a href="categories.php" class="active"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-        <li><a href="brands.php"><i class="fas fa-copyright"></i> <span>Brands</span></a></li>
-        <li><a href="coupons.php"><i class="fas fa-ticket-alt"></i> <span>Coupons</span></a></li>
-        <li><a href="orders.php"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-        <li><a href="regenerate_invoice.php"><i class="fas fa-file-invoice-dollar"></i> <span>Regenerate Invoice</span></a></li>
-        <li><a href="customers.php"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-        <li><a href="../testing/" target="_blank"><i class="fas fa-flask"></i> <span>Testing Dashboard</span></a></li>
-    </ul>
-    <button class="logout-btn" onclick="window.location.href='logout.php'">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </button>
-</div>
-
-<!-- Main Content -->
-<div class="main-content">
-
-    <!-- Dashboard Header -->
+<div class="edit-category-page container-fluid py-4">
     <div class="dashboard-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -246,8 +204,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
             </div>
         </div>
     </div>
-
-<div class="container-fluid py-4">
 
     <?php if ($message): ?>
         <div class="alert alert-success message-alert" role="alert">
@@ -317,7 +273,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
         </form>
     </div>
 </div>
-</div>
 
 <script>
     setTimeout(() => {
@@ -355,27 +310,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_category'])) {
             removeInput.value = '1';
         }
     }
-    
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.querySelector('.sidebar-overlay');
-        
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    }
-    
-    // Close sidebar when clicking on a menu item (mobile only)
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuLinks = document.querySelectorAll('.sidebar-menu a');
-        menuLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    toggleSidebar();
-                }
-            });
-        });
-    });
 </script>
 
-</body>
-</html>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

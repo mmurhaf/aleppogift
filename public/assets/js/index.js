@@ -3,6 +3,12 @@
  * Handles quick view, add to cart, product sharing, and other interactive features
  */
 
+var __ = function (k, p, fallback) {
+    var s = (window.AG_I18N && window.AG_I18N[k]) || fallback || k;
+    if (p) { for (var n in p) { s = s.split('{' + n + '}').join(p[n]); } }
+    return s;
+};
+
 // Enhanced product grid initialization
 document.addEventListener('DOMContentLoaded', function() {
     // Cart loading is now handled entirely by main.js to prevent conflicts
@@ -19,41 +25,61 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initialize add to cart buttons - SINGLE EVENT LISTENER ONLY
+    document.querySelectorAll('.add-bundle-form').forEach(form => {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const button = this.querySelector('button');
+            const bundleId = this.querySelector('input[name="bundle_id"]').value;
+            if (!bundleId || (button && button.disabled)) return;
+            const original = button ? button.textContent : '';
+            if (button) {
+                button.disabled = true;
+                button.textContent = __('adding', null, 'Adding...');
+            }
+            const body = new URLSearchParams();
+            body.set('bundle_id', bundleId);
+            fetch('ajax/add_bundle_to_cart.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                credentials: 'same-origin',
+                body: body.toString()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) throw new Error(data.message || __('bundle_add_failed', null, 'Could not add bundle'));
+                    if (window.updateCartCount) window.updateCartCount(data.count);
+                    if (window.showCartPreview) window.showCartPreview();
+                    if (window.showToast) window.showToast(data.message || __('bundle_added', null, 'Bundle added'), 'success');
+                    if (button) button.textContent = __('added', null, 'Added');
+                })
+                .catch(error => {
+                    if (window.showToast) window.showToast(error.message || __('bundle_add_failed', null, 'Could not add bundle'), 'error');
+                    if (button) button.textContent = original;
+                })
+                .finally(() => {
+                    setTimeout(() => {
+                        if (button) {
+                            button.disabled = false;
+                            button.textContent = original || __('add_bundle', null, 'Add bundle to cart');
+                        }
+                    }, 1200);
+                });
+        });
+    });
+
     document.querySelectorAll('.add-to-cart-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             e.stopPropagation(); // Prevent event bubbling
             
-            // Prevent double submission
             const submitBtn = this.querySelector('.add-to-cart');
-            if (submitBtn.disabled) return;
-            
-            submitBtn.disabled = true;
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
-            
+            if (submitBtn && submitBtn.disabled) return;
+
             const productId = this.querySelector('input[name="product_id"]').value;
-            const productName = this.querySelector('.add-to-cart').dataset.name;
             const quantity = this.querySelector('input[name="quantity"]').value;
-            
-                // Get price from the product card safely
-                let price = 0;
-                const productCard = this.closest('.product-card');
-                if (productCard) {
-                    const priceElement = productCard.querySelector('.price-current');
-                    if (priceElement) {
-                        const priceText = priceElement.textContent.replace(/[^\d.]/g, '');
-                        price = parseFloat(priceText);
-                    }
-                }
-            
-            addToCart(productId, quantity);
-            
-            // Re-enable button after a delay
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }, 1000);
+            if (typeof window.addToCart === 'function') {
+                window.addToCart(productId, quantity, submitBtn);
+            }
         });
     });
     
@@ -75,6 +101,10 @@ document.addEventListener('DOMContentLoaded', function() {
         imageObserver.observe(img);
     });
     
+    if (document.querySelector('.scroll-to-top')) {
+        return;
+    }
+
     // Add scroll to top button
     const scrollToTopBtn = document.createElement('button');
     scrollToTopBtn.className = 'scroll-to-top';
@@ -132,7 +162,7 @@ function openQuickView(productId) {
                 color: #666;
             ">
                 <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                <p>Loading product details...</p>
+                <p>${__('loading_product_details', null, 'Loading product details...')}</p>
             </div>
             <button class="close-modal" onclick="closeQuickView()" style="
                 position: absolute;
@@ -166,12 +196,12 @@ function openQuickView(productId) {
             if (data.success) {
                 displayProductDetails(modal, data.product);
             } else {
-                showQuickViewError(modal, data.error || 'Failed to load product details');
+                showQuickViewError(modal, data.error || __('product_details_failed', null, 'Failed to load product details'));
             }
         })
         .catch(error => {
             console.error('Error loading product:', error);
-            showQuickViewError(modal, `Error: ${error.message}`);
+            showQuickViewError(modal, __('error_with_message', { message: error.message }, 'Error: {message}'));
         });
 }
 
@@ -181,7 +211,7 @@ function openQuickView(productId) {
 function displayProductDetails(modal, product) {
     const content = modal.querySelector('.quick-view-content');
     const priceAED = parseFloat(product.price);
-    const priceUSD = (priceAED / 3.68).toFixed(2);
+    const priceUSD = (typeof window.usdFromAed === 'function' ? window.usdFromAed(priceAED) : (priceAED * (window.AED_TO_USD_RATE || 0.2723)).toFixed(2));
     
     content.innerHTML = `
         <button class="close-modal" onclick="closeQuickView()" style="
@@ -216,17 +246,17 @@ function displayProductDetails(modal, product) {
             <div class="product-details-section">
                 <h3 style="margin: 0 0 1rem 0; color: #333; font-size: 1.5rem;">${product.name_en}</h3>
                 
-                ${product.category_name ? `<p style="margin: 0.5rem 0; color: #666;"><strong>Category:</strong> ${product.category_name}</p>` : ''}
-                ${product.brand_name ? `<p style="margin: 0.5rem 0; color: #666;"><strong>Brand:</strong> ${product.brand_name}</p>` : ''}
+                ${product.category_name ? `<p style="margin: 0.5rem 0; color: #666;"><strong>${__('category_label', null, 'Category:')}</strong> ${product.category_name}</p>` : ''}
+                ${product.brand_name ? `<p style="margin: 0.5rem 0; color: #666;"><strong>${__('brand_label', null, 'Brand:')}</strong> ${product.brand_name}</p>` : ''}
                 
                 <div class="product-price" style="margin: 1.5rem 0;">
-                    <span style="font-size: 1.5rem; font-weight: bold; color: #007bff;">AED ${priceAED.toLocaleString()}</span>
-                    <span style="font-size: 1rem; color: #666; margin-left: 0.5rem;">($${priceUSD})</span>
+                    <span style="font-size: 1.5rem; font-weight: bold; color: #007bff;">${typeof window.formatStoreMoney === 'function' ? window.formatStoreMoney(priceAED, false) : priceAED.toLocaleString()}</span>
+                    <span style="font-size: 1rem; color: #666; margin-left: 0.5rem;">${window.AG_CURRENCY && window.AG_CURRENCY.code !== 'AED' ? '(AED ' + priceAED.toFixed(2) + ')' : '($' + priceUSD + ')'}</span>
                 </div>
                 
                 ${product.description_en ? `
                     <div style="margin: 1.5rem 0;">
-                        <h4 style="margin: 0 0 0.5rem 0; color: #333;">Description</h4>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #333;">${__('description', null, 'Description')}</h4>
                         <p style="color: #666; line-height: 1.6;">${product.description_en}</p>
                     </div>
                 ` : ''}
@@ -247,7 +277,7 @@ function displayProductDetails(modal, product) {
                             "
                             onmouseover="this.style.background='#0056b3'"
                             onmouseout="this.style.background='#007bff'">
-                        <i class="fas fa-shopping-cart" style="margin-right: 0.5rem;"></i>Add to Cart
+                        <i class="fas fa-shopping-cart" style="margin-right: 0.5rem;"></i>${__('add_to_cart', null, 'Add to Cart')}
                     </button>
                     
                     <a href="product.php?id=${product.id}" 
@@ -264,7 +294,7 @@ function displayProductDetails(modal, product) {
                        "
                        onmouseover="this.style.background='#545b62'"
                        onmouseout="this.style.background='#6c757d'">
-                        <i class="fas fa-eye" style="margin-right: 0.5rem;"></i>View Full Details
+                        <i class="fas fa-eye" style="margin-right: 0.5rem;"></i>${__('view_full_details', null, 'View Full Details')}
                     </a>
                 </div>
             </div>
@@ -279,7 +309,7 @@ function displayProductDetails(modal, product) {
             const productName = this.dataset.name;
             
             // Add loading state
-            this.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Adding...';
+            this.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>' + __('adding', null, 'Adding...');
             this.disabled = true;
             
             // Call the existing addToCart function
@@ -287,7 +317,7 @@ function displayProductDetails(modal, product) {
             
             // Reset button after a delay
             setTimeout(() => {
-                this.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right: 0.5rem;"></i>Add to Cart';
+                this.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right: 0.5rem;"></i>' + __('add_to_cart', null, 'Add to Cart');
                 this.disabled = false;
             }, 2000);
         });
@@ -313,7 +343,7 @@ function showQuickViewError(modal, errorMessage) {
         
         <div style="text-align: center; padding: 60px 40px; color: #666;">
             <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 1rem;"></i>
-            <h3 style="margin: 0 0 1rem 0; color: #333;">Error</h3>
+            <h3 style="margin: 0 0 1rem 0; color: #333;">${__('toast_error', null, 'Error')}</h3>
             <p style="margin: 0 0 2rem 0;">${errorMessage}</p>
             <button onclick="closeQuickView()" style="
                 background: #6c757d;
@@ -322,7 +352,7 @@ function showQuickViewError(modal, errorMessage) {
                 padding: 0.75rem 1.5rem;
                 border-radius: 6px;
                 cursor: pointer;
-            ">Close</button>
+            ">${__('close', null, 'Close')}</button>
         </div>
     `;
 }
@@ -347,18 +377,23 @@ function closeQuickView() {
  * Share product using Web Share API or fallback
  */
 function shareProduct(name, price, id, url) {
-    const shareText = `Check out this product at Aleppo Gift: ${name} - AED ${price} - Product Code: ${id}\n${url}`;
+    if (typeof url === 'string' && url.charAt(0) === '/') {
+        url = window.location.origin + url;
+    }
+    const shareText = __('share_text', { name: name, price: price, id: id }, 'Check out this product at Aleppo Gift: {name} - AED {price} - Product Code: {id}') + `\n${url}`;
 
-    if (navigator.share) {
+    if (typeof navigator.share === 'function') {
         navigator.share({
             title: name,
             text: shareText,
             url: url
-        }).then(() => {
-            console.log('Thanks for sharing!');
-        }).catch(console.error);
-    } else {
-        // Fallback (if not supported)
-        alert("Sharing is not supported in this browser. Please copy the link manually:\n" + url);
+        }).catch(function (error) {
+            if (!error || error.name !== 'AbortError') {
+                console.error(error);
+            }
+        });
+        return;
     }
+
+    window.prompt(__('copy_link_prompt', null, 'Copy this link to share:'), url);
 }

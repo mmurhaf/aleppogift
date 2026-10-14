@@ -30,16 +30,11 @@ $sql_orders = "SELECT * FROM orders WHERE customer_id = :id ORDER BY order_date 
 $stmt_orders = $db->query($sql_orders, ['id' => $customer_id]);
 $orders = $stmt_orders->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Details</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+<?php
+$page_title = 'Customer Details';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
         :root {
             --primary: #4361ee;
             --primary-light: #e6f0ff;
@@ -53,13 +48,12 @@ $orders = $stmt_orders->fetchAll(PDO::FETCH_ASSOC);
             --border: #dee2e6;
         }
         
-        * {
+        .view-customer-page,
+        .view-customer-page * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
         
-        body {
+        .view-customer-page {
             font-family: 'Inter', Arial, sans-serif;
             line-height: 1.6;
             color: var(--dark);
@@ -67,7 +61,7 @@ $orders = $stmt_orders->fetchAll(PDO::FETCH_ASSOC);
             padding: 20px;
         }
         
-        .container {
+        .view-customer-page .container {
             max-width: 1200px;
             margin: 0 auto;
             background: white;
@@ -278,18 +272,17 @@ $orders = $stmt_orders->fetchAll(PDO::FETCH_ASSOC);
             }
         }
     </style>
-</head>
-<body>
+    <div class="view-customer-page">
     <div class="container">
         <div class="header">
             <h1>Customer Details</h1>
             <div class="header-actions">
-                <button class="btn btn-primary">
+                <a href="edit_customer.php?id=<?= (int)$customer['id'] ?>" class="btn btn-primary">
                     <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-danger">
-                    <i class="fas fa-trash-alt"></i> Delete
-                </button>
+                </a>
+                <a href="customers.php" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Customers
+                </a>
             </div>
         </div>
         
@@ -313,7 +306,7 @@ $orders = $stmt_orders->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     <div class="info-item">
                         <span class="info-label">Member Since</span>
-                        <span class="info-value"><?= date('M j, Y', strtotime($customer['created_at'])) ?></span>
+                        <span class="info-value"><?= !empty($customer['created_at']) ? date('M j, Y', strtotime($customer['created_at'])) : '—' ?></span>
                     </div>
                 </div>
             </div>
@@ -362,19 +355,19 @@ $orders = $stmt_orders->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach ($orders as $order): ?>
                         <tr>
                             <td><?= $order['id'] ?></td>
-                            <td><?= date('M j, Y', strtotime($order['order_date'])) ?></td>
-                            <td>AED <?= number_format($order['total_amount'], 2) ?></td>
+                            <td><?= !empty($order['order_date']) ? date('M j, Y', strtotime($order['order_date'])) : '—' ?></td>
+                            <td>AED <?= number_format((float)($order['total_amount'] ?? 0), 2) ?></td>
                             <td>
-                                <span class="status status-<?= strtolower($order['payment_status']) ?>">
-                                    <?= ucfirst($order['payment_status']) ?>
+                                <span class="status status-<?= strtolower((string)($order['payment_status'] ?? 'pending')) ?>">
+                                    <?= ucfirst((string)($order['payment_status'] ?? 'pending')) ?>
                                 </span>
                             </td>
-                            <td><?= htmlspecialchars($order['payment_method']) ?></td>
+                            <td><?= htmlspecialchars((string)($order['payment_method'] ?? '')) ?></td>
                             <td>
                                 <div style="display: flex; gap: 10px;">
-                                    <?php if (!empty($order['invoice_pdf'])): ?>
-                                        <a href="/invoices/<?= htmlspecialchars($order['invoice_pdf']) ?>" 
-                                           class="action-link" 
+                                    <?php if (($order['payment_status'] ?? '') === 'paid'): ?>
+                                        <a href="generate_invoice.php?id=<?= (int)$order['id'] ?>"
+                                           class="action-link"
                                            target="_blank">
                                             <i class="fas fa-file-invoice"></i> Invoice
                                         </a>
@@ -391,5 +384,6 @@ $orders = $stmt_orders->fetchAll(PDO::FETCH_ASSOC);
             <?php endif; ?>
         </div>
     </div>
-</body>
-</html>
+    </div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

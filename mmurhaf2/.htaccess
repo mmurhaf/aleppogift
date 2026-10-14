@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteRule ^$ /portfolio/ [R=301,L]
+RewriteRule ^index\.html?$ /portfolio/ [R=301,L]
+

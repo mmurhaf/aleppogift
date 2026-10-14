@@ -1,18 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>404 - Page Not Found</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        h1 { font-size: 48px; color: #c00; }
-        p { font-size: 20px; }
-        a { color: #007bff; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <h1>404</h1>
-    <p>Sorry, the page you are looking for does not exist.</p>
-    <p><a href="/aleppogift/public/">Go to Home</a></p>
-</body>
-</html>
+<?php
+http_response_code(404);
+require_once __DIR__ . '/../includes/bootstrap.php';
+
+$pageTitle = t('pages.404.meta_title');
+$pageKicker = '404';
+$pageHeading = t('pages.404.heading');
+$pageLead = t('pages.404.lead');
+require __DIR__ . '/../includes/visitor_open.php';
+?>
+<article class="prose-panel" style="text-align:center;">
+    <p class="page-kicker">404</p>
+    <p><?= te('pages.404.body') ?></p>
+    <a class="btn btn-primary" href="<?= htmlspecialchars(store_url()) ?>"><?= te('pages.404.back_shop') ?></a>
+</article>
+<?php require __DIR__ . '/../includes/visitor_close.php'; ?>

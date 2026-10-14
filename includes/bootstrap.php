@@ -20,13 +20,30 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
     ini_set('session.cookie_secure', IS_PRODUCTION ? 1 : 0);
     ini_set('session.use_strict_mode', 1);
-    ini_set('session.cookie_samesite', 'Strict');
+    // Lax keeps the cart on a top-level return from the card gateway.
+    // Strict withholds the cookie on that navigation, so checkout.php
+    // sees an empty cart and sends the customer back to cart.php.
+    ini_set('session.cookie_samesite', 'Lax');
     ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
     session_start();
+
+    $cookieParams = session_get_cookie_params();
+    $cookieOptions = [
+        'expires' => 0,
+        'path' => $cookieParams['path'] !== '' ? $cookieParams['path'] : '/',
+        'secure' => (bool)$cookieParams['secure'],
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ];
+    if (!empty($cookieParams['domain'])) {
+        $cookieOptions['domain'] = $cookieParams['domain'];
+    }
+    setcookie(session_name(), session_id(), $cookieOptions);
 }
 
 // Load security components
 require_once(__DIR__ . '/security.php');
+require_once(__DIR__ . '/functions.php');
 
 // Load database and core components
 require_once(__DIR__ . '/Database.php');
@@ -38,8 +55,11 @@ $optional_includes = [
     __DIR__ . '/ZiinaPayment.php',
     __DIR__ . '/whatsapp_notify.php',
     __DIR__ . '/shipping.php',
+    __DIR__ . '/store_features.php',
     __DIR__ . '/helpers/cart.php',
+    __DIR__ . '/helpers/bundles.php',
     __DIR__ . '/cart_helpers.php',
+    __DIR__ . '/shared_cart.php',
     __DIR__ . '/uae_symbol_utils.php'
 ];
 
@@ -47,6 +67,10 @@ foreach ($optional_includes as $file) {
     if (file_exists($file)) {
         require_once($file);
     }
+}
+
+if (function_exists('sharedCartWatch')) {
+    sharedCartWatch();
 }
 
 // Application constants
@@ -73,16 +97,46 @@ if (!Security::validateSession()) {
     $_SESSION['user_ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
 }
 
-// Rate limiting for security
+// Rate limiting. Counts live in the session, so they apply to browsers that keep
+// the session cookie. Page views, cart preview, and cart-count AJAX all share
+// one bucket with PDF export. 100/hour was used up during normal shopping, and
+// the next hit to ajax/export_cart_pdf.php returned 429.
 $client_ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
-if (!Security::checkRateLimit($client_ip, 100, 3600)) {
+$request_method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper((string)$_SERVER['REQUEST_METHOD']) : 'GET';
+$script_name = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', (string)$_SERVER['SCRIPT_NAME']) : '';
+$auth_post = $request_method === 'POST'
+    && (bool)preg_match('#/(login|register|forgot_password|reset_password)\.php$#', $script_name);
+
+if ($auth_post) {
+    $within_limit = Security::checkRateLimit($client_ip . '|auth', 30, 3600);
+    $limit_scope = 'auth';
+} else {
+    $within_limit = Security::checkRateLimit($client_ip, 2000, 3600);
+    $limit_scope = 'storefront';
+}
+
+if (!$within_limit) {
     Security::logSecurityEvent('Rate limit exceeded', 'warning', [
         'ip' => $client_ip,
+        'scope' => $limit_scope,
+        'script' => $script_name,
         'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''
     ]);
-    
-    http_response_code(429);
-    die('Too many requests. Please try again later.');
+
+    if (!headers_sent()) {
+        header('Retry-After: 60');
+        http_response_code(429);
+    }
+    $limitMessage = 'Too many requests. Please try again later.';
+    if (preg_match('#/ajax/#', $script_name)) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode(['success' => false, 'message' => $limitMessage]);
+    } else {
+        echo $limitMessage;
+    }
+    exit;
 }
 
 // Log security event for monitoring

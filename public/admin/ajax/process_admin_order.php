@@ -11,7 +11,7 @@ require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
 require_once($root_dir . '/includes/generate_invoice_pdf.php');
-require_once($root_dir . '/includes/generate_payment_link.php');
+require_once($root_dir . '/includes/ZiinaPayment.php');
 require_once($root_dir . '/includes/send_email_simple.php');
 
 // Require admin login
@@ -202,26 +202,42 @@ try {
     if (!empty($input['send_payment_link']) && $input['payment_status'] === 'pending') {
         // Get customer details
         $customer = $db->query(
-            "SELECT * FROM customers WHERE id = ?", 
+            "SELECT * FROM customers WHERE id = ?",
             [$customerId]
         )->fetch(PDO::FETCH_ASSOC);
 
-        // Generate payment link
-        $paymentLinkGenerator = new PaymentLinkGenerator($db);
-        $paymentLink = $paymentLinkGenerator->generatePaymentLink($orderId, $totalAmount);
+        // Generate Ziina payment link
+        $ziina = new ZiinaPayment();
+        $ziinaMessage = 'AleppoGift Order #' . $orderId;
+        $ziinaResult = $ziina->createPaymentIntent($orderId, $totalAmount, $ziinaMessage);
 
-        // Send email with payment link and PDF invoice
-        $emailSent = sendPaymentLinkEmail(
-            $customer['email'],
+        if ($ziinaResult['success']) {
+            $paymentLink = $ziinaResult['payment_url'];
+            $ziinaPaymentId = $ziinaResult['payment_id'] ?? null;
+
+            // Store the Ziina payment ID against the order
+            if ($ziinaPaymentId) {
+                $db->query(
+                    "UPDATE orders SET payment_reference = :ref WHERE id = :id",
+                    ['ref' => $ziinaPaymentId, 'id' => $orderId]
+                );
+            }
+
+            // Send email with payment link and PDF invoice
+            $emailSent = sendPaymentLinkEmail(
+                $customer['email'],
             $customer['fullname'],
             $orderId,
             $paymentLink,
             $invoiceResult['file_path'] ?? null
         );
 
-        $paymentLinkSent = $emailSent;
-        
-        error_log("Payment link sent for order #$orderId: " . ($emailSent ? 'Success' : 'Failed'));
+            $paymentLinkSent = $emailSent;
+            
+            error_log("Payment link sent for order #$orderId: " . ($emailSent ? 'Success' : 'Failed'));
+        } else {
+            error_log("Ziina payment link generation failed for order #$orderId: " . ($ziinaResult['error'] ?? 'Unknown error'));
+        }
     }
 
     // Return success

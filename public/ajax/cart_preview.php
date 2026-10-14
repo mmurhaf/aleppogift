@@ -3,9 +3,14 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once(__DIR__ . '/../../includes/shared_cart.php');
+sharedCartWatch();
 
 require_once(__DIR__ . '/../../config/config.php');
 require_once(__DIR__ . '/../../includes/Database.php');
+require_once(__DIR__ . '/../../includes/functions.php');
+require_once(__DIR__ . '/../../includes/currencies.php');
+require_once(__DIR__ . '/../../includes/store_features.php');
 
 // Set proper headers to prevent caching issues
 header('Content-Type: text/html; charset=UTF-8');
@@ -35,6 +40,7 @@ $_SESSION['cart'] = array_values($_SESSION['cart']);
 
 try {
     // Include cart helpers
+    require_once(__DIR__ . '/../../includes/helpers/bundles.php');
     require_once(__DIR__ . '/../../includes/cart_helpers.php');
     
     // Validate session and cart
@@ -43,30 +49,37 @@ try {
     $db = new Database();
     if (!$db->conn) {
         error_log("Cart Preview Error: Failed to connect to the database.");
-        echo "<p class='text-danger text-center py-3'>Error loading cart: Database connection failed</p>";
+        echo "<p class='text-danger text-center py-3'>" . te('cart.preview_db_error') . "</p>";
         return;
     }
     $cart = $_SESSION['cart'] ?? [];
+    session_write_close();
 
     if (empty($cart)) {
-        echo "<div class='text-center py-4'>
-                <div class='empty-cart-icon-small mb-3'>
-                    <i class='fas fa-shopping-cart' style='font-size: 2rem; color: #6c757d;'></i>
-                </div>
-                <p class='text-muted mb-0'>Your cart is empty</p>
+        $shopUrl = function_exists('store_url') ? store_url('#products') : 'index.php#products';
+        echo "<div class='cart-preview-empty'>
+                <i class='fas fa-shopping-bag' aria-hidden='true'></i>
+                <p>" . te('header.cart_empty') . "</p>
+                <a class='btn btn-primary btn-sm' href='" . htmlspecialchars($shopUrl) . "'>" . te('header.browse_products') . "</a>
               </div>";
         return;
     }
 
+    $pricedCart = priceCart($db, $cart);
     $total = 0;
     $total_items = 0;
     $processed_items = 0;
     $skipped_items = 0;
+    $rendered_keys = [];
 
-    foreach ($cart as $item):
+    $renderPreviewItem = function ($key, $item) use ($db, $pricedCart, &$total, &$total_items, &$processed_items, &$skipped_items, &$rendered_keys) {
+        if (isset($rendered_keys[$key])) {
+            return;
+        }
+        $rendered_keys[$key] = true;
         // Get product with image and status in a single query
         $product = $db->query(
-            "SELECT p.id, p.name_en, p.price, p.status,
+            "SELECT p.id, p.name_en, p.name_ar, p.price, p.status,
                     (SELECT image_path FROM product_images WHERE product_id = p.id AND is_main = 1 LIMIT 1) as main_image 
              FROM products p WHERE p.id = :id", 
             ['id' => $item['product_id']]
@@ -75,19 +88,20 @@ try {
         if (!$product) {
             error_log("Cart Preview: Product ID {$item['product_id']} not found in database");
             $skipped_items++;
-            continue; // Skip if product doesn't exist
+            return;
         }
         
         if ($product['status'] != 1) {
             error_log("Cart Preview: Product ID {$item['product_id']} is inactive (status: {$product['status']})");
             $skipped_items++;
-            continue; // Skip if product is inactive
+            return;
         }
 
         $processed_items++;
 
-        $price = $product['price'];
-        $display_image = $product['main_image']; // Default to main image
+        $priced = $pricedCart['lines'][$key] ?? null;
+        $price = $priced['catalog_unit'] ?? $product['price'];
+        $display_image = $product['main_image'];
         $variation = null;
         
         // Add variation price if applicable and get variant image
@@ -100,7 +114,7 @@ try {
                 ['id' => $item['variation_id']]
             )->fetch(PDO::FETCH_ASSOC);
             
-            if ($variation) {
+            if ($variation && $priced === null) {
                 $price += $variation['additional_price'];
                 
                 // Use variant-specific image if available
@@ -110,7 +124,7 @@ try {
             }
         }
 
-        $lineTotal = $item['quantity'] * $price;
+        $lineTotal = $priced['line_total'] ?? ($item['quantity'] * $price);
         $total += $lineTotal;
         $total_items += $item['quantity'];
         
@@ -118,60 +132,55 @@ try {
         $resolved_image = function_exists('resolveImagePath') 
             ? resolveImagePath($display_image) 
             : ($display_image ?: 'uploads/default-product.jpg');
+        $image_src = function_exists('store_url') ? store_url($resolved_image) : $resolved_image;
+        $product_name = loc_field($product, 'name');
+        if ($processed_items === 1) {
+            echo '<div class="cart-preview-list">';
+        }
 ?>
-<div class="cart-item-preview d-flex align-items-center p-3 border-bottom" data-product-id="<?= $item['product_id'] ?>" style="gap: 12px;">
-    <div class="item-image-small">
-        <img src="<?= htmlspecialchars($resolved_image) ?>" 
-             alt="<?= htmlspecialchars($product['name_en']) ?>"
-             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: <?= (!empty($variation) && !empty($variation['variant_image'])) ? '2px solid #E67B2E' : '1px solid #e9ecef' ?>;"
-             <?php if (!empty($variation) && !empty($variation['variant_image'])): ?>
-             title="Selected variant image"
-             <?php endif; ?>
-             onerror="this.src='uploads/default-product.jpg'">
-    </div>
-    <div class="item-info flex-grow-1" style="min-width: 0;">
-        <div class="item-name fw-semibold text-truncate" style="font-size: 0.9rem; color: #2c3e50;">
-            <?= htmlspecialchars($product['name_en']) ?>
-        </div>
-        <?php if (!empty($variation)): ?>
-            <div class="item-variation text-muted small mb-1">
-                <i class="fas fa-tag me-1" style="font-size: 0.7rem;"></i>
-                <?= htmlspecialchars($variation['size']) ?> / <?= htmlspecialchars($variation['color']) ?>
-            </div>
+<div class="cart-preview-item" data-product-id="<?= (int)$item['product_id'] ?>">
+    <img src="<?= htmlspecialchars($image_src) ?>"
+         alt="<?= htmlspecialchars($product_name) ?>"
+         onerror="this.src='<?= htmlspecialchars(function_exists('store_url') ? store_url('assets/images/no-image.png') : 'assets/images/no-image.png') ?>'">
+    <div class="item-copy">
+        <div class="item-name"><?= htmlspecialchars($product_name) ?></div>
+        <?php if (!empty($priced['bundle_name_en'])): ?>
+            <div class="item-meta"><?= htmlspecialchars($priced['bundle_name_en']) ?></div>
         <?php endif; ?>
-        <div class="item-price text-success fw-bold" style="font-size: 0.9rem;">
-            AED <?= number_format($lineTotal, 2) ?>
+        <?php if (!empty($variation)): ?>
+            <div class="item-meta"><?= htmlspecialchars(trim(($variation['size'] ?? '') . ' ' . ($variation['color'] ?? ''))) ?></div>
+        <?php endif; ?>
+        <div class="cart-preview-qty" aria-label="<?= te('cart.quantity') ?>">
+            <button type="button" class="update-qty" data-key="<?= (int)$key ?>" data-id="<?= (int)$item['product_id'] ?>" data-action="decrease" aria-label="<?= te('cart.decrease_qty') ?>">−</button>
+            <span><?= (int)$item['quantity'] ?></span>
+            <button type="button" class="update-qty" data-key="<?= (int)$key ?>" data-id="<?= (int)$item['product_id'] ?>" data-action="increase" aria-label="<?= te('cart.increase_qty') ?>">+</button>
         </div>
     </div>
-    <div class="item-actions d-flex flex-column align-items-center" style="gap: 8px;">
-        <div class="quantity-controls-small d-flex align-items-center bg-light rounded-pill px-2 py-1" style="gap: 6px;">
-            <button class="btn btn-sm update-qty" 
-                    data-id="<?= $item['product_id'] ?>" 
-                    data-action="decrease"
-                    style="width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: #6c757d;">
-                <i class="fas fa-minus" style="font-size: 0.7rem;"></i>
-            </button>
-            <span class="quantity-display fw-bold text-center" style="min-width: 24px; font-size: 0.85rem; color: #2c3e50;">
-                <?= $item['quantity'] ?>
-            </span>
-            <button class="btn btn-sm update-qty" 
-                    data-id="<?= $item['product_id'] ?>" 
-                    data-action="increase"
-                    style="width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: #6c757d;">
-                <i class="fas fa-plus" style="font-size: 0.7rem;"></i>
-            </button>
-        </div>
-        <button class="btn btn-sm text-danger remove-item" 
-                data-id="<?= $item['product_id'] ?>" 
-                title="Remove from cart"
-                style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent; opacity: 0.7; transition: opacity 0.2s;"
-                onmouseover="this.style.opacity='1'" 
-                onmouseout="this.style.opacity='0.7'">
-            <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+    <div class="cart-preview-side">
+        <div class="line-total"><?= format_store_money($lineTotal) ?></div>
+        <button type="button" class="cart-preview-remove remove-item" data-key="<?= (int)$key ?>" data-id="<?= (int)$item['product_id'] ?>" title="<?= te('cart.remove_from_cart') ?>" aria-label="<?= te('cart.remove_named', ['name' => $product_name]) ?>">
+            <i class="fas fa-trash" aria-hidden="true"></i>
         </button>
     </div>
 </div>
-<?php endforeach; ?>
+<?php
+    };
+
+    foreach ($pricedCart['bundles'] as $bundleGroup) {
+        echo '<div class="item-meta" style="padding:0.35rem 0.75rem;">'
+            . htmlspecialchars(loc_field($bundleGroup, 'name') . ' — ' . $bundleGroup['message'])
+            . '</div>';
+        foreach ($bundleGroup['line_keys'] as $key) {
+            if (!isset($cart[$key])) {
+                continue;
+            }
+            $renderPreviewItem($key, $cart[$key]);
+        }
+    }
+    foreach ($cart as $key => $item) {
+        $renderPreviewItem($key, $item);
+    }
+?>
 
 <?php 
 // Log summary for debugging
@@ -183,31 +192,27 @@ if ($processed_items == 0 && count($cart) > 0): ?>
         <div class="empty-cart-icon-small mb-3">
             <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ffc107;"></i>
         </div>
-        <p class="text-warning mb-2">Cart items are temporarily unavailable</p>
-        <small class="text-muted">Some products may have been removed or are inactive</small>
+        <p class="text-warning mb-2"><?= te('cart.preview_unavailable') ?></p>
+        <small class="text-muted"><?= te('cart.preview_unavailable_hint') ?></small>
     </div>
 <?php endif; ?>
 
-<div class="cart-summary p-3 bg-light rounded-3 mt-3">
-    <div class='d-flex justify-content-between align-items-center fw-bold mb-3' style="font-size: 1.1rem;">
-        <span style="color: #2c3e50;">Total (<?= $total_items ?> item<?= $total_items != 1 ? 's' : '' ?>):</span>
-        <span class="text-success" style="font-size: 1.2rem;">AED <?= number_format($total, 2) ?></span>
-    </div>
-
-    <?php if ($total > 0 && $processed_items > 0): ?>
-    <div class="d-grid gap-2">
-        <a href="cart.php" class="btn btn-outline-primary" style="border-radius: 12px; padding: 10px; font-weight: 600; border-width: 2px;">
-            <i class="fas fa-shopping-cart me-2"></i>View Full Cart
-        </a>
-        <a href="checkout.php" class="btn btn-success" style="border-radius: 12px; padding: 12px; font-weight: 600; background: linear-gradient(135deg, #28a745, #20c997); border: none; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
-            <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
-        </a>
-    </div>
-    <?php endif; ?>
+<?php if ($processed_items > 0): ?>
 </div>
+<div class="cart-preview-footer">
+    <div class="cart-preview-total">
+        <span><?= te($total_items != 1 ? 'cart.items_many' : 'cart.items_one', ['count' => (int)$total_items]) ?></span>
+        <strong><?= format_store_money($total) ?></strong>
+    </div>
+    <div class="cart-preview-actions">
+        <a href="<?= htmlspecialchars(function_exists('store_url') ? store_url('cart.php') : 'cart.php') ?>" class="btn btn-outline-secondary"><?= te('cart.view_cart') ?></a>
+        <a href="<?= htmlspecialchars(function_exists('store_url') ? store_url('checkout.php') : 'checkout.php') ?>" class="btn btn-primary"><?= te('checkout') ?></a>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php
 } catch (Exception $e) {
     error_log("Cart preview error: " . $e->getMessage());
-    echo "<p class='text-danger text-center py-3'>Error loading cart contents</p>";
+    echo "<p class='text-danger text-center py-3'>" . te('cart.preview_error') . "</p>";
 }

@@ -69,9 +69,9 @@
   padding: 0.5rem 1.25rem;
   border-radius: 8px;
   transition: all 0.3s ease;
-  border: 2px solid #007bff;
+  border: 2px solid var(--primary-500);
   background: white;
-  color: #007bff;
+  color: var(--primary-600);
   font-weight: 600;
   position: relative;
   overflow: visible;
@@ -82,16 +82,16 @@
 }
 
 .cart-button-header:hover {
-  background: #007bff;
+  background: var(--primary-500);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
-  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(184, 98, 10, 0.25);
+  border-color: var(--primary-500);
 }
 
 .cart-button-header:active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 2px 6px rgba(184, 98, 10, 0.2);
 }
 
 /* Mobile Cart Button */
@@ -103,19 +103,19 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  border: 2px solid #007bff;
+  border: 2px solid var(--primary-500);
   background: white;
-  color: #007bff;
+  color: var(--primary-600);
   transition: all 0.3s ease;
   position: relative;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .cart-button-mobile:hover {
-  background: #007bff;
+  background: var(--primary-500);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(184, 98, 10, 0.25);
 }
 
 .cart-button-mobile i {
@@ -125,18 +125,18 @@
 /* Search Button Styles */
 #search-toggle {
   transition: all 0.3s ease;
-  border: 2px solid #6c757d;
+  border: 2px solid var(--gray-600);
   background: white;
-  color: #6c757d;
+  color: var(--gray-700);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 #search-toggle:hover {
-  background: #6c757d;
+  background: var(--gray-700);
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);
-  border-color: #6c757d;
+  border-color: var(--gray-700);
 }
 
 #search-toggle i {
@@ -167,39 +167,28 @@
 }
 
 #search-bar .form-control:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 0.2rem rgba(184, 98, 10, 0.15);
 }
 
 #search-bar .btn-primary {
   border-radius: 8px;
   padding: 0.625rem 1.25rem;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 2px 6px rgba(184, 98, 10, 0.2);
 }
 
 #search-bar .btn-outline-secondary {
   border-radius: 8px;
   padding: 0.625rem 1rem;
-  border: 2px solid #6c757d;
+  border: 2px solid var(--gray-600);
   transition: all 0.3s ease;
 }
 
 #search-bar .btn-outline-secondary:hover {
-  background: #6c757d;
+  background: var(--gray-700);
   color: white;
-  border-color: #6c757d;
-}
-
-.cart-button-header:hover {
-  background: var(--primary, #007bff);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-}
-
-.cart-button-header:active {
-  transform: translateY(0);
+  border-color: var(--gray-700);
 }
 
 .cart-count-badge {
@@ -261,8 +250,8 @@
 }
 
 .navbar-nav .nav-link:hover {
-  color: #007bff;
-  background: rgba(0, 123, 255, 0.05);
+  color: var(--primary-600);
+  background: rgba(184, 98, 10, 0.08);
 }
 
 .navbar-nav .nav-link::after {
@@ -273,7 +262,7 @@
   transform: translateX(-50%);
   width: 0;
   height: 2px;
-  background: #007bff;
+  background: var(--primary-500);
   transition: width 0.3s ease;
 }
 
@@ -290,12 +279,12 @@
 }
 
 .navbar-toggler:hover {
-  background: rgba(0, 123, 255, 0.05);
-  border-color: #007bff;
+  background: rgba(184, 98, 10, 0.08);
+  border-color: var(--primary-500);
 }
 
 .navbar-toggler:focus {
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(184, 98, 10, 0.25);
 }
 
 /* Cart Preview Enhancement */
@@ -321,7 +310,7 @@
 }
 
 #cartPreview .card-header {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
   color: white;
   border-radius: 12px 12px 0 0;
 }
@@ -369,7 +358,7 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  color: #6c757d;
+  color: var(--gray-600);
 }
 
 /* Empty cart animation */

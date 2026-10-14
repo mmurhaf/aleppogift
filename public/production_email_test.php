@@ -66,8 +66,8 @@
                         echo '<h4>Troubleshooting Steps:</h4>';
                         echo '<ol>';
                         echo '<li>Verify email account "sales@aleppogift.com" exists in iPage control panel</li>';
-                        echo '<li>Check if the password is correct: Salem1972#a</li>';
-                        echo '<li>Try the alternative password: Salem1972#i</li>';
+                        echo '<li>Check if the password is correct: ********</li>';
+                        echo '<li>Try the alternative password: ********</li>';
                         echo '<li>Contact iPage support for email configuration help</li>';
                         echo '</ol>';
                         echo '</div>';

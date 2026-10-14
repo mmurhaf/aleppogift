@@ -7,14 +7,48 @@ RewriteEngine On
 # Set the base directory
 RewriteBase /
 
-# Redirect all traffic to public folder
+# Canonical host: www -> non-www (avoids duplicate indexing)
+RewriteCond %{HTTP_HOST} ^www\.(aleppogift\.com)$ [NC]
+RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+# Serve the database-driven sitemap at the standard location
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+# Map /dashboard/ to /public/admin/ (avoids WAF blocking /admin/)
+RewriteRule ^dashboard/?$ public/admin/index.php [L,QSA]
+RewriteRule ^dashboard/(.+)$ public/admin/$1 [L,QSA]
+
+# Backward-compatible redirect: /admin/dashboard/* -> /dashboard/*
+RewriteRule ^admin/dashboard/?$ /dashboard/ [R=302,L,NC]
+RewriteRule ^admin/dashboard/(.+)$ /dashboard/$1 [R=302,L,NC]
+
+# Redirect bare /admin/ directory access to /admin/login.php (avoids WAF 403 on directory access)
+RewriteRule ^admin/?$ /admin/login.php [R=302,L]
+
+# Redirect /public/ URLs to root (clean URLs) - Remove /public from any URL
+# Only redirect when the client actually requested a /public/ URL (not internal rewrites)
+RewriteCond %{THE_REQUEST} \s/public/ [NC]
+RewriteCond %{REQUEST_URI} ^/public(/.*)?$ [NC]
+RewriteRule ^public(/(.*))?$ /$2 [R=301,L,QSA]
+
+# Category-only public mode: block cart/checkout and legacy storefront pages
+# FIXED: Removed 'product|' from this redirect rule
+RewriteRule ^(cart_0|cart_3|checkout_0|checkout_00|thankyou_0|thankyou_00|thankyou_05)\.php$ / [R=302,L,NC]
+RewriteRule ^(index00|index007|index07|index5|index6|index7|index99|index_0|index_002|index_099|index_3|index_99|index_no_ar)\.php$ / [R=302,L,NC]
+
+# Redirect all traffic to public folder internally (without changing URL)
 # Skip if already accessing public folder
 RewriteCond %{REQUEST_URI} !^/public/
 # Skip if file exists in root
 RewriteCond %{REQUEST_FILENAME} !-f
 # Skip if directory exists in root
 RewriteCond %{REQUEST_FILENAME} !-d
-# Redirect everything to public folder
+# For directory requests (ending with /), rewrite to index.php explicitly
+RewriteRule ^(.*)/$ /public/$1/index.php [L,QSA]
+# Redirect everything else to public folder internally
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ /public/$1 [L,QSA]
 
 # Handle direct access to root - redirect to public/index.php
@@ -22,6 +56,7 @@ RewriteCond %{REQUEST_URI} ^/$
 RewriteRule ^$ /public/index.php [L]
 
 # Custom error pages
+ErrorDocument 403 /public/403.php
 ErrorDocument 404 /public/404.php
 ErrorDocument 500 /public/500.php
 

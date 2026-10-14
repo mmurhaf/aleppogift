@@ -70,16 +70,16 @@ echo "</form>\n";
 
 echo "\n<h3>📋 Next Steps if Email Fails</h3>\n";
 echo "1. Check error logs during order submission\n";
-echo "2. Test both passwords: Salem1972#a and Salem1972#i\n";
+echo "2. Test both passwords: ******** and ********\n";
 echo "3. Verify email account exists in iPage hosting control panel\n";
 echo "4. Test SMTP connection directly\n";
 echo "5. Try updating the SMTP password in the configuration\n\n";
 
 echo "<h3>🔧 Update Email Password</h3>\n";
 echo "To update the email password, edit config/config.php and change:\n";
-echo "<code>define('SMTP_PASSWORD', 'Salem1972#i');</code>\n";
+echo "<code>define('SMTP_PASSWORD', '********');</code>\n";
 echo "or\n";
-echo "<code>define('SMTP_PASSWORD', 'Salem1972#a');</code>\n\n";
+echo "<code>define('SMTP_PASSWORD', '********');</code>\n\n";
 
 echo "<h3>� PHPMailer Installation Test</h3>\n";
 
@@ -204,7 +204,7 @@ if (!$phpmailer_found) {
                     echo "\n<h4>🔍 PHPMailer Troubleshooting:</h4>\n";
                     echo "1. Check SMTP credentials in config/config.php\n";
                     echo "2. Verify port 465 is not blocked by firewall\n";
-                    echo "3. Try alternative password: Salem1972#i\n";
+                    echo "3. Try alternative password: ********\n";
                     echo "4. Contact iPage support for SMTP settings\n";
                 }
             } else {

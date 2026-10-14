@@ -2,6 +2,7 @@
 session_start();
 require_once('../../config/config.php');
 require_once('../../includes/Database.php');
+require_once __DIR__ . '/../../includes/i18n.php';
 
 header('Content-Type: application/json');
 
@@ -9,31 +10,46 @@ try {
     $db = new Database();
     
     $product_id = isset($_POST['product_id']) ? (int) $_POST['product_id'] : 0;
+    $requested_key = isset($_POST['cart_key']) ? (int) $_POST['cart_key'] : -1;
     $action = $_POST['action'] ?? '';
 
-    if ($product_id < 1) {
-        echo json_encode(['success' => false, 'message' => 'Invalid product ID']);
+    if ($requested_key < 0 && $product_id < 1) {
+        echo json_encode(['success' => false, 'message' => t('cart.invalid_product_id')]);
         exit;
     }
 
     if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
-        echo json_encode(['success' => false, 'message' => 'Cart is empty']);
+        echo json_encode(['success' => false, 'message' => t('header.cart_empty')]);
         exit;
     }
 
-    // Find the cart item
     $cart_key = null;
     $cart_item = null;
-    foreach ($_SESSION['cart'] as $key => $item) {
-        if ($item['product_id'] == $product_id) {
-            $cart_key = $key;
-            $cart_item = $item;
-            break;
+    if ($requested_key >= 0 && isset($_SESSION['cart'][$requested_key])) {
+        $cart_key = $requested_key;
+        $cart_item = $_SESSION['cart'][$requested_key];
+        $product_id = (int)$cart_item['product_id'];
+    } else {
+        foreach ($_SESSION['cart'] as $key => $item) {
+            if ($item['product_id'] == $product_id && ($item['line_role'] ?? 'standalone') !== 'bundle') {
+                $cart_key = $key;
+                $cart_item = $item;
+                break;
+            }
+        }
+        if ($cart_key === null) {
+            foreach ($_SESSION['cart'] as $key => $item) {
+                if ($item['product_id'] == $product_id) {
+                    $cart_key = $key;
+                    $cart_item = $item;
+                    break;
+                }
+            }
         }
     }
 
     if ($cart_key === null) {
-        echo json_encode(['success' => false, 'message' => 'Product not found in cart']);
+        echo json_encode(['success' => false, 'message' => t('cart.not_in_cart')]);
         exit;
     }
 
@@ -58,11 +74,21 @@ try {
         $new_quantity = $current_quantity + 1;
         
         // Check stock limit
-        $stock_limit = $variation ? $variation['stock'] : $product['stock'];
-        if ($stock_limit !== null && $new_quantity > $stock_limit) {
+        $stock_limit = $variation ? $variation['stock'] : ($product['stock'] ?? null);
+        $reserved_others = 0;
+        foreach ($_SESSION['cart'] as $other_key => $other_item) {
+            if ((int)$other_key === (int)$cart_key) {
+                continue;
+            }
+            $same_variation = (int)($other_item['variation_id'] ?? 0) === (int)($cart_item['variation_id'] ?? 0);
+            if ((int)$other_item['product_id'] === $product_id && $same_variation) {
+                $reserved_others += (int)$other_item['quantity'];
+            }
+        }
+        if ($stock_limit !== null && ($reserved_others + $new_quantity) > (int)$stock_limit) {
             echo json_encode([
                 'success' => false, 
-                'message' => 'Cannot increase quantity. Stock limit: ' . $stock_limit
+                'message' => t('cart.stock_limit', ['stock' => $stock_limit])
             ]);
             exit;
         }
@@ -79,7 +105,7 @@ try {
             $_SESSION['cart'] = array_values($_SESSION['cart']); // Reindex array
         }
     } else {
-        echo json_encode(['success' => false, 'message' => 'Invalid action']);
+        echo json_encode(['success' => false, 'message' => t('cart.invalid_action')]);
         exit;
     }
 
@@ -89,13 +115,13 @@ try {
         'success' => true,
         'count' => $total_count,
         'new_quantity' => $new_quantity,
-        'message' => 'Cart updated successfully'
+        'message' => t('cart.updated')
     ]);
 
 } catch (Exception $e) {
     error_log("Update cart error: " . $e->getMessage());
     echo json_encode([
         'success' => false, 
-        'message' => 'An error occurred. Please try again.'
+        'message' => t('error_generic')
     ]);
 }

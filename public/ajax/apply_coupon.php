@@ -11,7 +11,7 @@ $db = new Database();
 $cart = $_SESSION['cart'] ?? [];
 
 if (empty($cart)) {
-    echo "<p class='text-muted'>Your cart is empty.</p>";
+    echo "<p class='text-muted'>" . te('header.cart_empty') . "</p>";
     return;
 }
 
@@ -20,7 +20,7 @@ if (empty($cart)) {
 $code = trim($_POST['code'] ?? '');
 
 if (!$code) {
-    echo json_encode(['success' => false, 'message' => 'No coupon provided.']);
+    echo json_encode(['success' => false, 'message' => t('cart.coupon_missing')]);
     exit;
 }
 
@@ -30,34 +30,25 @@ $stmt = $db->query($sql, ['code' => $code]);
 $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$coupon) {
-    echo json_encode(['success' => false, 'message' => 'Invalid or inactive coupon.']);
+    echo json_encode(['success' => false, 'message' => t('cart.coupon_invalid')]);
     exit;
 }
 
 // Validate dates
 $today = date('Y-m-d');
 if ($coupon['start_date'] > $today || $coupon['end_date'] < $today) {
-    echo json_encode(['success' => false, 'message' => 'Coupon expired or not yet valid.']);
+    echo json_encode(['success' => false, 'message' => t('cart.coupon_expired')]);
     exit;
 }
 
 // Validate usage
 if ($coupon['used_count'] >= $coupon['max_usage']) {
-    echo json_encode(['success' => false, 'message' => 'Coupon usage limit reached.']);
+    echo json_encode(['success' => false, 'message' => t('cart.coupon_limit')]);
     exit;
 }
 
-// Calculate item total (without shipping)
-$total = 0;
-$itemTotal = 0;
-foreach ($cart as $item):
-    $product = $db->query("SELECT name_en, price FROM products WHERE id = :id", ['id' => $item['product_id']])->fetch(PDO::FETCH_ASSOC);
-    if (!$product) continue;
-
-    $lineTotal = $item['quantity'] * $product['price'];
-    $itemTotal += $lineTotal;
-    
-endforeach;
+$pricedCart = priceCart($db, $cart);
+$itemTotal = (float)$pricedCart['total'];
 
 
 // if (!empty($_SESSION['cart_item'])) {

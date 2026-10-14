@@ -1,0 +1,46 @@
+# Robots.txt for Aleppo Gift
+# https://aleppogift.com
+
+User-agent: *
+Allow: /
+
+# Admin and private areas
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /includes/
+Disallow: /config/
+Disallow: /database/
+Disallow: /logs/
+Disallow: /vendor/
+Disallow: /invoice/
+Disallow: /ajax/
+
+# Transactional / per-user pages (no search value)
+Disallow: /cart.php
+Disallow: /checkout.php
+Disallow: /thankyou.php
+Disallow: /payment.php
+Disallow: /account.php
+Disallow: /login.php
+Disallow: /wishlist.php
+Disallow: /set_language.php
+Disallow: /download_invoice.php
+Disallow: /download_quotation.php
+Disallow: /view_invoice.php
+
+# Internal search results and sort/filter permutations
+Disallow: /*?search=
+Disallow: /*&search=
+Disallow: /*?s=
+Disallow: /*?sort=
+Disallow: /*&sort=
+
+# Test and debug files
+Disallow: /test_*
+Disallow: /debug*
+Disallow: /smtp_*
+Disallow: /testing/
+Disallow: /*_test.php
+Disallow: /*_diagnostic.php
+
+Sitemap: https://aleppogift.com/sitemap.xml

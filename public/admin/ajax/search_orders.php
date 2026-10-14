@@ -84,14 +84,15 @@ try {
                 c.phone
             FROM orders o
             LEFT JOIN customers c ON o.customer_id = c.id
-            WHERE c.fullname LIKE :query_like
-               OR c.email LIKE :query_like
+            WHERE c.fullname LIKE :query_name
+               OR c.email LIKE :query_email
             ORDER BY o.id DESC
             LIMIT 20
         ";
         
         $params = [
-            'query_like' => '%' . $query . '%'
+            'query_name' => '%' . $query . '%',
+            'query_email' => '%' . $query . '%',
         ];
     }
     

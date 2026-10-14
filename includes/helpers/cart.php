@@ -7,50 +7,11 @@
  * @return array [total_price, total_weight]
  */
 function getCartTotalAndWeight($db, $cart): array {
-    $total = 0;
-    $weight = 0;
-
-    if (empty($cart)) {
+    if (!function_exists('priceCart')) {
         return [0, 0];
     }
-
-    foreach ($cart as $item) {
-        try {
-            $product = $db->query(
-                "SELECT price, weight FROM products WHERE id = :id AND status = 1", 
-                ['id' => $item['product_id']]
-            )->fetch(PDO::FETCH_ASSOC);
-
-            if (!$product) {
-                continue; // Skip if product not found or inactive
-            }
-
-            $price = $product['price'];
-            $item_weight = $product['weight'] ?? 1;
-
-            // Add variation price if applicable
-            if (!empty($item['variation_id'])) {
-                $variation = $db->query(
-                    "SELECT additional_price FROM product_variations WHERE id = :id", 
-                    ['id' => $item['variation_id']]
-                )->fetch(PDO::FETCH_ASSOC);
-                
-                if ($variation) {
-                    $price += $variation['additional_price'];
-                }
-            }
-
-            $quantity = $item['quantity'];
-            $total += $price * $quantity;
-            $weight += $item_weight * $quantity;
-
-        } catch (Exception $e) {
-            error_log("Cart calculation error for item {$item['product_id']}: " . $e->getMessage());
-            continue;
-        }
-    }
-
-    return [$total, $weight];
+    $priced = priceCart($db, $cart);
+    return [$priced['total'], $priced['weight']];
 }
 
 /**
@@ -73,9 +34,16 @@ function getCartItemCount($cart): int {
  * @param int|null $variation_id Variation ID to check (optional)
  * @return bool|array Returns cart item if found, false otherwise
  */
-function findCartItem($cart, $product_id, $variation_id = null) {
+function findCartItem($cart, $product_id, $variation_id = null, $line_role = null) {
     foreach ($cart as $key => $item) {
-        if ($item['product_id'] == $product_id && 
+        $role = $item['line_role'] ?? 'standalone';
+        if ($line_role === null && $role === 'bundle') {
+            continue;
+        }
+        if ($line_role !== null && $role !== $line_role) {
+            continue;
+        }
+        if ($item['product_id'] == $product_id &&
             ($item['variation_id'] ?? null) == $variation_id) {
             return ['key' => $key, 'item' => $item];
         }

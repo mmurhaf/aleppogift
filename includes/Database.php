@@ -21,7 +21,21 @@ class Database {
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         } catch(PDOException $exception) {
-            die("Database connection error: " . $exception->getMessage());
+            error_log("Database connection error: " . $exception->getMessage());
+
+            $message = (defined('IS_PRODUCTION') && IS_PRODUCTION)
+                ? 'Service temporarily unavailable. Please try again later.'
+                : 'Database connection error: ' . $exception->getMessage();
+            $script = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+            if (preg_match('#/ajax/#', $script)) {
+                if (!headers_sent()) {
+                    header('Content-Type: application/json; charset=utf-8');
+                    http_response_code(500);
+                }
+                echo json_encode(['success' => false, 'message' => $message]);
+                exit;
+            }
+            die($message);
         }
     }
 
@@ -41,8 +55,15 @@ class Database {
                 // Named parameters - use bindValue
                 foreach ($params as $key => $value) {
                     $param = (strpos($key, ':') === 0) ? $key : ':' . $key;
-                    $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
-                    $stmt->bindValue($param, $value, $type);
+                    if ($value === null) {
+                        $stmt->bindValue($param, null, PDO::PARAM_NULL);
+                    } elseif (is_bool($value)) {
+                        $stmt->bindValue($param, $value ? 1 : 0, PDO::PARAM_INT);
+                    } elseif (is_int($value)) {
+                        $stmt->bindValue($param, $value, PDO::PARAM_INT);
+                    } else {
+                        $stmt->bindValue($param, (string)$value, PDO::PARAM_STR);
+                    }
                 }
                 $stmt->execute();
             }
@@ -71,6 +92,10 @@ class Database {
 
     // ✅ Add this method to allow PDO access directly
     public function getPdo() {
+        return $this->conn;
+    }
+
+    public function getConnection() {
         return $this->conn;
     }
     

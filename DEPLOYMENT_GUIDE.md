@@ -109,7 +109,7 @@ return [
     'ftp' => [
         'host'     => '89.117.188.183',
         'user'     => 'u933234997',
-        'password' => 'Salem1972#h',
+        'password' => '********',
     ],
     'paths' => [
         'local_root'        => 'C:\\xampp\\htdocs\\aleppogift',

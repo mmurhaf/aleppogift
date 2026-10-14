@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../vendor/fpdf/fpdf.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/Database.php';
+require_once __DIR__ . '/../includes/ProductImageResolver.php';
 
 $db = new Database();
 
@@ -46,10 +47,14 @@ try {
         throw new Exception("Order not found");
     }
 
-    $order_items = $db->query("
-        SELECT oi.*, p.name_en 
+    $order_items = $db->query("\
+        SELECT oi.*, p.name_en,
+               COALESCE(pi_variant.image_path, pi_main.image_path) AS selected_image
         FROM order_items oi 
         JOIN products p ON oi.product_id = p.id 
+        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN product_images pi_variant ON pv.image_id = pi_variant.id
+        LEFT JOIN product_images pi_main ON pi_main.product_id = oi.product_id AND pi_main.is_main = 1
         WHERE order_id = :id
     ", ['id' => $order_id])->fetchAll(PDO::FETCH_ASSOC);
 
@@ -126,7 +131,8 @@ $pdf->SetFillColor($headerColor[0], $headerColor[1], $headerColor[2]);
 $pdf->SetTextColor(255);
 $pdf->SetFont('Arial', 'B', 10);
 $pdf->Cell(15, 10, '#', 1, 0, 'C', true);
-$pdf->Cell(85, 10, 'PRODUCT DESCRIPTION', 1, 0, 'L', true);
+$pdf->Cell(20, 10, 'IMAGE', 1, 0, 'C', true);
+$pdf->Cell(65, 10, 'PRODUCT DESCRIPTION', 1, 0, 'L', true);
 $pdf->Cell(20, 10, 'QTY', 1, 0, 'C', true);
 $pdf->Cell(30, 10, 'UNIT PRICE', 1, 0, 'R', true);
 $pdf->Cell(30, 10, 'TOTAL', 1, 1, 'R', true);
@@ -145,16 +151,35 @@ foreach ($order_items as $item) {
     
     // Calculate needed height
     $productName = $item['name_en'];
-    $nameWidth = 85;
+    $imageWidth = 20;
+    $nameWidth = 65;
     $nameLength = $pdf->GetStringWidth($productName);
     $lines = ceil($nameLength / $nameWidth);
-    $currentRowHeight = max($rowHeight, $rowHeight * $lines);
+    $currentRowHeight = max(18, $rowHeight * $lines);
     
     // Row cells
     $pdf->Cell(15, $currentRowHeight, $index++, 1, 0, 'C', true);
+
+    // Product image
+    $imageX = $pdf->GetX();
+    $imageY = $pdf->GetY();
+    $pdf->Cell($imageWidth, $currentRowHeight, '', 1, 0, 'C', true);
+
+    $imagePath = ProductImageResolver::resolveAsLocalPath(
+        (string)($item['selected_image'] ?? ''),
+        [
+            __DIR__ . '/../',
+            __DIR__ . '/../public/',
+            __DIR__ . '/../public/uploads/products/'
+        ]
+    );
+    if ($imagePath !== null) {
+        $imageSize = min($imageWidth - 4, $currentRowHeight - 4, 16);
+        $pdf->Image($imagePath, $imageX + 2, $imageY + 2, $imageSize, $imageSize);
+    }
     
     // Product name with multi-line support
-    $pdf->MultiCell(85, $rowHeight, $productName, 1, 'L', true);
+    $pdf->MultiCell($nameWidth, $rowHeight, $productName, 1, 'L', true);
     $pdf->SetXY($pdf->GetX() + 100, $pdf->GetY() - $currentRowHeight);
     
     $pdf->Cell(20, $currentRowHeight, $item['quantity'], 1, 0, 'C', true);
@@ -193,27 +218,27 @@ $pdf->SetFont('Arial', '', 11);
 $pdf->SetTextColor(60);
 $pdf->SetFillColor(255);
 
-// Exchange rate: 1 USD = 3.68 AED (1 AED = 0.27 USD)
-$aed_to_usd = 0.27;
+// Exchange rate: 1 AED = 0.23 EUR
+$aed_to_eur = 0.23;
 
 // Subtotal
-$subtotal_usd = $subtotal * $aed_to_usd;
+$subtotal_eur = $subtotal * $aed_to_eur;
 $pdf->SetFont('Arial', 'B', 11);
 $pdf->Cell(140, 8, 'Subtotal:', 0, 0, 'R');
-$pdf->Cell(40, 8, number_format($subtotal, 2) . ' (USD ' . number_format($subtotal_usd, 2) . ')', 0, 1, 'R');
+$pdf->Cell(40, 8, number_format($subtotal, 2) . ' (EUR ' . number_format($subtotal_eur, 2) . ')', 0, 1, 'R');
 
 // Shipping
-$shipping_usd = $shippingAED * $aed_to_usd;
+$shipping_eur = $shippingAED * $aed_to_eur;
 $pdf->SetFont('Arial', '', 11);
 $pdf->Cell(140, 8, 'Shipping:', 0, 0, 'R');
-$pdf->Cell(40, 8, number_format($shippingAED, 2) . ' (USD ' . number_format($shipping_usd, 2) . ')', 0, 1, 'R');
+$pdf->Cell(40, 8, number_format($shippingAED, 2) . ' (EUR ' . number_format($shipping_eur, 2) . ')', 0, 1, 'R');
 
 // Discount (if applicable)
 if ($discountAmount > 0) {
-    $discount_usd = $discountAmount * $aed_to_usd;
+    $discount_eur = $discountAmount * $aed_to_eur;
     $pdf->SetTextColor(220, 53, 69); // Red color for discount
     $pdf->Cell(140, 8, 'Discount:', 0, 0, 'R');
-    $pdf->Cell(40, 8, '- ' . number_format($discountAmount, 2) . ' (-USD ' . number_format($discount_usd, 2) . ')', 0, 1, 'R');
+    $pdf->Cell(40, 8, '- ' . number_format($discountAmount, 2) . ' (-EUR ' . number_format($discount_eur, 2) . ')', 0, 1, 'R');
     $pdf->SetTextColor(60); // Reset to default color
 }
 
@@ -224,12 +249,12 @@ $vat = 0;
 // $pdf->Cell(40, 8, number_format($vat, 2), 0, 1, 'R');
 
 // Grand Total
-$total_usd = $grand_Total * $aed_to_usd;
+$total_eur = $grand_Total * $aed_to_eur;
 $pdf->Ln(3);
 $pdf->SetFont('Arial', 'B', 14);
 $pdf->SetTextColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
 $pdf->Cell(140, 10, 'GRAND TOTAL:', 0, 0, 'R');
-$pdf->Cell(40, 10, number_format($grand_Total, 2) . ' (USD ' . number_format($total_usd, 2) . ')', 0, 1, 'R');
+$pdf->Cell(40, 10, number_format($grand_Total, 2) . ' (EUR ' . number_format($total_eur, 2) . ')', 0, 1, 'R');
 $pdf->Ln(15);
 
 // Footer Notes

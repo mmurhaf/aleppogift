@@ -11,7 +11,7 @@ echo "<h2>🔧 SMTP Email Diagnostic Test - aleppogift</h2>\n";
 echo "<style>body{font-family:monospace;background:#f5f5f5;padding:20px;}</style>\n";
 
 // Test both password options
-$passwords = ['Salem1972#a', 'Salem1972#i'];
+$passwords = array_filter([defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '']);
 $username_options = ['sales@aleppogift.com', 'sales'];
 
 echo "<h3>📋 Current Configuration</h3>\n";
@@ -92,7 +92,7 @@ function testEmailSend($to, $username, $password) {
     
     try {
         $mail->isSMTP();
-        $mail->Host = 'smtp.ipage.com';
+        $mail->Host = 'smtp.hostinger.com';
         $mail->SMTPAuth = true;
         $mail->Username = $username;
         $mail->Password = $password;
@@ -148,7 +148,7 @@ if ($phpmailer_available) {
         foreach ($username_options as $username) {
             echo "\nTesting: $username with password ending in '" . substr($password, -2) . "'...\n";
             
-            $result = testSMTPConnection('smtp.ipage.com', 465, $username, $password, 'ssl');
+            $result = testSMTPConnection('smtp.hostinger.com', 465, $username, $password, 'ssl');
             
             if ($result['success']) {
                 echo "✅ SMTP Connection successful with $username and password ending in '" . substr($password, -2) . "'\n";
@@ -202,8 +202,8 @@ if (isset($_POST['send_test']) && !empty($_POST['test_email'])) {
 
 echo "\n<h3>🔧 Troubleshooting Steps</h3>\n";
 echo "1. ✅ Check if email account 'sales@aleppogift.com' exists in iPage control panel\n";
-echo "2. ✅ Verify the password is correct (try both: Salem1972#a and Salem1972#i)\n";
-echo "3. ✅ Ensure SMTP settings: smtp.ipage.com, port 465, SSL\n";
+echo "2. ✅ Verify the password is correct (try both: ******** and ********)\n";
+echo "3. ✅ Ensure SMTP settings: smtp.hostinger.com, port 465, SSL\n";
 echo "4. ✅ Check if domain aleppogift.com is properly configured for email\n";
 echo "5. ✅ Test if PHPMailer library is properly installed\n\n";
 
@@ -215,6 +215,6 @@ echo "• Check hosting provider's email documentation for specific settings\n\n
 
 echo "<h3>🔄 Update Configuration</h3>\n";
 echo "To update the working password in config, edit config/config.php:\n";
-echo "<code>define('SMTP_PASSWORD', 'Salem1972#i'); // or Salem1972#a</code>\n";
+echo "<code>define('SMTP_PASSWORD', '********'); // or ********</code>\n";
 
 ?>

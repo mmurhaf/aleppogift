@@ -47,18 +47,11 @@ function countOrderItems($order_id) {
 }
 
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - AleppoGift</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="assets/admin-theme.css">
-    <style>
+<?php
+$page_title = 'Dashboard';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
     /* Additional dashboard specific styles */
     .stats-cards {
         display: grid;
@@ -184,59 +177,8 @@ function countOrderItems($order_id) {
         text-decoration: underline;
     }
 </style>
-</head>
-<body>
-    <!-- Mobile Menu Toggle Button -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
-    
-    <!-- Sidebar Overlay for Mobile -->
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    
-    <!-- Sidebar Navigation -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2><i class="fas fa-gifts"></i> <span>AleppoGift</span></h2>
-        </div>
-        <ul class="sidebar-menu">
-            <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-            <li><a href="analytics.php"><i class="fas fa-chart-line"></i> <span>Analytics</span></a></li>
-            <li><a href="products.php"><i class="fas fa-box-open"></i> <span>Products</span></a></li>
-            <li><a href="categories.php"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-            <li><a href="brands.php"><i class="fas fa-copyright"></i> <span>Brands</span></a></li>
-            <li><a href="coupons.php"><i class="fas fa-ticket-alt"></i> <span>Coupons</span></a></li>
-            <li><a href="orders.php"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-            <li><a href="create_order.php"><i class="fas fa-plus-circle"></i> <span>Create Order</span></a></li>
-            <li><a href="payment_links.php"><i class="fas fa-link"></i> <span>Payment Links</span></a></li>
-            <li><a href="quick_payment_link.php"><i class="fas fa-bolt"></i> <span>Quick Payment</span></a></li>
-            <li><a href="regenerate_invoice.php"><i class="fas fa-file-invoice-dollar"></i> <span>Regenerate Invoice</span></a></li>
-            <li><a href="edit_invoice.php"><i class="fas fa-file-invoice"></i> <span>Edit Invoice</span></a></li>
-            <li><a href="customers.php"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-            <li><a href="http://localhost:8501" target="_blank"><i class="fas fa-robot"></i> <span>Social Media Bot</span></a></li>
-            <li><a href="../testing/" target="_blank"><i class="fas fa-flask"></i> <span>Testing Dashboard</span></a></li>
-        </ul>
-        <button class="logout-btn" onclick="window.location.href='logout.php'">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </button>
-    </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="header">
-            <div class="header-title">
-                <button class="header-menu-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Dashboard Overview</h1>
-            </div>
-            <div class="user-info">
-                <i class="fas fa-user-circle" style="font-size: 40px; color: #667eea;"></i>
-                <span>Admin</span>
-            </div>
-        </div>
-
+<div class="container-fluid py-4">
         <!-- Statistics Cards -->
         <div class="stats-cards">
             <div class="card">
@@ -284,6 +226,25 @@ function countOrderItems($order_id) {
                     <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <i class="fas fa-robot"></i>
                     </div>
+                </div>
+            </div>
+
+            <!-- Build & Share Cart quick-action card -->
+            <div class="card" style="cursor: pointer; transition: transform 0.3s;"
+                 onclick="window.open('../cart.php', '_blank')"
+                 onmouseover="this.style.transform='translateY(-5px)'"
+                 onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">WhatsApp Orders</div>
+                        <div class="card-value" style="font-size: 1.2rem; color: #1cc88a;">Build Cart</div>
+                    </div>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
+                        <i class="fas fa-cart-arrow-down"></i>
+                    </div>
+                </div>
+                <div style="font-size:.78rem;color:#6c757d;padding-top:4px;">
+                    Add items &rarr; Save &amp; Share via WhatsApp
                 </div>
             </div>
         </div>
@@ -404,27 +365,5 @@ function countOrderItems($order_id) {
             </div>
         </div>
     </div>
-    
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-        
-        // Close sidebar when clicking on a menu item (mobile only)
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuLinks = document.querySelectorAll('.sidebar-menu a');
-            menuLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth <= 768) {
-                        toggleSidebar();
-                    }
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

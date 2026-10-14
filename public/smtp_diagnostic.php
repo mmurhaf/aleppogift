@@ -39,16 +39,16 @@ echo "   - Some need the full email address\n";
 echo "   - Current: " . SMTP_USERNAME . "\n\n";
 
 echo "4. Alternative SMTP Settings to Try:\n";
-echo "   Option A (current): smtp.ipage.com:465 (SSL)\n";
+echo "   Option A (current): smtp.hostinger.com:465 (SSL)\n";
 echo "   Option B: mail.aleppogift.com:465 (SSL)\n";
-echo "   Option C: smtp.ipage.com:465 (ssl)\n\n";
+echo "   Option C: smtp.hostinger.com:465 (ssl)\n\n";
 
 echo "=== Manual Test Instructions ===\n";
 echo "You can test the email credentials manually:\n";
 echo "1. Go to iPage control panel\n";
 echo "2. Check if 'sales@aleppogift.com' email exists\n";
-echo "3. If not, create it with password: Salem1972#i\n";
-echo "4. If it exists, reset the password to: Salem1972#i\n";
+echo "3. If not, create it with password: ********\n";
+echo "4. If it exists, reset the password to: ********\n";
 echo "5. Make sure the domain 'aleppogift.com' is properly configured\n\n";
 
 echo "=== Testing Different Username Formats ===\n";
@@ -72,7 +72,7 @@ $context = stream_context_create([
 ]);
 
 $socket = @stream_socket_client(
-    'ssl://smtp.ipage.com:465',
+    'ssl://smtp.hostinger.com:465',
     $errno,
     $errstr,
     30,
@@ -81,7 +81,7 @@ $socket = @stream_socket_client(
 );
 
 if ($socket) {
-    echo "✅ Raw SSL connection to smtp.ipage.com:465 successful\n";
+    echo "✅ Raw SSL connection to smtp.hostinger.com:465 successful\n";
     
     // Read server greeting
     $response = fgets($socket);

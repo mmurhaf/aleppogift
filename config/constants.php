@@ -31,14 +31,14 @@ define('REVIEWS_PER_PAGE', 10);
 define('WHATSAPP_NUMBER', '971561125320');
 define('WHATSAPP_INTERNATIONAL', '+971561125320');
 define('SUPPORT_EMAIL', 'info@aleppogift.com');
-define('ADMIN_EMAIL', 'admin@aleppogift.com');
+define('ADMIN_EMAIL', 'info@aleppogift.com');
 
 // =================================================================
 // CURRENCY SETTINGS
 // =================================================================
 define('DEFAULT_CURRENCY', 'AED');
 define('USD_TO_AED_RATE', 3.68);
-define('CURRENCY_SYMBOL', 'AED');
+define('CURRENCY_SYMBOL', 'د.إ');
 
 // =================================================================
 // IMAGE SETTINGS

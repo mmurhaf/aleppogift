@@ -3,6 +3,7 @@ ob_start(); // Start output buffering to prevent header errors
 
 require_once('../../config/config.php');
 require_once('../../includes/Database.php');
+require_once('../../includes/functions.php');
 require_once('../../includes/session_helper.php');
 //require_admin_login();
 
@@ -92,17 +93,19 @@ mb_internal_encoding('UTF-8');
 
 // Fetch categories
 $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$category_product_counts = [];
+foreach ($db->query("SELECT category_id, COUNT(*) AS product_count FROM products GROUP BY category_id")->fetchAll(PDO::FETCH_ASSOC) as $count_row) {
+    $category_product_counts[(int)$count_row['category_id']] = (int)$count_row['product_count'];
+}
+$placeholder_categories = array_values(array_filter($categories, function ($cat) {
+    return is_placeholder_name($cat['name_en'] ?? '');
+}));
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Categories Management - AleppoGift</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+<?php
+$page_title = 'Categories';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
         
         body {
             background-color: var(--light-bg);
@@ -169,8 +172,6 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
             transform: scale(1.1);
         }
     </style>
-</head>
-<body>
     <div class="container-fluid py-4">
         <!-- Dashboard Header -->
         <div class="dashboard-header">
@@ -198,6 +199,23 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
             <i class="fas fa-check-circle me-2"></i>
             <?php echo $message; ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($placeholder_categories)): ?>
+        <div class="alert alert-warning" role="alert">
+            <strong>Placeholder categories are hidden from the shop.</strong>
+            Rename them or move their products. Do not leave the public name as “not defined”.
+            <ul class="mb-0 mt-2">
+                <?php foreach ($placeholder_categories as $placeholder): ?>
+                    <li>
+                        Category #<?php echo (int)$placeholder['id']; ?>
+                        “<?php echo htmlspecialchars($placeholder['name_en']); ?>”
+                        is used by <?php echo (int)($category_product_counts[(int)$placeholder['id']] ?? 0); ?> products.
+                        <a href="edit_category.php?id=<?php echo (int)$placeholder['id']; ?>">Rename</a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
         </div>
         <?php endif; ?>
 
@@ -278,10 +296,7 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php 
-                                    // In a real app, you would show product count
-                                    echo '<span class="badge bg-primary">'.rand(5, 50).'</span>'; 
-                                    ?>
+                                    <span class="badge bg-primary"><?php echo (int)($category_product_counts[(int)$cat['id']] ?? 0); ?></span>
                                 </td>
                                 <td>
                                     <a href="categories.php?toggle_status=<?php echo $cat['id']; ?>" 
@@ -312,7 +327,6 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
         <!-- Pagination would go here in a real application -->
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-hide success message after 3 seconds
         setTimeout(() => {
@@ -323,5 +337,5 @@ $categories = $db->query("SELECT * FROM categories ORDER BY id DESC")->fetchAll(
             }
         }, 3000);
     </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

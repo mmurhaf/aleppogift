@@ -9,6 +9,32 @@ require_admin_login();
 $db = new Database();
 $message = "";
 
+function brand_status_uses_enum(Database $db): bool {
+    static $uses_enum = null;
+
+    if ($uses_enum !== null) {
+        return $uses_enum;
+    }
+
+    try {
+        $status_column = $db->query("SHOW COLUMNS FROM brands LIKE 'status'")->fetch(PDO::FETCH_ASSOC);
+        $uses_enum = isset($status_column['Type']) && stripos($status_column['Type'], 'enum(') !== false;
+    } catch (Throwable $e) {
+        $uses_enum = false;
+    }
+
+    return $uses_enum;
+}
+
+function normalize_brand_status_value($raw_status, bool $uses_enum) {
+    $is_active = in_array(strtolower((string)$raw_status), ['1', 'active', 'on'], true);
+    return $uses_enum ? ($is_active ? 'active' : 'inactive') : ($is_active ? 1 : 0);
+}
+
+function is_brand_active($status): bool {
+    return in_array(strtolower((string)$status), ['1', 'active'], true);
+}
+
 // Validate brand ID
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: brands.php");
@@ -28,7 +54,7 @@ if (!$brand) {
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
     $name_ar = trim($_POST['name_ar']);
     $name_en = trim($_POST['name_en']);
-    $status = isset($_POST['status']) ? 1 : 0;
+    $status = normalize_brand_status_value(isset($_POST['status']) ? 1 : 0, brand_status_uses_enum($db));
     $logo_filename = $brand['logo'] ?? null; // Keep existing logo by default
 
     // Handle image upload
@@ -97,16 +123,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Brand - AleppoGift Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
+<?php
+$page_title = 'Edit Brand';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
         :root {
             --primary-color: #007bff;
             --secondary-color: #6c757d;
@@ -118,49 +139,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
             --light-bg: #f8f9fa;
         }
 
-        body {
+        .edit-brand-page {
             font-family: 'Roboto', sans-serif;
             background-color: var(--light-bg);
             color: var(--dark-color);
+            margin-top: 0.5rem;
         }
 
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-
-        .container {
-            margin-top: 2rem;
-        }
-
-        .card {
+        .edit-brand-page .card {
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.12);
         }
 
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-            color: white;
-            border-radius: 10px 10px 0 0 !important;
-            padding: 1.5rem;
-        }
-
-        .card-title {
-            margin-bottom: 0;
-            font-weight: 500;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: var(--dark-color);
-            margin-bottom: 0.5rem;
+        .edit-brand-page .card-header {
+            background: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .form-control, .form-select {
@@ -306,26 +300,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
             justify-content: center;
         }
     </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.php">
-                <i class="fas fa-gift me-2"></i>AleppoGift Admin
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="dashboard.php">
-                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                </a>
-                <a class="nav-link" href="logout.php">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                </a>
-            </div>
-        </div>
-    </nav>
 
-    <div class="container">
+    <div class="edit-brand-page container">
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -378,7 +354,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="status" name="status" 
-                                           <?php echo $brand['status'] ? 'checked' : ''; ?>>
+                                           <?php echo is_brand_active($brand['status']) ? 'checked' : ''; ?>>
                                     <label class="form-check-label" for="status">
                                         <i class="fas fa-toggle-on me-1"></i>Active Brand
                                     </label>
@@ -388,7 +364,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="brand_image" class="form-label">
                                     <i class="fas fa-image me-1"></i>Brand Logo
@@ -427,15 +403,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
                                 <input type="hidden" id="remove_image" name="remove_image" value="0">
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="name_en" class="form-label">
-                                    <i class="fas fa-font me-1"></i>Brand Name (English)
-                                </label>
-                                <input type="text" class="form-control" id="name_en" name="name_en" 
-                                       value="<?php echo htmlspecialchars($brand['name_en']); ?>" required>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="d-flex gap-2">
@@ -451,7 +418,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function previewImage(input) {
             const preview = document.getElementById('imagePreview');
@@ -481,5 +447,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_brand'])) {
             }
         }
     </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

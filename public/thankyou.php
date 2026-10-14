@@ -3,7 +3,7 @@ require_once('../includes/bootstrap.php');
 
 // Bootstrap already loads all necessary components
 $db = new Database();
-$order_id = isset($_GET['order']) ? (int)$_GET['order'] : 0;
+$order_id = isset($_GET['order']) ? (int)$_GET['order'] : (int)($_GET['order_id'] ?? 0);
 
 if (!$order_id) {
     header("Location: index.php");
@@ -30,26 +30,38 @@ if (!$order) {
     exit;
 }
 
-// Update status to paid if not already
-if ($order['payment_status'] !== 'paid') {
+// Card checkout lands here after Ziina. COD is still unpaid until it is collected.
+$thankyouMethod = strtolower(trim((string)($order['payment_method'] ?? '')));
+$isCardPayment = in_array($thankyouMethod, ['ziina', 'zina', 'online', 'stripe', 'credit_card', 'card'], true);
+$isUnpaidCod = function_exists('ag_order_invoice_allowed') ? !ag_order_invoice_allowed($order) : ($thankyouMethod === 'cod');
+if ($isCardPayment && ($order['payment_status'] ?? '') !== 'paid') {
     $db->query("UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = :id", ['id' => $order_id]);
+    $order['payment_status'] = 'paid';
+    $isUnpaidCod = false;
+}
+if ($isCardPayment && ($order['payment_status'] ?? '') === 'paid' && function_exists('reserve_order_stock')) {
+    reserve_order_stock($db, $order_id);
 }
 
-// Generate invoice PDF
-try {
-    require_once '../includes/generate_invoice_pdf.php';
-    $generator = new PDFInvoiceGenerator();
-    $invoice_result = $generator->generateInvoicePDF($order_id);
-    
-    if ($invoice_result['success']) {
-        $invoicePath = $invoice_result['file_path'];
-        $_SESSION['valid_invoice_' . $order_id] = true;
-        error_log("✅ Invoice PDF generated successfully for Order #$order_id at: $invoicePath");
-    } else {
-        error_log("❌ Failed to generate invoice PDF for Order #$order_id: " . ($invoice_result['error'] ?? 'Unknown error'));
+$_SESSION['confirmed_order_' . $order_id] = true;
+
+// Paid orders get an invoice. Unpaid cash on delivery does not, until the customer asks.
+if (!$isUnpaidCod) {
+    try {
+        require_once '../includes/generate_invoice_pdf.php';
+        $generator = new PDFInvoiceGenerator();
+        $invoice_result = $generator->generateInvoicePDF($order_id);
+
+        if ($invoice_result['success']) {
+            $invoicePath = $invoice_result['file_path'];
+            $_SESSION['valid_invoice_' . $order_id] = true;
+            error_log("✅ Invoice PDF generated successfully for Order #$order_id at: $invoicePath");
+        } else {
+            error_log("❌ Failed to generate invoice PDF for Order #$order_id: " . ($invoice_result['error'] ?? 'Unknown error'));
+        }
+    } catch (Exception $e) {
+        error_log("❌ Invoice generation error for Order #$order_id: " . $e->getMessage());
     }
-} catch (Exception $e) {
-    error_log("❌ Invoice generation error for Order #$order_id: " . $e->getMessage());
 }
 
 
@@ -68,28 +80,35 @@ if (isset($_SESSION['temp_order_id'])) {
     }
 }
 
-$_SESSION['valid_invoice_' . $order_id] = true;
+if (!$isUnpaidCod) {
+    $_SESSION['valid_invoice_' . $order_id] = true;
+}
 
-// --- Ziina payment ---
+// --- Confirmation email ---
 $payment_method = $order['payment_method'] ?? '';
 $grandTotal = $order['total_amount'] ?? 0;
 $fullname = $order['customer_name'] ?? '';
 $email = $order['customer_email'] ?? '';
 
-if ($payment_method === 'Ziina') {
-    // Get customer data for enhanced email
-    $customer_data = [
-        'fullname' => $order['customer_name'] ?? '',
-        'phone' => $order['customer_phone'] ?? '',
-        'address' => $order['customer_address'] ?? '',
-        'city' => $order['customer_city'] ?? '',
-        'country' => $order['customer_country'] ?? ''
-    ];
-    
-    send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email, $customer_data);
+$customer_data = [
+    'fullname' => $order['customer_name'] ?? '',
+    'phone' => $order['customer_phone'] ?? '',
+    'address' => $order['customer_address'] ?? '',
+    'city' => $order['customer_city'] ?? '',
+    'country' => $order['customer_country'] ?? ''
+];
+
+if ($email !== '' && !ag_confirmation_already_sent($db, $order_id)) {
+    if ($payment_method === 'Ziina') {
+        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
+    }
+    sendConfirmedOrderEmail($email, $order_id, $fullname, $customer_data);
 }
 
 // Clear session data
+if (!empty($_SESSION['cart'])) {
+    sharedCartMarkUsed();
+}
 unset($_SESSION['cart']);
 unset($_SESSION['temp_order_id']);
 unset($_SESSION['discount_amount']);
@@ -104,76 +123,16 @@ if (isset($_SESSION['temp_order'])) {
     unset($_SESSION['temp_order']);
 }
 
-// --- Confirmation function ---
-function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $email, $customer_data = []) {
-    sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method, $customer_phone ?? '', $customer_city ?? '', $customer_country ?? '');
-
-    // Generate invoice PDF
-    $fullPath = '';
-    try {
-        require_once('../includes/generate_invoice_pdf.php');
-        $generator = new PDFInvoiceGenerator();
-        $invoice_result = $generator->generateInvoicePDF($order_id);
-        
-        if ($invoice_result['success']) {
-            $fullPath = $invoice_result['file_path'];
-            error_log("✅ Invoice PDF generated for confirmation email - Order #$order_id");
-        } else {
-            error_log("❌ Failed to generate invoice PDF for confirmation - Order #$order_id");
-        }
-    } catch (Exception $e) {
-        error_log("❌ Invoice generation error in confirmation - Order #$order_id: " . $e->getMessage());
-    }
-
-    // Send enhanced order confirmation email
-    if (!empty($fullPath) && file_exists($fullPath)) {
-        // Try enhanced email first
-        $status = sendEnhancedOrderEmail($email, $order_id, $fullname, $customer_data, $fullPath);
-        if (!$status) {
-            error_log("❌ Enhanced email failed for Order #$order_id to $email. Trying fallback...");
-            // Fallback to simple email
-            $status = sendInvoiceEmail($email, $order_id, $fullPath);
-        }
-        
-        if (!$status) {
-            error_log("❌ Failed to send email for Order #$order_id to $email.");
-        }
-    } else {
-        error_log("⚠️ PDF path missing or file not found for Order #$order_id. Sending enhanced email without PDF.");
-        // Send enhanced email without PDF
-        $status = sendEnhancedOrderEmail($email, $order_id, $fullname, $customer_data, null);
-        if (!$status) {
-            error_log("❌ Enhanced email (no PDF) failed for Order #$order_id to $email. Trying fallback...");
-            // Fallback to simple email
-            $status = sendOrderEmail($email, $order_id, $fullname);
-        }
-    }
-
-    $_SESSION['cart'] = [];
-    if (ob_get_level()) ob_end_clean();
-}
+$_SESSION['cart'] = [];
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(store_lang_html()) ?>" dir="<?= store_lang_dir() ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thank You - AleppoGift</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-     <!--<link rel="stylesheet" href="assets/css/style.css">-->
-	<link rel="stylesheet" href="assets/css/index.css">
-	<link rel="stylesheet" href="assets/css/enhanced-design.css">
-	<link rel="stylesheet" href="assets/css/components.css">
-	<link rel="stylesheet" href="assets/css/ui-components.css">
-	<link rel="stylesheet" href="assets/css/header-fixes.css">
-	
-	<!-- Google Fonts for Enhanced Typography -->
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <title><?= te('order.thankyou_title') ?></title>
+    <?php require __DIR__ . '/../includes/storefront_assets.php'; ?>
 
 </head>
 <body>
@@ -181,8 +140,8 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     <!-- Main Content -->
     <style>
         :root {
-            --primary-color: #4e6bff;
-            --secondary-color: #f8f9fa;
+            --primary-color: #d4840e;
+            --secondary-color: #fff8ee;
             --success-color: #28a745;
             --light-text: #6c757d;
             --border-radius: 8px;
@@ -207,7 +166,7 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
             left: 0;
             width: 100%;
             height: 5px;
-            background: linear-gradient(90deg, var(--primary-color), #8a2be2);
+            background: linear-gradient(90deg, #d4840e, #f5c842);
         }
         
         .confirmation-icon {
@@ -427,93 +386,119 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
             <div class="confirmation-icon">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <h1 class="thank-you-header">Thank You For Your Order!</h1>
-            <p class="lead">Your payment has been successfully processed. We've sent a confirmation to <strong><?= htmlspecialchars($order['customer_email']); ?></strong></p>
-            <p class="text-muted">Order ID: #<?= $order['id']; ?></p>
+            <h1 class="thank-you-header"><?= te('order.thankyou_heading') ?></h1>
+            <p class="lead"><?= str_replace('{email}', '<strong>' . htmlspecialchars($order['customer_email']) . '</strong>', te($isUnpaidCod ? 'order.thankyou_lead_cod' : 'order.thankyou_lead')) ?></p>
+            <p class="text-muted"><?= te('order.order_id', ['id' => $order['id']]) ?></p>
         </div>
 
         <div class="order-summary">
-            <h3 class="h5">Order Summary</h3>
+            <h3 class="h5"><?= te('order.summary') ?></h3>
             <div class="order-detail">
-                <span class="order-detail-label">Order Number:</span>
+                <span class="order-detail-label"><?= te('order.order_number_label') ?></span>
                 <span class="order-detail-value">#<?= $order['id']; ?></span>
             </div>
             <div class="order-detail">
-                <span class="order-detail-label">Date:</span>
-                <span class="order-detail-value"><?= date('F j, Y', strtotime($order['order_date'])); ?></span>
+                <span class="order-detail-label"><?= te('order.date') ?></span>
+                <span class="order-detail-value"><?= htmlspecialchars(store_date($order['order_date'])); ?></span>
             </div>
             <div class="order-detail">
-                <span class="order-detail-label">Customer Name:</span>
+                <span class="order-detail-label"><?= te('order.customer_name') ?></span>
                 <span class="order-detail-value"><?= htmlspecialchars($order['customer_name']); ?></span>
             </div>
             <div class="order-detail">
-                <span class="order-detail-label">Payment Method:</span>
-                <span class="order-detail-value"><?= htmlspecialchars($order['payment_method']); ?></span>
+                <span class="order-detail-label"><?= te('order.payment_method') ?></span>
+                <span class="order-detail-value"><?php
+                    $shownPayment = (string)($order['payment_method'] ?? '');
+                    if (strcasecmp($shownPayment, 'Ziina') === 0) {
+                        $shownPayment = t('order.method_card');
+                    } elseif (strcasecmp($shownPayment, 'COD') === 0) {
+                        $shownPayment = t('order.method_cod');
+                    }
+                    echo htmlspecialchars($shownPayment);
+                ?></span>
             </div>
             <div class="order-detail">
-                <span class="order-detail-label">Total Amount:</span>
+                <span class="order-detail-label"><?= te('order.total_amount') ?></span>
                 <?php 
-                $aed_to_usd = 0.27;
-                $total_usd = $order['total_amount'] * $aed_to_usd;
+                $aed_to_eur = 0.23;
+                $total_eur = $order['total_amount'] * $aed_to_eur;
                 ?>
-                <span class="order-detail-value text-success fw-bold">AED <?= number_format($order['total_amount'], 2); ?> ($<?= number_format($total_usd, 2); ?>)</span>
+                <span class="order-detail-value text-success fw-bold">AED <?= number_format($order['total_amount'], 2); ?> (€<?= number_format($total_eur, 2); ?>)</span>
             </div>
         </div>
 
         <div class="whats-next">
-            <h4 class="h5">What's Next?</h4>
-            <p>Your order is being processed and will be shipped soon. Here's what to expect:</p>
+            <h4 class="h5"><?= te('order.whats_next') ?></h4>
+            <p><?= te('order.whats_next_text') ?></p>
             
             <div class="steps">
                 <div class="step">
                     <div class="step-number">1</div>
-                    <div class="step-title">Order Processing</div>
-                    <div class="step-desc">We're preparing your items for shipment</div>
+                    <div class="step-title"><?= te('order.step_processing') ?></div>
+                    <div class="step-desc"><?= te('order.step_processing_desc') ?></div>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
-                    <div class="step-title">Shipping</div>
-                    <div class="step-desc">Your order will be dispatched within 1-2 business days</div>
+                    <div class="step-title"><?= te('shipping') ?></div>
+                    <div class="step-desc"><?= te('order.step_shipping_desc') ?></div>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
-                    <div class="step-title">Delivery</div>
-                    <div class="step-desc">Expected delivery in 3-5 business days</div>
+                    <div class="step-title"><?= te('order.step_delivery') ?></div>
+                    <div class="step-desc"><?= te('order.step_delivery_desc') ?></div>
                 </div>
             </div>
         </div>
 
         <div class="text-center mt-5">
-            <?php if (file_exists("../invoice/invoice_{$order_id}.pdf")): ?>
+            <?php
+            $invoiceFileReady = file_exists("../invoice/invoice_{$order_id}.pdf");
+            $codInvoiceRequested = !empty($_SESSION['invoice_requested_' . $order_id]);
+            ?>
+            <?php if ($isUnpaidCod): ?>
+                <div class="alert alert-warning text-start" id="invoiceGeneratingAlert">
+                    <?= te('order.cod_invoice_note') ?>
+                </div>
+                <?php if ($codInvoiceRequested): ?>
+                    <div class="alert alert-success"><?= te('order.invoice_requested') ?></div>
+                <?php else: ?>
+                    <div class="mt-3">
+                        <button id="generateInvoiceBtn" class="btn btn-primary" onclick="generateInvoiceNow(<?= $order_id ?>, true)">
+                            <i class="fas fa-file-pdf me-2"></i> <?= te('order.request_invoice') ?>
+                        </button>
+                    </div>
+                    <div id="invoiceGenerationStatus" class="mt-3"></div>
+                <?php endif; ?>
+            <?php elseif ($invoiceFileReady): ?>
                 <a href="download_invoice.php?id=<?= $order_id ?>" target="_blank" class="btn btn-download">
-                    <i class="fas fa-file-pdf me-2"></i> Download Invoice
+                    <i class="fas fa-file-pdf me-2"></i> <?= te('order.download_invoice') ?>
                 </a>
-                <button id="resendEmailBtn" class="btn btn-resend" onclick="resendEmail(<?= $order_id ?>)">
-                    <i class="fas fa-envelope me-2"></i> Resend Email
-                </button>
             <?php else: ?>
                 <div class="alert alert-warning" id="invoiceGeneratingAlert">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    Invoice is being generated. Please refresh the page in a moment.
+                    <?= te('order.invoice_generating') ?>
                 </div>
                 <div class="mt-3">
                     <button id="generateInvoiceBtn" class="btn btn-primary" onclick="generateInvoiceNow(<?= $order_id ?>)">
-                        <i class="fas fa-file-pdf me-2"></i> Generate Invoice Now
+                        <i class="fas fa-file-pdf me-2"></i> <?= te('order.generate_invoice_now') ?>
                     </button>
                 </div>
                 <div id="invoiceGenerationStatus" class="mt-3"></div>
             <?php endif; ?>
+            <button id="resendEmailBtn" class="btn btn-resend" onclick="resendEmail(<?= $order_id ?>)">
+                <i class="fas fa-envelope me-2"></i> <?= te('order.resend_email') ?>
+            </button>
             
             <!-- Status message container -->
             <div id="resendStatus" class="mt-3"></div>
             
             <div class="mt-4">
-                <p class="mb-3">Need help with your order?</p>
+                <p class="mb-3"><?= te('order.need_help') ?></p>
                 <a href="contact.php" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-headset me-2"></i> Contact Support
+                    <i class="fas fa-headset me-2"></i> <?= te('order.contact_support') ?>
                 </a>
                 <a href="index.php" class="btn btn-primary">
-                    <i class="fas fa-home me-2"></i> Back to Home
+                    <i class="fas fa-home me-2"></i> <?= te('order.back_home') ?>
                 </a>
             </div>
         </div>
@@ -522,17 +507,33 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     <?php require_once(__DIR__ . '/../includes/footer.php'); ?> 
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-	<script src="assets/js/main.js"></script>
-	<script src="assets/js/enhanced-main.js"></script>
+	<script src="assets/js/main.js?v=20261012i18n"></script>
+	<script src="assets/js/enhanced-main.js?v=20261012i18n"></script>
 	
 	<script>
+        const orderI18n = <?= json_encode([
+            'sending' => te('order.sending'),
+            'resendEmail' => te('order.resend_email'),
+            'resendError' => te('order.resend_error'),
+            'generating' => te('order.generating_invoice'),
+            'generated' => te('order.invoice_generated'),
+            'invoiceNumber' => te('order.invoice_number'),
+            'downloadInvoice' => te('order.download_invoice'),
+            'generationFailed' => te('order.generation_failed'),
+            'generateError' => te('order.generate_error'),
+            'generateNow' => te('order.generate_invoice_now'),
+            'requestInvoice' => te('order.request_invoice'),
+            'requestingInvoice' => te('order.requesting_invoice'),
+            'invoiceRequested' => te('order.invoice_requested'),
+        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+
         function resendEmail(orderId) {
             const btn = document.getElementById('resendEmailBtn');
             const statusDiv = document.getElementById('resendStatus');
             
             // Disable button and show loading state
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sending...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> ' + orderI18n.sending;
             
             // Clear previous status
             statusDiv.innerHTML = '';
@@ -568,14 +569,14 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
                 statusDiv.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-circle me-2"></i>
-                        An error occurred while sending the email. Please try again.
+                        ${orderI18n.resendError}
                     </div>
                 `;
             })
             .finally(() => {
                 // Re-enable button and restore original text
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-envelope me-2"></i> Resend Email';
+                btn.innerHTML = '<i class="fas fa-envelope me-2"></i> ' + orderI18n.resendEmail;
                 
                 // Auto-hide success message after 5 seconds
                 setTimeout(() => {
@@ -593,14 +594,14 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
             });
         }
         
-        function generateInvoiceNow(orderId) {
+        function generateInvoiceNow(orderId, requested) {
             const btn = document.getElementById('generateInvoiceBtn');
             const statusDiv = document.getElementById('invoiceGenerationStatus');
             const alertDiv = document.getElementById('invoiceGeneratingAlert');
             
             // Disable button and show loading state
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Generating Invoice...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> ' + (requested ? orderI18n.requestingInvoice : orderI18n.generating);
             
             // Clear previous status
             statusDiv.innerHTML = '';
@@ -615,22 +616,30 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.success && (requested || data.admin_only)) {
                     statusDiv.innerHTML = `
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle me-2"></i>
-                            <strong>Invoice generated successfully!</strong><br>
-                            Invoice Number: ${data.invoice_number}<br>
+                            ${orderI18n.invoiceRequested}
+                        </div>
+                    `;
+                    btn.style.display = 'none';
+                } else if (data.success) {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>${orderI18n.generated}</strong><br>
+                            ${orderI18n.invoiceNumber} ${data.invoice_number}<br>
                             <a href="${data.download_url}" target="_blank" class="btn btn-sm btn-success mt-2">
-                                <i class="fas fa-download me-1"></i> Download Invoice
+                                <i class="fas fa-download me-1"></i> ${orderI18n.downloadInvoice}
                             </a>
                         </div>
                     `;
                     
-                    // Hide the "generating" alert
-                    alertDiv.style.display = 'none';
+                    if (alertDiv) {
+                        alertDiv.style.display = 'none';
+                    }
                     
-                    // Optionally refresh the page after a short delay
                     setTimeout(() => {
                         window.location.reload();
                     }, 3000);
@@ -639,7 +648,7 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
                     statusDiv.innerHTML = `
                         <div class="alert alert-danger">
                             <i class="fas fa-exclamation-circle me-2"></i>
-                            <strong>Generation failed:</strong> ${data.error}
+                            <strong>${orderI18n.generationFailed}</strong> ${data.error}
                         </div>
                     `;
                 }
@@ -649,14 +658,14 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
                 statusDiv.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-circle me-2"></i>
-                        An error occurred while generating the invoice. Please try again.
+                        ${orderI18n.generateError}
                     </div>
                 `;
             })
             .finally(() => {
                 // Re-enable button and restore original text
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> Generate Invoice Now';
+                btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> ' + (requested ? orderI18n.requestInvoice : orderI18n.generateNow);
             });
         }
     </script>

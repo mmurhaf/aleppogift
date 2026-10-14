@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senior Full Stack Developer in UAE | E-commerce & AI Web Solutions | M Morhaf Abdulkarim</title>
+    <meta name="description" content="Senior Full Stack Developer helping businesses launch and optimize e-commerce and business platforms. Real projects: AleppoGift, DubGift, and Krmeen. Available for freelance work in UAE and globally.">
+    <meta name="keywords" content="Full Stack Developer UAE, E-commerce Developer UAE, PHP Developer, AI Web Solutions, Freelance Web Developer">
+    
+    <!-- External Resources -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --info-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-gradient: linear-gradient(135deg, #434343 0%, #000000 100%);
+            
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --bg-light: #f7fafc;
+            --bg-dark: #1a202c;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.06);
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-gradient);
+        }
+
+        /* Enhanced Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            padding: 1rem 0;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: var(--shadow-md);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 0.5rem;
+            padding: 0.5rem 1rem !important;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .navbar-nav .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .navbar-nav .nav-link:hover::before {
+            left: 0;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: var(--primary-gradient);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(1deg); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            color: white;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            font-weight: 400;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        /* Enhanced Buttons */
+        .btn-modern {
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary-modern {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary-modern:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline-modern {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-outline-modern:hover {
+            background: white;
+            color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Section Styling */
+        .section {
+            padding: 6rem 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: clamp(2.5rem, 4vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .faq-section {
+            padding-bottom: 7rem;
+        }
+
+        .faq-section .modern-card {
+            margin-bottom: 1rem;
+        }
+
+        /* About Section */
+        .about-section {
+            background: white;
+        }
+
+        .about-content {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--primary-gradient);
+        }
+
+        .profile-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid white;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .profile-image:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Enhanced Cards */
+        .modern-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card-header-gradient {
+            padding: 1.5rem;
+            color: white;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .card-header-primary { background: var(--primary-gradient); }
+        .card-header-success { background: var(--success-gradient); }
+        .card-header-warning { background: var(--warning-gradient); }
+        .card-header-info { background: var(--info-gradient); }
+        .card-header-secondary { background: var(--secondary-gradient); }
+        .card-header-dark { background: var(--dark-gradient); }
+
+        .card-body-modern {
+            padding: 2rem;
+        }
+
+        /* Featured Projects */
+        .featured-project {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .featured-project:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .project-image {
+            height: 250px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+
+        .project-image:hover img {
+            transform: scale(1.1);
+        }
+
+        .project-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .project-image:hover .project-overlay {
+            opacity: 0.9;
+        }
+
+        .project-overlay i {
+            color: white;
+            font-size: 3rem;
+        }
+
+        /* Tech Badges */
+        .tech-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            margin: 0.25rem;
+            background: var(--bg-light);
+            color: var(--primary-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .tech-badge:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Skills Section */
+        .skills-section {
+            background: var(--bg-light);
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .skill-item {
+            background: white;
+            padding: 1rem;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .skill-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background: var(--bg-dark);
+            color: white;
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .contact-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        .contact-card a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .contact-card a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-dark);
+            color: white;
+            padding: 3rem 0 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 1.5rem;
+            margin: 0 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: var(--accent-color);
+            transform: translateY(-3px);
+        }
+
+        /* Achievement Cards */
+        .achievement-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .section {
+                padding: 3rem 0;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-modern {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+
+        /* Animation Classes */
+        .animate-fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .animate-fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .animate-slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.6s ease;
+        }
+
+        .animate-slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .animate-slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.6s ease;
+        }
+
+        .animate-slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Code Font */
+        .code-font {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+        }
+    </style>
+
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": "M Morhaf Abdulkarim",
+            "jobTitle": "Senior Full Stack Developer",
+            "url": "https://aleppogift.com/portfolio/",
+            "image": "https://aleppogift.com/portfolio/images/profile.png",
+            "email": "mailto:mmurhaf1@gmail.com",
+            "telephone": "+971553470059",
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Ras Al Khaimah",
+                "addressCountry": "AE"
+            },
+            "sameAs": [
+                "https://github.com/mmurhaf/",
+                "https://www.linkedin.com/in/m-murhaf-moustafa-abdulkarim-93a14616/",
+                "https://saleto.me/mmurhaf"
+            ]
+        }
+        </script>
+
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "name": "Full Stack, E-commerce, and AI Web Development Services",
+            "serviceType": "Web Development",
+            "provider": {
+                "@type": "Person",
+                "name": "M Morhaf Abdulkarim",
+                "url": "https://aleppogift.com/portfolio/"
+            },
+            "areaServed": [
+                {
+                    "@type": "Country",
+                    "name": "United Arab Emirates"
+                },
+                {
+                    "@type": "Place",
+                    "name": "Worldwide"
+                }
+            ],
+            "url": "https://aleppogift.com/portfolio/#services",
+            "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "Development Services",
+                "itemListElement": [
+                    {
+                        "@type": "Offer",
+                        "itemOffered": {
+                            "@type": "Service",
+                            "name": "E-commerce Development"
+                        }
+                    },
+                    {
+                        "@type": "Offer",
+                        "itemOffered": {
+                            "@type": "Service",
+                            "name": "Full Stack Web Development"
+                        }
+                    },
+                    {
+                        "@type": "Offer",
+                        "itemOffered": {
+                            "@type": "Service",
+                            "name": "Technical SEO and Speed Optimization"
+                        }
+                    },
+                    {
+                        "@type": "Offer",
+                        "itemOffered": {
+                            "@type": "Service",
+                            "name": "AI Business Automation"
+                        }
+                    },
+                    {
+                        "@type": "Offer",
+                        "itemOffered": {
+                            "@type": "Service",
+                            "name": "Website Maintenance and Support"
+                        }
+                    }
+                ]
+            }
+        }
+        </script>
+
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "What services does M Morhaf Abdulkarim provide?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "I provide full stack web development, e-commerce development, technical SEO and speed optimization, AI business automation, and website maintenance support."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Do you work with clients in the UAE and internationally?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. I work with businesses in the UAE and globally on freelance and long-term development projects."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Can you optimize existing e-commerce websites?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. I optimize existing stores for speed, technical SEO, checkout flow, and conversion performance."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "How can I contact you for a project?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "You can contact me by email at mmurhaf1@gmail.com or by phone and WhatsApp at +971553470059."
+                    }
+                }
+            ]
+        }
+        </script>
+
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#home">
+            <i class="fas fa-code me-2"></i>M Morhaf Abdulkarim
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#home"><i class="fas fa-home me-1"></i>Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#about"><i class="fas fa-user me-1"></i>About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#projects"><i class="fas fa-laptop-code me-1"></i>Projects</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#ai-projects"><i class="fas fa-robot me-1"></i>AI Projects</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#achievements"><i class="fas fa-trophy me-1"></i>Achievements</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact"><i class="fas fa-envelope me-1"></i>Contact</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->  
+<section id="home" class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-8">
+                <div class="hero-content" data-aos="fade-up">
+                    <h1 class="hero-title">
+                        Senior Full Stack Developer
+                        <br><span class="text-warning">& AI Development Expert</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        I help businesses launch fast, conversion-focused websites and e-commerce platforms
+                    </p>
+                    <p class="hero-description">
+                        Specialized in creating scalable web applications, e-commerce platforms, and AI-powered solutions. 
+                        With 10+ years of experience and expertise in MERN stack, PHP, Angular, and cutting-edge AI tools, 
+                        I deliver innovative solutions that drive business growth.
+                    </p>
+                    
+                    <div class="hero-stats">
+                        <div class="stat-card" data-aos="zoom-in" data-aos-delay="100">
+                            <span class="stat-number counter" data-target="50">0</span>
+                            <span class="stat-label">Projects Completed</span>
+                        </div>
+                        <div class="stat-card" data-aos="zoom-in" data-aos-delay="200">
+                            <span class="stat-number counter" data-target="10">0</span>
+                            <span class="stat-label">Years Experience</span>
+                        </div>
+                        <div class="stat-card" data-aos="zoom-in" data-aos-delay="300">
+                            <span class="stat-number counter" data-target="25">0</span>
+                            <span class="stat-label">AI-Assisted Projects</span>
+                        </div>
+                        <div class="stat-card" data-aos="zoom-in" data-aos-delay="400">
+                            <span class="stat-number counter" data-target="100">0</span>
+                            <span class="stat-label">Happy Clients</span>
+                        </div>
+                    </div>
+                    
+                    <div class="hero-buttons">
+                        <a href="#projects" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-briefcase me-2"></i>View Real Case Studies
+                        </a>
+                        <a href="#contact" class="btn-modern btn-outline-modern">
+                            <i class="fas fa-calendar-check me-2"></i>Book Free 20-min Call
+                        </a>
+                        <a href="portfolio.html" class="btn-modern btn-outline-modern">
+                            <i class="fas fa-user-circle me-2"></i>Full Portfolio
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center" data-aos="fade-left">
+                <div class="hero-image-container">
+                    <img src="images/Murhaf_2018.jpg" alt="M Morhaf Abdulkarim" class="profile-image">
+                    <div class="floating-tech-badges">
+                        <span class="tech-badge badge-php">PHP</span>
+                        <span class="tech-badge badge-js">JavaScript</span>
+                        <span class="tech-badge badge-react">React</span>
+                        <span class="tech-badge badge-angular">Angular</span>
+                        <span class="tech-badge badge-ai">AI Tools</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="section about-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">About Me</h2>
+            <p class="section-subtitle">
+                Passionate developer with a decade of experience in creating innovative digital solutions
+            </p>
+        </div>
+        
+        <div class="about-content" data-aos="fade-up" data-aos-delay="100">
+            <div class="row align-items-center">
+                <div class="col-lg-4 text-center mb-4 mb-lg-0">
+                    <img src="images/Murhaf_2018.jpg" alt="M Morhaf Abdulkarim" class="profile-image">
+                </div>
+                <div class="col-lg-8">
+                    <h3 class="mb-4">M Morhaf Moustafa Abdulkarim</h3>
+                    <p class="lead mb-4">
+                        <strong>Senior Full Stack Developer & AI Development Expert</strong>
+                    </p>
+                    <p class="mb-4">
+                        I am a versatile Software Analyst and Developer with expertise in Full Stack Development and AI-assisted programming. 
+                        With a Master's degree in Knowledge and Information Management from UGent University and a Bachelor's degree in 
+                        Software for Computing Techniques and Automated Systems, I bring both academic knowledge and practical experience 
+                        to every project.
+                    </p>
+                    <p class="mb-4">
+                        Over a decade of experience has made me proficient in technologies such as MERN stack (MongoDB, Express, React, Node.js), 
+                        Angular, PHP, Java, and Oracle databases. I'm passionate about developing efficient software solutions and bringing 
+                        innovation to every project I work on, especially leveraging AI tools to accelerate development and enhance code quality.
+                    </p>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-graduation-cap text-primary me-2"></i>Education</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Master's Degree</strong></li>
+                                <li>Knowledge & Information Management</li>
+                                <li>UGent University</li>
+                                <li class="mt-2"><strong>Bachelor's Degree</strong></li>
+                                <li>Software for Computing Techniques</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-code text-primary me-2"></i>Specializations</h5>
+                            <ul class="list-unstyled">
+                                <li>• Full Stack Development</li>
+                                <li>• AI-Assisted Programming</li>
+                                <li>• E-commerce Platforms</li>
+                                <li>• Database Architecture</li>
+                                <li>• API Development</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="tech-badge">PHP</span>
+                        <span class="tech-badge">JavaScript</span>
+                        <span class="tech-badge">React</span>
+                        <span class="tech-badge">Angular</span>
+                        <span class="tech-badge">Node.js</span>
+                        <span class="tech-badge">MongoDB</span>
+                        <span class="tech-badge">MySQL</span>
+                        <span class="tech-badge">Oracle DB</span>
+                        <span class="tech-badge">AI Tools</span>
+                        <span class="tech-badge">Docker</span>
+                    </div>
+                    
+                    <a href="https://wa.me/971509686710" target="_blank" class="btn-modern btn-primary-modern">
+                        <i class="fab fa-whatsapp me-2"></i>WhatsApp Me
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Services Snapshot Section -->
+<section id="services" class="section section-alt">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Services</h2>
+            <p class="section-subtitle">Business-focused delivery with clear scope, timeline, and outcomes.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6"><div class="modern-card h-100"><div class="card-body-modern"><h5>E-commerce Development</h5><p class="small text-muted">Build or optimize online stores for conversion, speed, and maintainability.</p><a href="services/ecommerce-development-uae.html" class="btn btn-sm btn-outline-primary">View Service</a></div></div></div>
+            <div class="col-lg-3 col-md-6"><div class="modern-card h-100"><div class="card-body-modern"><h5>Full Stack Development</h5><p class="small text-muted">Custom business websites and web apps with robust backend architecture.</p><a href="services/full-stack-web-development.html" class="btn btn-sm btn-outline-primary">View Service</a></div></div></div>
+            <div class="col-lg-3 col-md-6"><div class="modern-card h-100"><div class="card-body-modern"><h5>Technical SEO & Speed</h5><p class="small text-muted">Improve Core Web Vitals, crawlability, and technical health for growth.</p><a href="services/website-speed-technical-seo.html" class="btn btn-sm btn-outline-primary">View Service</a></div></div></div>
+            <div class="col-lg-3 col-md-6"><div class="modern-card h-100"><div class="card-body-modern"><h5>AI-Assisted Automation</h5><p class="small text-muted">Add practical AI-powered workflows to save time and increase output quality.</p><a href="services/ai-business-automation.html" class="btn btn-sm btn-outline-primary">View Service</a></div></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- Real Case Studies Section -->
+<section id="case-studies" class="section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Real Business Case Studies</h2>
+            <p class="section-subtitle">Live production projects built and optimized for real clients.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>AleppoGift</h5><p class="small text-muted">E-commerce platform engineering, checkout flow, catalog architecture, and continuous optimization.</p><a href="case-studies/aleppogift-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>DubGift</h5><p class="small text-muted">Responsive gift-store implementation with stronger catalog UX and conversion-oriented structure.</p><a href="case-studies/dubgift-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>Krmeen</h5><p class="small text-muted">Business website delivery with structured messaging, production deployment, and maintainable pages.</p><a href="case-studies/krmeen-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>Ziina WP Plugin</h5><p class="small text-muted">WordPress payment integration work focused on plugin architecture, reliability, and checkout experience.</p><a href="case-studies/ziina-wp-plugin-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>Luscher Test</h5><p class="small text-muted">Interactive psychology-style assessment platform with dynamic results and analytics-friendly structure.</p><a href="case-studies/luscher-test-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>Kids Story</h5><p class="small text-muted">Storytelling experience for children with lightweight performance and mobile-first readability.</p><a href="case-studies/kids-story-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>LUXURY System</h5><p class="small text-muted">Luxury catalog and workflow implementation with visual merchandising and scalable product structure.</p><a href="case-studies/luxury-system-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+            <div class="col-lg-4"><div class="modern-card h-100"><div class="card-body-modern"><h5>صعوبات التعلم</h5><p class="small text-muted">Arabic educational initiative supporting learning difficulties with accessible and structured content flow.</p><a href="case-studies/learning-difficulties-case-study.html" class="btn btn-sm btn-outline-dark">Read Case Study</a></div></div></div>
+        </div>
+    </div>
+</section>
+<!-- Featured Projects Section -->
+<section id="projects" class="section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Featured Projects</h2>
+            <p class="section-subtitle">
+                Showcase of my most impactful and innovative development work
+            </p>
+        </div>
+        
+        <!-- Top Featured Projects -->
+        <div class="row mb-5">
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="modern-card featured-project">
+                    <div class="project-image">
+                        <img src="images/aleppoGift.png" alt="AleppoGift E-commerce Platform">
+                        <div class="project-overlay">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">AleppoGift E-commerce</h5>
+                            <a href="https://aleppogift.com/" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                        <p class="card-text">
+                            Complete e-commerce platform for Turkish coffee cups and artisanal products. 
+                            Full-stack development with payment integration and social media connectivity.
+                        </p>
+                        <div class="tech-stack mb-3">
+                            <span class="tech-badge">PHP</span>
+                            <span class="tech-badge">MySQL</span>
+                            <span class="tech-badge">Bootstrap</span>
+                            <span class="tech-badge">JavaScript</span>
+                            <span class="tech-badge">Payment Gateway</span>
+                        </div>
+                        <div class="project-stats">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>2023 • 
+                                <i class="fas fa-users me-1"></i>1000+ Users • 
+                                <i class="fas fa-shopping-cart me-1"></i>E-commerce
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="modern-card featured-project">
+                    <div class="project-image">
+                        <img src="images/rakChamber.png" alt="RAK Chamber of Commerce">
+                        <div class="project-overlay">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">RAK Chamber Automation</h5>
+                            <a href="https://www.rakchamber.ae/en/home" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                        <p class="card-text">
+                            Enterprise-level automation system for Ras Al Khaimah Chamber of Commerce. 
+                            Streamlined administrative processes and improved operational efficiency.
+                        </p>
+                        <div class="tech-stack mb-3">
+                            <span class="tech-badge">PHP</span>
+                            <span class="tech-badge">Oracle DB</span>
+                            <span class="tech-badge">Angular</span>
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">CSS3</span>
+                        </div>
+                        <div class="project-stats">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>2022 • 
+                                <i class="fas fa-building me-1"></i>Enterprise • 
+                                <i class="fas fa-cogs me-1"></i>Automation
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="modern-card featured-project">
+                    <div class="project-image">
+                        <img src="images/story.png" alt="Children's Digital Storybooks">
+                        <div class="project-overlay">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Digital Storybooks</h5>
+                            <a href="https://saleto.me/story/" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                        <p class="card-text">
+                            Interactive children's e-books with 3D illustrations published on Amazon. 
+                            Promoting values of friendship, cooperation, and kindness through storytelling.
+                        </p>
+                        <div class="tech-stack mb-3">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">CSS3</span>
+                            <span class="tech-badge">JavaScript</span>
+                            <span class="tech-badge">Digital Publishing</span>
+                            <span class="tech-badge">SEO</span>
+                        </div>
+                        <div class="project-stats">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>2023 • 
+                                <i class="fas fa-book me-1"></i>Publishing • 
+                                <i class="fas fa-child me-1"></i>Educational
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- AI-Assisted Projects Section -->
+<section id="ai-projects" class="section skills-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">AI-Assisted Development Projects</h2>
+            <p class="section-subtitle">
+                Innovative projects developed using AI-powered programming and modern development practices
+            </p>
+        </div>
+        
+        <div class="row">
+            <!-- E-commerce Projects -->
+            <div class="col-lg-6 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="modern-card">
+                    <div class="card-header-gradient card-header-primary">
+                        <h5><i class="fas fa-shopping-cart me-2"></i>E-commerce Platforms</h5>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="project-list">
+                            <div class="project-item mb-3">
+                                <h6><strong>AleppoGift (Multiple Versions)</strong></h6>
+                                <p class="small text-muted mb-2">Complete e-commerce solution with payment integration and SEO optimization</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">Bootstrap</span>
+                                    <span class="tech-badge">JavaScript</span>
+                                    <span class="tech-badge">Payment Gateway</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="/aleppogift/" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="fas fa-external-link-alt me-1"></i>Latest
+                                    </a>
+                                    <a href="/aleppogift_oct/" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-external-link-alt me-1"></i>October
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>DubGift E-commerce</strong></h6>
+                                <p class="small text-muted mb-2">Responsive online store with advanced shopping cart system</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">Responsive Design</span>
+                                </div>
+                                <a href="/dubgift/" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>SaleToMe Platform</strong></h6>
+                                <p class="small text-muted mb-2">Multi-vendor marketplace with user authentication</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">Authentication</span>
+                                </div>
+                                <a href="/saletome/" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                            
+                            <div class="project-item">
+                                <h6><strong>Watches E-commerce</strong></h6>
+                                <p class="small text-muted mb-2">Luxury watch catalog with advanced image galleries</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">Image Gallery</span>
+                                </div>
+                                <a href="/watches/" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile & Communication Apps -->
+            <div class="col-lg-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="modern-card">
+                    <div class="card-header-gradient card-header-success">
+                        <h5><i class="fas fa-mobile-alt me-2"></i>Mobile & Communication</h5>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="project-list">
+                            <div class="project-item mb-3">
+                                <h6><strong>WhatsApp Web Clone</strong></h6>
+                                <p class="small text-muted mb-2">Real-time messaging application with WebSocket integration</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">WebSocket</span>
+                                    <span class="tech-badge">Real-time</span>
+                                </div>
+                                <a href="/WhatsApp/" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>ePhone Application</strong></h6>
+                                <p class="small text-muted mb-2">Mobile-first communication platform</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">JavaScript</span>
+                                    <span class="tech-badge">Mobile-First</span>
+                                </div>
+                                <a href="/ephone/" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                            
+                            <div class="project-item">
+                                <h6><strong>Personal Applications</strong></h6>
+                                <p class="small text-muted mb-2">Custom PHP applications with user management</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">User Management</span>
+                                    <span class="tech-badge">Custom Apps</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="/_app_amna/" target="_blank" class="btn btn-sm btn-outline-success me-1">
+                                        <i class="fas fa-external-link-alt me-1"></i>App Amna
+                                    </a>
+                                    <a href="/_app_murhaf/" target="_blank" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-external-link-alt me-1"></i>App Murhaf
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entertainment & Content -->
+            <div class="col-lg-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="modern-card">
+                    <div class="card-header-gradient card-header-warning">
+                        <h5><i class="fas fa-gamepad me-2"></i>Entertainment & Content</h5>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="project-list">
+                            <div class="project-item mb-3">
+                                <h6><strong>Kids Story Platform</strong></h6>
+                                <p class="small text-muted mb-2">Interactive storytelling platform with child-friendly interface</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">Interactive UI</span>
+                                </div>
+                                <a href="/kidsstory/" target="_blank" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>Luscher Color Test</strong></h6>
+                                <p class="small text-muted mb-2">Psychology testing application with data analysis</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">JavaScript</span>
+                                    <span class="tech-badge">Psychology</span>
+                                </div>
+                                <a href="/luscher_test/" target="_blank" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Test
+                                </a>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>Sci-Fi Content Platform</strong></h6>
+                                <p class="small text-muted mb-2">Content management system for science fiction stories</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">CMS</span>
+                                </div>
+                                <a href="/sifi/" target="_blank" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                            
+                            <div class="project-item">
+                                <h6><strong>Happy Dom Hostel</strong></h6>
+                                <p class="small text-muted mb-2">Hospitality management system with booking functionality</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">Booking System</span>
+                                    <span class="tech-badge">Hospitality</span>
+                                </div>
+                                <a href="/happydomhostel/" target="_blank" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business & Professional -->
+            <div class="col-lg-6 mb-4" data-aos="fade-up" data-aos-delay="400">
+                <div class="modern-card">
+                    <div class="card-header-gradient card-header-info">
+                        <h5><i class="fas fa-briefcase me-2"></i>Business & Professional</h5>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="project-list">
+                            <div class="project-item mb-3">
+                                <h6><strong>Portfolio Websites</strong></h6>
+                                <p class="small text-muted mb-2">Professional portfolio sites with responsive design</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">HTML5</span>
+                                    <span class="tech-badge">CSS3</span>
+                                    <span class="tech-badge">Bootstrap</span>
+                                    <span class="tech-badge">Responsive</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="/portfolio/" target="_blank" class="btn btn-sm btn-outline-info me-1">
+                                        <i class="fas fa-external-link-alt me-1"></i>Main
+                                    </a>
+                                    <a href="/divisima/" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-external-link-alt me-1"></i>Divisima
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>Business Dashboard</strong></h6>
+                                <p class="small text-muted mb-2">Data visualization and analytics dashboard</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">Analytics</span>
+                                </div>
+                                <a href="/dashboard/" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Dashboard
+                                </a>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>Suggestion Forum</strong></h6>
+                                <p class="small text-muted mb-2">Community discussion platform with user management</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">PHP</span>
+                                    <span class="tech-badge">MySQL</span>
+                                    <span class="tech-badge">Forum System</span>
+                                </div>
+                                <a href="/suggestion_forum/" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Forum
+                                </a>
+                            </div>
+                            
+                            <div class="project-item">
+                                <h6><strong>Bocto Business Platform</strong></h6>
+                                <p class="small text-muted mb-2">Modern business platform with professional design</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">Modern PHP</span>
+                                    <span class="tech-badge">Business Logic</span>
+                                    <span class="tech-badge">Professional</span>
+                                </div>
+                                <a href="/bocto/" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Project
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tools & Utilities -->
+            <div class="col-lg-6 mb-4" data-aos="fade-up" data-aos-delay="500">
+                <div class="modern-card">
+                    <div class="card-header-gradient card-header-secondary">
+                        <h5><i class="fas fa-tools me-2"></i>Tools & Utilities</h5>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="project-list">
+                            <div class="project-item mb-3">
+                                <h6><strong>Simple Calculator</strong></h6>
+                                <p class="small text-muted mb-2">Clean mathematical calculator with modern interface</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">JavaScript</span>
+                                    <span class="tech-badge">Mathematical Operations</span>
+                                    <span class="tech-badge">Clean UI</span>
+                                </div>
+                                <a href="/simple_calculater/" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Calculator
+                                </a>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>WordPress Sites</strong></h6>
+                                <p class="small text-muted mb-2">Custom WordPress themes and plugin development</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">WordPress</span>
+                                    <span class="tech-badge">Custom Themes</span>
+                                    <span class="tech-badge">Plugin Dev</span>
+                                </div>
+                                <a href="/wp_site_1748496734/" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Site
+                                </a>
+                            </div>
+                            
+                            <div class="project-item">
+                                <h6><strong>Development Directory</strong></h6>
+                                <p class="small text-muted mb-2">Comprehensive project management and navigation system</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">HTML5</span>
+                                    <span class="tech-badge">CSS3</span>
+                                    <span class="tech-badge">JavaScript</span>
+                                    <span class="tech-badge">Project Management</span>
+                                </div>
+                                <a href="/index.html" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Directory
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Educational & Learning -->
+            <div class="col-lg-6 mb-4" data-aos="fade-up" data-aos-delay="600">
+                <div class="modern-card">
+                    <div class="card-header-gradient card-header-dark">
+                        <h5><i class="fas fa-graduation-cap me-2"></i>Educational & Learning</h5>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="project-list">
+                            <div class="project-item mb-3">
+                                <h6><strong>AI Tutorial Platform</strong></h6>
+                                <p class="small text-muted mb-2">Interactive learning platform for AI and modern development</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">Educational Content</span>
+                                    <span class="tech-badge">Interactive Learning</span>
+                                    <span class="tech-badge">Modern Design</span>
+                                </div>
+                                <a href="/AI Tutorial/" target="_blank" class="btn btn-sm btn-outline-dark">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Tutorials
+                                </a>
+                            </div>
+                            
+                            <div class="project-item mb-3">
+                                <h6><strong>Books Brief Platform</strong></h6>
+                                <p class="small text-muted mb-2">Content management system for book reviews and reading</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">Content Management</span>
+                                    <span class="tech-badge">Book Reviews</span>
+                                    <span class="tech-badge">Reading Platform</span>
+                                </div>
+                                <a href="/Books_Brief/" target="_blank" class="btn btn-sm btn-outline-dark">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Platform
+                                </a>
+                            </div>
+                            
+                            <div class="project-item">
+                                <h6><strong>Kids Stories Collection</strong></h6>
+                                <p class="small text-muted mb-2">Safe, interactive storytelling platform for children</p>
+                                <div class="tech-stack mb-2">
+                                    <span class="tech-badge">Interactive Stories</span>
+                                    <span class="tech-badge">Child-Safe Design</span>
+                                    <span class="tech-badge">Educational Content</span>
+                                </div>
+                                <a href="/kids_stories/" target="_blank" class="btn btn-sm btn-outline-dark">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Stories
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Current Development Projects Section (Merged from mmurhaf) -->
+<section id="current-projects" class="section section-alt">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Current Development Projects</h2>
+            <p class="section-subtitle">
+                Active WordPress and AI plugin initiatives originally highlighted in the mmurhaf portfolio.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="modern-card h-100">
+                    <div class="card-body-modern">
+                        <h5><i class="fab fa-wordpress text-primary me-2"></i>Ziina WP Plugin</h5>
+                        <p class="small text-muted mb-3">WordPress integration and payment flow enhancements focused on smoother checkout and plugin-level extensibility.</p>
+                        <div class="tech-stack-mini">
+                            <span class="tech-badge">WordPress</span>
+                            <span class="tech-badge">PHP</span>
+                            <span class="tech-badge">Plugin Dev</span>
+                            <span class="tech-badge">Payment API</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="modern-card h-100">
+                    <div class="card-body-modern">
+                        <h5><i class="fas fa-palette text-primary me-2"></i>Luscher Test</h5>
+                        <p class="small text-muted mb-3">Interactive color psychology assessment with dynamic scoring and clear report output for end users.</p>
+                        <div class="tech-stack-mini">
+                            <span class="tech-badge">JavaScript</span>
+                            <span class="tech-badge">PHP</span>
+                            <span class="tech-badge">UX Logic</span>
+                            <span class="tech-badge">Analytics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="modern-card h-100">
+                    <div class="card-body-modern">
+                        <h5><i class="fas fa-book-open text-primary me-2"></i>Kids Story</h5>
+                        <p class="small text-muted mb-3">Children storytelling platform designed for engaging reading sessions with friendly navigation and multimedia content.</p>
+                        <div class="tech-stack-mini">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">JavaScript</span>
+                            <span class="tech-badge">PHP</span>
+                            <span class="tech-badge">UI/UX</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="350">
+                <div class="modern-card h-100">
+                    <div class="card-body-modern">
+                        <h5><i class="fas fa-gem text-primary me-2"></i>LUXURY System</h5>
+                        <p class="small text-muted mb-3">Premium commerce workflow for luxury products with advanced catalog handling and visual-first product discovery.</p>
+                        <div class="tech-stack-mini">
+                            <span class="tech-badge">E-commerce</span>
+                            <span class="tech-badge">Catalog Engine</span>
+                            <span class="tech-badge">PHP</span>
+                            <span class="tech-badge">MySQL</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="400">
+                <div class="modern-card h-100">
+                    <div class="card-body-modern">
+                        <h5><i class="fas fa-graduation-cap text-primary me-2"></i>صعوبات التعلم</h5>
+                        <p class="small text-muted mb-3">Arabic educational solution focused on learning difficulties support with accessible content and guided activities.</p>
+                        <div class="tech-stack-mini">
+                            <span class="tech-badge">Arabic UX</span>
+                            <span class="tech-badge">Education Tech</span>
+                            <span class="tech-badge">PHP</span>
+                            <span class="tech-badge">Content System</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4" data-aos="fade-up" data-aos-delay="350">
+            <div class="col-12">
+                <div class="modern-card">
+                    <div class="card-body-modern">
+                        <h6 class="mb-3"><i class="fas fa-address-card text-primary me-2"></i>Additional Contact Channels</h6>
+                        <div class="d-flex flex-wrap gap-3 align-items-center">
+                            <a href="mailto:contact@murhaf.dev" class="btn btn-sm btn-outline-primary"><i class="fas fa-envelope me-1"></i>contact@murhaf.dev</a>
+                            <a href="https://github.com/mmurhaf/" target="_blank" class="btn btn-sm btn-outline-dark"><i class="fab fa-github me-1"></i>GitHub</a>
+                            <a href="https://www.linkedin.com/in/m-murhaf-moustafa-abdulkarim-93a14616/" target="_blank" class="btn btn-sm btn-outline-info"><i class="fab fa-linkedin me-1"></i>LinkedIn</a>
+                            <a href="https://saleto.me/mmurhaf" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-globe me-1"></i>Legacy Portfolio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Achievements Section -->
+<section id="achievements" class="section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Development Achievements</h2>
+            <p class="section-subtitle">
+                Comprehensive technology stack and accomplishments in AI-assisted development
+            </p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-12" data-aos="fade-up" data-aos-delay="100">
+                <div class="modern-card">
+                    <div class="card-header-gradient card-header-primary">
+                        <h5><i class="fas fa-trophy me-2"></i>Technology Mastery & Project Statistics</h5>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <h6><i class="fas fa-server text-primary me-2"></i>Backend Technologies</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-check text-success me-1"></i>PHP (Advanced)</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>MySQL Database Design</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>RESTful API Development</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>MVC Architecture</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Security Implementation</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Oracle Database</li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <h6><i class="fas fa-laptop-code text-info me-2"></i>Frontend Technologies</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-check text-success me-1"></i>HTML5 & CSS3</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>JavaScript (ES6+)</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Bootstrap Framework</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Responsive Design</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>AJAX & JSON</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Angular & React</li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <h6><i class="fas fa-shopping-cart text-warning me-2"></i>E-commerce Features</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-check text-success me-1"></i>Shopping Cart Systems</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Payment Gateway Integration</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Inventory Management</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Order Processing</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>SEO Optimization</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Multi-vendor Support</li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <h6><i class="fas fa-robot text-danger me-2"></i>Modern Practices</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-check text-success me-1"></i>AI-Assisted Development</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Code Documentation</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Version Control (Git)</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Performance Optimization</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Security Best Practices</li>
+                                    <li><i class="fas fa-check text-success me-1"></i>Agile Development</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="row text-center">
+                            <div class="col-md-3 mb-3">
+                                <div class="achievement-card">
+                                    <h3 class="text-primary mb-1">50+</h3>
+                                    <p class="mb-0 small">Web Applications</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="achievement-card">
+                                    <h3 class="text-success mb-1">100K+</h3>
+                                    <p class="mb-0 small">Lines of Code</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="achievement-card">
+                                    <h3 class="text-warning mb-1">25+</h3>
+                                    <p class="mb-0 small">AI-Assisted Projects</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="achievement-card">
+                                    <h3 class="text-info mb-1">2023-2025</h3>
+                                    <p class="mb-0 small">Development Period</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Skills Section -->
+<section id="skills" class="section skills-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Core Skills</h2>
+            <p class="section-subtitle">
+                Comprehensive technical expertise across modern development technologies
+            </p>
+        </div>
+        
+        <div class="skills-grid" data-aos="fade-up" data-aos-delay="100">
+            <div class="skill-item">
+                <i class="fas fa-code text-primary fa-2x mb-3"></i>
+                <h6>Full Stack Development</h6>
+                <p class="small text-muted">MERN Stack, Complete Web Solutions</p>
+            </div>
+            <div class="skill-item">
+                <i class="fab fa-angular text-danger fa-2x mb-3"></i>
+                <h6>Frontend Frameworks</h6>
+                <p class="small text-muted">Angular, ReactJS, Vue.js</p>
+            </div>
+            <div class="skill-item">
+                <i class="fab fa-node-js text-success fa-2x mb-3"></i>
+                <h6>Backend Development</h6>
+                <p class="small text-muted">Node.js, Express.js, PHP</p>
+            </div>
+            <div class="skill-item">
+                <i class="fas fa-database text-info fa-2x mb-3"></i>
+                <h6>Database Management</h6>
+                <p class="small text-muted">MongoDB, MySQL, Oracle</p>
+            </div>
+            <div class="skill-item">
+                <i class="fab fa-docker text-primary fa-2x mb-3"></i>
+                <h6>DevOps & Cloud</h6>
+                <p class="small text-muted">Docker, AWS, CI/CD</p>
+            </div>
+            <div class="skill-item">
+                <i class="fas fa-shopping-cart text-warning fa-2x mb-3"></i>
+                <h6>E-commerce Development</h6>
+                <p class="small text-muted">Payment Systems, SEO, Performance</p>
+            </div>
+            <div class="skill-item">
+                <i class="fas fa-robot text-danger fa-2x mb-3"></i>
+                <h6>AI-Assisted Development</h6>
+                <p class="small text-muted">Modern AI Tools, Code Generation</p>
+            </div>
+            <div class="skill-item">
+                <i class="fas fa-mobile-alt text-success fa-2x mb-3"></i>
+                <h6>Mobile Development</h6>
+                <p class="small text-muted">Progressive Web Apps, Responsive Design</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="section section-alt faq-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-subtitle">Answers aligned with the structured data used for search.</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="modern-card mb-3">
+                    <div class="card-body-modern">
+                        <h5>What services does M Morhaf Abdulkarim provide?</h5>
+                        <p class="mb-0">I provide full stack web development, e-commerce development, technical SEO and speed optimization, AI business automation, and website maintenance support.</p>
+                    </div>
+                </div>
+
+                <div class="modern-card mb-3">
+                    <div class="card-body-modern">
+                        <h5>Do you work with clients in the UAE and internationally?</h5>
+                        <p class="mb-0">Yes. I work with businesses in the UAE and globally on freelance and long-term development projects.</p>
+                    </div>
+                </div>
+
+                <div class="modern-card mb-3">
+                    <div class="card-body-modern">
+                        <h5>Can you optimize existing e-commerce websites?</h5>
+                        <p class="mb-0">Yes. I optimize existing stores for speed, technical SEO, checkout flow, and conversion performance.</p>
+                    </div>
+                </div>
+
+                <div class="modern-card">
+                    <div class="card-body-modern">
+                        <h5>How can I contact you for a project?</h5>
+                        <p class="mb-0">You can contact me by email at mmurhaf1@gmail.com or by phone and WhatsApp at +971553470059.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="section contact-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Let's Connect</h2>
+            <p class="section-subtitle">
+                Ready to collaborate on your next innovative project? Let's discuss how we can work together.
+            </p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h5>Email</h5>
+                    <a href="mailto:mmurhaf1@gmail.com">mmurhaf1@gmail.com</a>
+                    <p class="small mt-2">Professional inquiries and project discussions</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <h5>Phone</h5>
+                    <a href="tel:+971509686710">+971 50 968 6710</a>
+                    <p class="small mt-2">Direct line for urgent project matters</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h5>Location</h5>
+                    <p>UAE & Remote</p>
+                    <p class="small mt-2">Available for global remote collaboration</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-lg-8 mx-auto text-center" data-aos="fade-up" data-aos-delay="400">
+                <h4 class="mb-4">Professional Profiles</h4>
+                <div class="social-links mb-4">
+                    <a href="https://www.linkedin.com/in/m-murhaf-moustafa-abdulkarim-93a14616/" target="_blank" title="LinkedIn Profile">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/mmurhaf/" target="_blank" title="GitHub Profile">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://saleto.me/mmurhaf" target="_blank" title="Portfolio Website">
+                        <i class="fas fa-globe"></i>
+                    </a>
+                    <a href="mailto:mmurhaf1@gmail.com" title="Send Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+                <p class="lead">
+                    <strong>M Morhaf Moustafa Abdulkarim</strong><br>
+                    Senior Full Stack Developer & AI Development Expert
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h5>M Morhaf Abdulkarim</h5>
+                <p class="mb-3">
+                    Senior Full Stack Developer specializing in AI-assisted development, e-commerce solutions, 
+                    and modern web technologies. Transforming ideas into digital reality.
+                </p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/m-murhaf-moustafa-abdulkarim-93a14616/" target="_blank" title="LinkedIn">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/mmurhaf/" target="_blank" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://saleto.me/mmurhaf" target="_blank" title="Portfolio">
+                        <i class="fas fa-globe"></i>
+                    </a>
+                    <a href="mailto:mmurhaf1@gmail.com" title="Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                <h6>Quick Links</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#about" class="text-light">About Me</a></li>
+                    <li><a href="#services" class="text-light">Services</a></li>
+                    <li><a href="#case-studies" class="text-light">Case Studies</a></li>
+                    <li><a href="#projects" class="text-light">Featured Projects</a></li>
+                    <li><a href="#ai-projects" class="text-light">AI Projects</a></li>
+                    <li><a href="#achievements" class="text-light">Achievements</a></li>
+                    <li><a href="portfolio.html" class="text-light">Full Portfolio</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <h6>Services</h6>
+                <ul class="list-unstyled">
+                    <li><a href="services/full-stack-web-development.html" class="text-light">Full Stack Development</a></li>
+                    <li><a href="services/ecommerce-development-uae.html" class="text-light">E-commerce Solutions</a></li>
+                    <li><a href="services/ai-business-automation.html" class="text-light">AI-Assisted Programming</a></li>
+                    <li><a href="services/website-maintenance-support.html" class="text-light">Maintenance & Support</a></li>
+                    <li><a href="services/website-speed-technical-seo.html" class="text-light">Performance & Technical SEO</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="mb-0">&copy; 2025 M Morhaf Moustafa Abdulkarim. All Rights Reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-0">
+                    <i class="fas fa-robot me-1"></i>AI-Assisted Development Portfolio
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+
+<script>
+    // Initialize AOS (Animate On Scroll)
+    AOS.init({
+        duration: 800,
+        easing: 'ease-in-out',
+        once: true,
+        offset: 100
+    });
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.navbar');
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+
+    // Counter animation
+    function animateCounters() {
+        const counters = document.querySelectorAll('.counter');
+        
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            const increment = target / 50;
+            let current = 0;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    counter.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    counter.textContent = Math.floor(current);
+                }
+            }, 30);
+        });
+    }
+
+    // Trigger counter animation when hero section is visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCounters();
+                observer.unobserve(entry.target);
+            }
+        });
+    });
+
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+        observer.observe(heroSection);
+    }
+
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                const offsetTop = target.offsetTop - 80;
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Add navbar toggler icon
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    if (navbarToggler && !navbarToggler.querySelector('.navbar-toggler-icon')) {
+        navbarToggler.innerHTML = '<i class="fas fa-bars"></i>';
+    }
+
+    // Tech badge hover effects
+    document.querySelectorAll('.tech-badge').forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+
+    // Loading animation for buttons
+    document.querySelectorAll('.btn-modern').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (this.getAttribute('href').startsWith('#')) return;
+            
+            const originalText = this.innerHTML;
+            this.innerHTML = '<span class="loading-spinner me-2"></span>Loading...';
+            
+            setTimeout(() => {
+                this.innerHTML = originalText;
+            }, 1000);
+        });
+    });
+</script>
+
+</body>
+</html>
+
+

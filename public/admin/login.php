@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Use absolute paths to avoid relative path issues
 $root_dir = dirname(dirname(__DIR__));
 // Load configuration and session helper first
@@ -21,9 +21,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt = $db->query($sql, ['username' => $username]);
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($admin && password_verify($password, $admin['password'])) {
+    if ($admin && password_verify($password, $admin['password']) && (int)($admin['active'] ?? 1) === 1) {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_id'] = $admin['id'];
+        $_SESSION['admin_username'] = $admin['username'];
+        $_SESSION['admin_role'] = $admin['role'] ?? 'super_admin';
         $_SESSION['admin_last_activity'] = time(); // Set initial activity time
         header("Location: dashboard.php");
         exit;
@@ -39,19 +41,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - AleppoGift</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/admin-theme.css">
     <style>
         :root {
-            --primary-color: #4a6fa5;
-            --secondary-color: #166088;
-            --accent-color: #4fc3f7;
+            --primary-color: #e67e22;
+            --secondary-color: #d35400;
+            --accent-color: #f39c12;
             --light-color: #f8f9fa;
             --dark-color: #343a40;
             --success-color: #28a745;
             --warning-color: #ffc107;
             --danger-color: #dc3545;
+            --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         }
         
         * {
@@ -61,33 +64,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         
         body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            font-family: 'Nunito', sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(230, 126, 34, 0.18), transparent 32%),
+                radial-gradient(circle at bottom right, rgba(211, 84, 0, 0.14), transparent 28%),
+                linear-gradient(135deg, #fff8f1 0%, #f6efe7 48%, #f3f4f6 100%);
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 24px;
         }
         
         .login-container {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(230, 126, 34, 0.16);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             overflow: hidden;
             transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(230, 126, 34, 0.14);
         }
         
         .login-container:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 26px 60px rgba(211, 84, 0, 0.22);
         }
         
         .login-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--gradient-primary);
             color: white;
-            padding: 25px;
+            padding: 28px;
             text-align: center;
         }
         
@@ -104,12 +112,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         
         .login-header p {
-            opacity: 0.8;
-            font-size: 0.9rem;
+            opacity: 0.9;
+            font-size: 0.95rem;
         }
         
         .login-form {
-            padding: 30px;
+            padding: 32px;
         }
         
         .form-group {
@@ -120,54 +128,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 500;
+            font-weight: 700;
             color: var(--dark-color);
         }
         
         .form-control {
             width: 100%;
-            padding: 12px 15px 12px 40px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 13px 15px 13px 42px;
+            border: 1px solid #ddd7cf;
+            border-radius: 12px;
             font-size: 1rem;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background: #fffdfa;
         }
         
         .form-control:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+            box-shadow: 0 0 0 4px rgba(230, 126, 34, 0.14);
         }
         
         .input-icon {
             position: absolute;
             left: 15px;
             top: 40px;
-            color: #6c757d;
+            color: #9a6b3f;
         }
         
         .btn {
             display: block;
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 13px;
+            background: var(--gradient-primary);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 12px;
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.3s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 14px 28px rgba(230, 126, 34, 0.22);
         }
         
         .btn:hover {
-            opacity: 0.9;
+            opacity: 0.96;
+            transform: translateY(-1px);
+            box-shadow: 0 18px 34px rgba(211, 84, 0, 0.26);
         }
         
         .alert {
             padding: 12px;
             margin-bottom: 20px;
-            border-radius: 5px;
+            border-radius: 12px;
             font-size: 0.9rem;
         }
         
@@ -186,6 +198,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             color: var(--primary-color);
             text-decoration: none;
             font-size: 0.9rem;
+            font-weight: 700;
             transition: color 0.3s;
         }
         
@@ -196,15 +209,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         @media (max-width: 480px) {
             .login-container {
-                margin: 0 15px;
+                margin: 0;
             }
             
             .login-header {
-                padding: 20px;
+                padding: 22px;
             }
             
             .login-form {
-                padding: 20px;
+                padding: 22px;
             }
         }
     </style>
@@ -241,7 +254,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </button>
                 
                 <div class="forgot-password">
-                    <a href="#">Forgot password?</a>
+                    <a href="mailto:sales@aleppogift.com?subject=Admin%20password%20reset">Forgot password?</a>
                 </div>
             </form>
         </div>

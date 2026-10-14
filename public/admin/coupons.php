@@ -61,16 +61,11 @@ if (isset($_GET['edit'])) {
     $edit_coupon = $db->query("SELECT * FROM coupons WHERE id = :id", ['id' => $_GET['edit']])->fetch(PDO::FETCH_ASSOC);
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coupon Management - AleppoGift</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+<?php
+$page_title = 'Coupons';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
         :root {
             --primary-color: #4e73df;
             --success-color: #1cc88a;
@@ -164,8 +159,6 @@ if (isset($_GET['edit'])) {
             to { opacity: 0; }
         }
     </style>
-</head>
-<body>
     <div class="container-fluid py-4">
         <!-- Dashboard Header -->
         <div class="dashboard-header">
@@ -369,7 +362,6 @@ if (isset($_GET['edit'])) {
         </nav>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-hide success message after 3 seconds
         setTimeout(() => {
@@ -396,5 +388,5 @@ if (isset($_GET['edit'])) {
             });
         });
     </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

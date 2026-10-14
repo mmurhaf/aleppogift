@@ -533,7 +533,7 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     try {
         // Send WhatsApp notification to admin
         error_log("📱 Sending WhatsApp notification for Order #$order_id");
-        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method, $phone, $city, $country);
+        sendAdminWhatsApp($order_id, $fullname, $grandTotal, $payment_method);
         error_log("✅ WhatsApp sent for Order #$order_id");
 
         // Generate and send invoice - with enhanced error handling
@@ -640,11 +640,11 @@ function send_confirmation($order_id, $fullname, $grandTotal, $payment_method, $
     
     <!-- Main CSS files to match index.php -->
     <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/header.css">
     <link rel="stylesheet" href="assets/css/index.css">
-    <link rel="stylesheet" href="assets/css/enhanced-design.css">
+    <link rel="stylesheet" href="assets/css/header.css">
     <link rel="stylesheet" href="assets/css/components.css">
     <link rel="stylesheet" href="assets/css/ui-components.css">
+    <link rel="stylesheet" href="assets/css/header-fixes.css">
     <link rel="stylesheet" href="assets/css/checkout-clean.css">
 </head>
 <body>

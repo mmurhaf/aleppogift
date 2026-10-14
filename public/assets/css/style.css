@@ -1,14 +1,14 @@
 /* ===== Global Styles ===== */
 :root {
-  --primary: #E67B2E;         /* From the gift and "GIFT" text */
-  --primary-dark: #C66524;    /* A slightly darker version for hover effects */
-  --black: #000000;           /* From "Aleppo" */
-  --gray-dark: #444444;
-  --gray: #666666;
-  --gray-light: #DDDDDD;
-  --gray-lighter: #EEEEEE;
-  --white: #FFFFFF;
-  --bg-color: #FAFAFA;
+    --primary: #D4840E;
+    --primary-dark: #B8620A;
+    --black: #23170D;
+    --gray-dark: #5E472F;
+    --gray: #7E6243;
+    --gray-light: #DDC8A6;
+    --gray-lighter: #ECDCC2;
+    --white: #FFFFFF;
+    --bg-color: #FFF8EE;
 }
 
 * {
@@ -550,7 +550,7 @@ footer {
     }
     
     .nav-link:hover {
-        color: #0d6efd !important;
+        color: var(--primary-600) !important;
     }
     
     .payment-methods i {
@@ -708,31 +708,6 @@ footer {
         width: 300px;
         right: 10px !important;
     }
-}
-
-/* Base Styles */
-:root {
-    --primary-color: #4a6b8a;
-    --secondary-color: #f8f9fa;
-    --accent-color: #e67e22;
-    --dark-color: #343a40;
-    --danger-color: #dc3545;
-    --success-color: #28a745;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    line-height: 1.6;
-}
-
-.container {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 20px;
 }
 
 /* Header Styles */
@@ -1030,26 +1005,6 @@ body {
     }
 }
 
-/* Base Styles */
-:root {
-    --primary-color: #4a6b8a;
-    --secondary-color: #f8f9fa;
-    --accent-color: #e67e22;
-    --dark-color: #343a40;
-    --danger-color: #dc3545;
-    --success-color: #28a745;
-    --border-color: #e0e0e0;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    line-height: 1.6;
-}
-
 /* Checkout Container */
 .checkout-container {
     max-width: 1000px;
@@ -1245,152 +1200,6 @@ option[value^="🇸🇦"] { background-image: url('flags/saudi.png'); background
     to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* Cart Preview Container */
-#cartPreview {
-    width: 350px;
-    max-height: 70vh;
-    overflow-y: auto;
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    z-index: 1050;
-}
-
-/* Card Body */
-#cartPreview .card-body {
-    padding: 1.25rem;
-}
-
-/* Header Section */
-#cartPreview .card-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #333;
-}
-
-#cartPreview .card-title i {
-    color: #4a6b8a; /* Primary color */
-}
-
-/* Close Button */
-#cartPreview .btn-close {
-    padding: 0.5rem;
-    font-size: 0.75rem;
-}
-
-/* Empty Cart Message */
-#cartPreview #cart-items-preview .text-muted {
-    font-size: 0.9rem;
-    color: #6c757d;
-}
-
-/* Cart Items Container (when populated) */
-.cart-item {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #f1f1f1;
-}
-
-.cart-item-img {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 5px;
-    margin-right: 1rem;
-}
-
-.cart-item-details {
-    flex: 1;
-}
-
-.cart-item-title {
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-    color: #333;
-}
-
-.cart-item-price {
-    font-size: 0.85rem;
-    color: #4a6b8a;
-    font-weight: 600;
-}
-
-.cart-item-quantity {
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-
-.remove-item {
-    color: #dc3545;
-    background: none;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 0.25rem;
-    margin-left: 0.5rem;
-}
-
-/* Buttons Section */
-#cartPreview .d-grid {
-    margin-top: 1rem;
-}
-
-#cartPreview .btn {
-    padding: 0.5rem;
-    font-size: 0.85rem;
-    border-radius: 5px;
-    font-weight: 500;
-}
-
-#cartPreview .btn-primary {
-    background-color: #4a6b8a;
-    border-color: #4a6b8a;
-}
-
-#cartPreview .btn-primary:hover {
-    background-color: #3a5770;
-    border-color: #3a5770;
-}
-
-#cartPreview .btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-}
-
-#cartPreview .btn-success:hover {
-    background-color: #218838;
-    border-color: #218838;
-}
-
-/* Scrollbar Styling */
-#cartPreview::-webkit-scrollbar {
-    width: 8px;
-}
-
-#cartPreview::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 0 10px 10px 0;
-}
-
-#cartPreview::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 10px;
-}
-
-#cartPreview::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 576px) {
-    #cartPreview {
-        width: 300px;
-        right: 10px !important;
-    }
-}
 .order-summary {
     background-color: #ffffff;
     border-radius: 8px;
@@ -1639,7 +1448,7 @@ option[value^="🇸🇦"] { background-image: url('flags/saudi.png'); background
         }
         
         .rate-table tr:hover td {
-            background-color: rgba(52, 152, 219, 0.05);
+            background-color: rgba(245, 200, 66, 0.08);
         }
         
         .form-card {

@@ -1,325 +1,335 @@
 <?php
-// File: includes/generate_invoice_pdf.php
-// This file creates actual PDF invoice files using FPDF
 
-require_once(__DIR__ . '/../vendor/fpdf/fpdf.php');
 require_once(__DIR__ . '/../config/config.php');
 require_once(__DIR__ . '/Database.php');
+require_once(__DIR__ . '/ArabicPdfRenderer.php');
+require_once(__DIR__ . '/ProductImageResolver.php');
+require_once(__DIR__ . '/PdfDocument.php');
 
 class PDFInvoiceGenerator {
     private $db;
-    
+    private $aedToUsdRate = 0.2723;
+
     public function __construct() {
         $this->db = new Database();
-    }
-    
-    public function generateInvoicePDF($order_id) {
-        // Validate order_id
-        if (!$order_id || !is_numeric($order_id)) {
-            throw new Exception("Invalid order ID provided");
+        if (defined('AED_TO_USD_RATE')) {
+            $this->aedToUsdRate = (float)AED_TO_USD_RATE;
         }
-        
+    }
+
+    public function generateInvoicePDF($order_id) {
+        if (!$order_id || !is_numeric($order_id)) {
+            throw new Exception('Invalid order ID provided');
+        }
+
         $order_id_int = (int)$order_id;
 
-        // Get order details with customer info in one query
-        try {
-            $order = $this->db->query("
-                SELECT 
-                    o.*, 
-                    c.fullname AS customer_name,
-                    c.email AS customer_email,
-                    c.phone AS customer_phone,
-                    c.address AS customer_address,
-                    c.city AS customer_city,
-                    c.country AS customer_country
-                FROM orders o
-                LEFT JOIN customers c ON o.customer_id = c.id
-                WHERE o.id = ?
-            ", [$order_id_int])->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            throw new Exception("Database error fetching order: " . $e->getMessage());
-        }
-        
+        $order = $this->db->query(
+            "SELECT o.*, c.fullname AS customer_name, c.email AS customer_email, c.phone AS customer_phone, c.address AS customer_address, c.city AS customer_city, c.country AS customer_country
+             FROM orders o
+             LEFT JOIN customers c ON o.customer_id = c.id
+             WHERE o.id = ?",
+            [$order_id_int]
+        )->fetch(PDO::FETCH_ASSOC);
+
         if (!$order) {
             throw new Exception("Order #$order_id not found");
         }
-        
-        // Get order items with product details
+
+        $order_items = $this->db->query(
+            "SELECT oi.*, p.name_en, p.name_ar,
+                    pv.size AS variation_size, pv.color AS variation_color,
+                    COALESCE(
+                        (SELECT pi.image_path
+                         FROM product_images pi
+                         WHERE pi.id = pv.image_id
+                         LIMIT 1),
+                        (SELECT pi.image_path
+                         FROM product_images pi
+                         WHERE pi.product_id = oi.product_id
+                         ORDER BY pi.is_main DESC, pi.id ASC
+                         LIMIT 1)
+                    ) AS selected_image
+             FROM order_items oi
+             LEFT JOIN products p ON oi.product_id = p.id
+             LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+             WHERE oi.order_id = ?
+             ORDER BY oi.id ASC",
+            [$order_id_int]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $bundleNames = [];
+        $bundleDiscount = 0.0;
         try {
-            $order_items = $this->db->query("
-                SELECT 
-                    oi.*,
-                    p.name_en,
-                    p.name_ar
-                FROM order_items oi
-                LEFT JOIN products p ON oi.product_id = p.id
-                WHERE oi.order_id = ?
-                ORDER BY oi.id ASC
-            ", [$order_id_int])->fetchAll(PDO::FETCH_ASSOC);
+            $orderBundles = $this->db->query(
+                "SELECT bundle_id, bundle_name_en, discount_amount FROM order_bundles WHERE order_id = ?",
+                [$order_id_int]
+            )->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($orderBundles as $orderBundle) {
+                $bundleDiscount += (float)$orderBundle['discount_amount'];
+                if (!empty($orderBundle['bundle_id'])) {
+                    $bundleNames[(int)$orderBundle['bundle_id']] = $orderBundle['bundle_name_en'];
+                }
+            }
         } catch (Exception $e) {
-            throw new Exception("Database error fetching order items: " . $e->getMessage());
+            error_log('Invoice bundle lookup failed: ' . $e->getMessage());
         }
 
-        // Create PDF
-        $pdf = new FPDF();
-        $pdf->AddPage();
-        $pdf->SetAutoPageBreak(true, 20);
-
-        // Colors
-        $primaryColor = array(230, 123, 46); // Aleppo Gift orange
-        $headerColor = array(44, 62, 80); // Dark blue
-        $lightColor = array(245, 245, 245); // Light gray
-        $borderColor = array(220, 220, 220); // Border gray
-
-        // Invoice number and date
-        $invoice_number = 'INV-' . str_pad($order_id, 6, '0', STR_PAD_LEFT);
+        $invoice_number = 'INV-' . str_pad((string)$order_id_int, 6, '0', STR_PAD_LEFT);
         $invoice_date = date('F j, Y', strtotime($order['created_at'] ?? $order['order_date'] ?? 'now'));
 
-        // Set document properties
-        $pdf->SetTitle('Invoice #' . $invoice_number);
-        $pdf->SetAuthor('AleppoGift.com');
+        $e = static function ($value): string {
+            return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+        };
 
-        // Header Section
-        $pdf->SetFont('Arial', 'B', 16);
-        $pdf->SetTextColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
-        
-        // Add logo if exists
-        $logo_path = __DIR__ . '/../public/assets/images/logo.png';
-        if (file_exists($logo_path)) {
-            $pdf->Image($logo_path, 15, 15, 45);
-        }
-        
-        $pdf->Cell(0, 10, 'INVOICE', 0, 1, 'R');
-        $pdf->SetFont('Arial', '', 10);
-        $pdf->SetTextColor(100);
-        $pdf->Cell(0, 5, 'AleppoGift.com | Premium Syrian Products', 0, 1, 'R');
-        $pdf->SetFont('Arial', 'B', 10);
-        $pdf->Cell(0, 5, 'Date: ' . $invoice_date, 0, 1, 'R');
-        $pdf->Cell(0, 5, 'Invoice #: ' . $invoice_number, 0, 1, 'R');
-        $pdf->Cell(0, 5, 'Order ID: #' . $order_id, 0, 1, 'R');
-        $pdf->Ln(12);
+        $moneyHtml = function ($amount, bool $negative = false): string {
+            return PdfDocument::money((float)$amount, $this->aedToUsdRate, $negative);
+        };
 
-        // Company and Customer Info
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
-        $pdf->Cell(95, 7, 'FROM:', 0, 0);
-        $pdf->Cell(95, 7, 'BILL TO:', 0, 1);
-        $pdf->SetFont('Arial', '', 10);
-        $pdf->SetTextColor(60);
-
-        // Company info
-        $pdf->Cell(95, 6, 'Aleppo Gift Trading LLC', 0, 0);
-        $pdf->Cell(95, 6, $order['customer_name'] ?: 'N/A', 0, 1);
-        $pdf->Cell(95, 6, 'Dubai, United Arab Emirates', 0, 0);
-        $pdf->Cell(95, 6, $order['customer_address'] ?: '', 0, 1);
-        $pdf->Cell(95, 6, 'Phone: +971 56 112 5320', 0, 0);
-        $pdf->Cell(95, 6, 'Phone: ' . ($order['customer_phone'] ?: ''), 0, 1);
-        $pdf->Cell(95, 6, 'Email: info@aleppogift.com', 0, 0);
-        $pdf->Cell(95, 6, 'Email: ' . ($order['customer_email'] ?: ''), 0, 1);
-        $pdf->Ln(15);
-
-        // Payment Information (left column) and Shipping Information (right column)
-        $pdf->SetFont('Arial', 'B', 10);
-        $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
-        $pdf->Cell(95, 6, 'PAYMENT INFORMATION', 0, 0);
-        $pdf->Cell(95, 6, 'SHIPPING INFORMATION', 0, 1);
-        
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(60);
-        
-        // Payment Method | Shipping Method
-        $pdf->Cell(95, 5, 'Payment Method: ' . ($order['payment_method'] ?: 'N/A'), 0, 0);
-        if (!empty($order['shipping_method'])) {
-            $pdf->Cell(95, 5, 'Shipping Method: ' . $order['shipping_method'], 0, 1);
-        } else {
-            $pdf->Cell(95, 5, '', 0, 1);
-        }
-        
-        // Payment Status | Shipping Cost
-        $shipping_cost = $order['shipping_aed'] ?? $order['shipping_amount'] ?? 0;
-        $pdf->Cell(95, 5, 'Payment Status: ' . ucfirst($order['payment_status'] ?: 'pending'), 0, 0);
-        if ($shipping_cost > 0) {
-            $pdf->Cell(95, 5, 'Shipping Cost: AED ' . number_format($shipping_cost, 2), 0, 1);
-        } else {
-            $pdf->Cell(95, 5, 'Shipping Cost: Free Shipping', 0, 1);
-        }
-        
-        // Empty | Total Weight
-        if (!empty($order['total_weight']) && $order['total_weight'] > 0) {
-            $pdf->Cell(95, 5, '', 0, 0);
-            $pdf->Cell(95, 5, 'Total Weight: ' . number_format($order['total_weight'], 2) . ' kg', 0, 1);
-        }
-        
-        // Empty | Tracking Number
-        if (!empty($order['tracking_number'])) {
-            $pdf->Cell(95, 5, '', 0, 0);
-            $pdf->Cell(95, 5, 'Tracking Number: ' . $order['tracking_number'], 0, 1);
-        }
-        
-        // Empty | Carrier
-        if (!empty($order['carrier_name'])) {
-            $pdf->Cell(95, 5, '', 0, 0);
-            $pdf->Cell(95, 5, 'Carrier: ' . $order['carrier_name'], 0, 1);
-        }
-        
-        // Empty | Shipment Status
-        if (!empty($order['shipment_status'])) {
-            $status_display = ucfirst($order['shipment_status']);
-            $pdf->Cell(95, 5, '', 0, 0);
-            $pdf->Cell(95, 5, 'Shipment Status: ' . $status_display, 0, 1);
-        }
-        
-        // Empty | Shipped Date
-        if (!empty($order['shipped_date'])) {
-            $shipped_date = date('F j, Y', strtotime($order['shipped_date']));
-            $pdf->Cell(95, 5, '', 0, 0);
-            $pdf->Cell(95, 5, 'Shipped Date: ' . $shipped_date, 0, 1);
-        }
-        
-        $pdf->Ln(10);
-
-        // Items Table Header
-        $pdf->SetFillColor($headerColor[0], $headerColor[1], $headerColor[2]);
-        $pdf->SetTextColor(255);
-        $pdf->SetFont('Arial', 'B', 9);
-        $pdf->Cell(15, 10, '#', 1, 0, 'C', true);
-        $pdf->Cell(85, 10, 'PRODUCT DESCRIPTION', 1, 0, 'L', true);
-        $pdf->Cell(20, 10, 'QTY', 1, 0, 'C', true);
-        $pdf->Cell(25, 10, 'UNIT PRICE', 1, 0, 'C', true);
-        $pdf->Cell(25, 10, 'TOTAL', 1, 0, 'C', true);
-        $pdf->Ln();
-
-        // Items Table Body
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(60);
-        $subtotal = 0;
-        $item_number = 1;
+        $subtotal = 0.0;
+        $rows = '';
+        $index = 1;
 
         foreach ($order_items as $item) {
-            $item_total = $item['price'] * $item['quantity'];
-            $subtotal += $item_total;
-            
-            // Product name (prefer English, fall back to Arabic)
-            $product_name = $item['name_en'] ?: $item['name_ar'] ?: $item['product_name'] ?: 'Product';
-            // SKU field not available in this database, using product ID instead
-            if (!empty($item['product_id'])) {
-                $product_name .= ' (ID: ' . $item['product_id'] . ')';
+            $qty = (int)($item['quantity'] ?? 0);
+            $price = (float)($item['price'] ?? 0);
+            $lineTotal = $qty * $price;
+            $subtotal += $lineTotal;
+
+            $rawName = trim((string)($item['product_name'] ?? ''));
+            if ($rawName === '') {
+                $rawName = (string)($item['name_en'] ?: ($item['name_ar'] ?? '') ?: 'Product');
             }
-            
-            // Check if we need a new page
-            if ($pdf->GetY() > 250) {
-                $pdf->AddPage();
-                // Re-add table header
-                $pdf->SetFillColor($headerColor[0], $headerColor[1], $headerColor[2]);
-                $pdf->SetTextColor(255);
-                $pdf->SetFont('Arial', 'B', 9);
-                $pdf->Cell(15, 10, '#', 1, 0, 'C', true);
-                $pdf->Cell(85, 10, 'PRODUCT DESCRIPTION', 1, 0, 'L', true);
-                $pdf->Cell(20, 10, 'QTY', 1, 0, 'C', true);
-                $pdf->Cell(25, 10, 'UNIT PRICE', 1, 0, 'C', true);
-                $pdf->Cell(25, 10, 'TOTAL', 1, 0, 'C', true);
-                $pdf->Ln();
-                $pdf->SetFont('Arial', '', 9);
-                $pdf->SetTextColor(60);
+            $rawName = html_entity_decode($rawName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $rawName = trim(strip_tags($rawName));
+            $nameEn = $e($rawName !== '' ? $rawName : 'Product');
+
+            $variantBits = array_filter([
+                trim((string)($item['variation_color'] ?? '')),
+                trim((string)($item['variation_size'] ?? '')),
+            ], static function ($bit) {
+                return $bit !== '';
+            });
+            $variantLine = $variantBits
+                ? '<div class="muted">' . $e(implode(' / ', $variantBits)) . '</div>'
+                : '';
+            $productIdLine = !empty($item['product_id'])
+                ? '<div class="muted">ID: ' . (int)$item['product_id'] . '</div>'
+                : '';
+            $bundleLine = '';
+            if (!empty($item['bundle_id']) && !empty($bundleNames[(int)$item['bundle_id']])) {
+                $bundleLine = '<div class="muted">Bundle: ' . $e($bundleNames[(int)$item['bundle_id']]) . '</div>';
             }
-            
-            $pdf->Cell(15, 8, $item_number, 1, 0, 'C');
-            $pdf->Cell(85, 8, $product_name, 1, 0, 'L');
-            $pdf->Cell(20, 8, $item['quantity'], 1, 0, 'C');
-            $pdf->Cell(25, 8, 'AED ' . number_format($item['price'], 2), 1, 0, 'C');
-            $pdf->Cell(25, 8, 'AED ' . number_format($item_total, 2), 1, 0, 'C');
-            $pdf->Ln();
-            
-            $item_number++;
+
+            $imageDataUri = ProductImageResolver::resolveAsDataUri(
+                (string)($item['selected_image'] ?? ''),
+                [
+                    __DIR__ . '/../',
+                    __DIR__ . '/../public/',
+                    __DIR__ . '/../public/uploads/products/'
+                ]
+            );
+            $imageHtml = $imageDataUri
+                ? '<img class="product-image" width="42" height="42" src="' . $e($imageDataUri) . '" alt="">'
+                : '<span class="muted">—</span>';
+
+            $rowClass = ($index % 2 === 0) ? ' class="alt"' : '';
+            $rows .= '<tr' . $rowClass . '>'
+                . '<td class="center">' . $index++ . '</td>'
+                . '<td class="center">' . $imageHtml . '</td>'
+                . '<td class="desc"><div class="pname">' . $nameEn . '</div>' . $variantLine . $bundleLine . $productIdLine . '</td>'
+                . '<td class="center">' . $qty . '</td>'
+                . '<td class="money">' . $moneyHtml($price) . '</td>'
+                . '<td class="money">' . $moneyHtml($lineTotal) . '</td>'
+                . '</tr>';
         }
 
-        // Totals Section
-        $pdf->Ln(5);
-        $pdf->SetFont('Arial', 'B', 9);
-        $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
+        if ($rows === '') {
+            $rows = '<tr><td class="center muted" colspan="6">No items found for this order</td></tr>';
+        }
 
-        // Exchange rate: 1 USD = 3.68 AED (1 AED = 0.27 USD)
-        $aed_to_usd = 0.27;
+        $shipping = (float)($order['shipping_aed'] ?? $order['shipping_amount'] ?? 0);
+        $discount = (float)($order['discount_amount'] ?? 0);
+        $grandTotal = (float)($order['total_amount'] ?? 0);
 
-        // Subtotal
-        $subtotal_usd = $subtotal * $aed_to_usd;
-        $pdf->Cell(110, 8, 'Subtotal:', 0, 0, 'R');
-        $pdf->Cell(60, 8, 'AED ' . number_format($subtotal, 2) . ' (USD ' . number_format($subtotal_usd, 2) . ')', 1, 1, 'C');
+        $address = trim((string)($order['customer_address'] ?? ''));
+        $addressLower = function_exists('mb_strtolower') ? mb_strtolower($address) : strtolower($address);
+        $locationParts = [];
+        foreach (['customer_city', 'customer_country'] as $locationKey) {
+            $part = trim((string)($order[$locationKey] ?? ''));
+            if ($part === '') {
+                continue;
+            }
+            $partLower = function_exists('mb_strtolower') ? mb_strtolower($part) : strtolower($part);
+            if ($addressLower === '' || !str_contains($addressLower, $partLower)) {
+                $locationParts[] = $part;
+            }
+        }
 
-        // Shipping - Always display
-        $shipping_amount = $order['shipping_aed'] ?? $order['shipping_amount'] ?? 0;
-        $shipping_usd = $shipping_amount * $aed_to_usd;
-        $pdf->Cell(110, 8, 'Shipping:', 0, 0, 'R');
-        if ($shipping_amount > 0) {
-            $pdf->Cell(60, 8, 'AED ' . number_format($shipping_amount, 2) . ' (USD ' . number_format($shipping_usd, 2) . ')', 1, 1, 'C');
+        $billLines = ['<strong>' . $e($order['customer_name'] ?: 'N/A') . '</strong>'];
+        if ($address !== '') {
+            $billLines[] = nl2br($e($address));
+        }
+        if ($locationParts) {
+            $billLines[] = $e(implode(', ', $locationParts));
+        }
+        if (trim((string)($order['customer_phone'] ?? '')) !== '') {
+            $billLines[] = 'Phone: ' . $e($order['customer_phone']);
+        }
+        if (trim((string)($order['customer_email'] ?? '')) !== '') {
+            $billLines[] = 'Email: ' . $e($order['customer_email']);
+        }
+
+        $paymentMethod = trim((string)($order['payment_method'] ?? ''));
+        if (strcasecmp($paymentMethod, 'Ziina') === 0) {
+            $paymentMethod = 'Card';
+        } elseif (strcasecmp($paymentMethod, 'COD') === 0) {
+            $paymentMethod = 'Cash on delivery';
         } else {
-            $pdf->Cell(60, 8, 'FREE', 1, 1, 'C');
+            $paymentMethod = $paymentMethod !== '' ? ucwords(str_replace('_', ' ', $paymentMethod)) : 'N/A';
+        }
+        $paymentStatus = trim((string)($order['payment_status'] ?? ''));
+        $paymentStatus = $paymentStatus !== '' ? ucfirst($paymentStatus) : 'Pending';
+
+        $shipLines = [];
+        if (trim((string)($order['shipping_method'] ?? '')) !== '') {
+            $shipLines[] = 'Method: ' . $e($order['shipping_method']);
+        }
+        $shipLines[] = 'Cost: ' . ($shipping > 0
+            ? 'AED ' . number_format($shipping, 2) . ' (USD ' . number_format($shipping * $this->aedToUsdRate, 2) . ')'
+            : 'Free');
+        if (!empty($order['total_weight']) && (float)$order['total_weight'] > 0) {
+            $shipLines[] = 'Weight: ' . $e(number_format((float)$order['total_weight'], 2)) . ' kg';
+        }
+        if (trim((string)($order['carrier_name'] ?? '')) !== '') {
+            $shipLines[] = 'Carrier: ' . $e($order['carrier_name']);
+        }
+        if (trim((string)($order['tracking_number'] ?? '')) !== '') {
+            $shipLines[] = 'Tracking: ' . $e($order['tracking_number']);
+        }
+        if (trim((string)($order['shipment_status'] ?? '')) !== '') {
+            $shipLines[] = 'Status: ' . $e(ucfirst((string)$order['shipment_status']));
         }
 
-        // Discount
-        $discount_amount = $order['discount_amount'] ?? 0;
-        if ($discount_amount > 0) {
-            $discount_usd = $discount_amount * $aed_to_usd;
-            $pdf->SetTextColor(220, 53, 69); // Red color for discount
-            $pdf->Cell(110, 8, 'Discount:', 0, 0, 'R');
-            $pdf->Cell(60, 8, '-AED ' . number_format($discount_amount, 2) . ' (-USD ' . number_format($discount_usd, 2) . ')', 1, 1, 'C');
-            $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
+        $noteText = trim((string)($order['note'] ?? $order['notes'] ?? ''));
+        $notesHtml = '';
+        if ($noteText !== '') {
+            $notesHtml = '<div class="section-title">NOTES</div><div class="notes">' . nl2br($e($noteText)) . '</div>';
         }
 
-        // Grand Total
-        $total_usd = $order['total_amount'] * $aed_to_usd;
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->SetFillColor($primaryColor[0], $primaryColor[1], $primaryColor[2]);
-        $pdf->SetTextColor(255);
-        $pdf->Cell(110, 10, 'GRAND TOTAL:', 0, 0, 'R');
-        $pdf->Cell(60, 10, 'AED ' . number_format($order['total_amount'], 2) . ' (USD ' . number_format($total_usd, 2) . ')', 1, 1, 'C', true);
-
-        // Notes section
-        if (!empty($order['notes'])) {
-            $pdf->Ln(10);
-            $pdf->SetFont('Arial', 'B', 10);
-            $pdf->SetTextColor($headerColor[0], $headerColor[1], $headerColor[2]);
-            $pdf->Cell(0, 6, 'NOTES:', 0, 1);
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->SetTextColor(60);
-            $pdf->MultiCell(0, 5, $order['notes']);
+        $discountRow = '';
+        if ($bundleDiscount > 0) {
+            $discountRow .= '<tr><td class="lbl">Bundle discount</td><td class="money discount">' . $moneyHtml($bundleDiscount, true) . '</td></tr>';
+            $subtotal += $bundleDiscount;
+        }
+        if ($discount > 0) {
+            $discountRow .= '<tr><td class="lbl">Discount</td><td class="money discount">' . $moneyHtml($discount, true) . '</td></tr>';
         }
 
-        // Footer
-        $pdf->Ln(15);
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(100);
-        $pdf->Cell(0, 5, 'Thank you for your business!', 0, 1, 'C');
-        $pdf->Cell(0, 5, 'Visit us at www.aleppogift.com | Email: info@aleppogift.com', 0, 1, 'C');
-        $pdf->Cell(0, 5, 'This is a computer-generated invoice.', 0, 1, 'C');
-
-        // Save PDF to file
-        $invoice_dir = __DIR__ . '/../invoice';
-        if (!is_dir($invoice_dir)) {
-            mkdir($invoice_dir, 0755, true);
+        $shippingValue = $shipping > 0 ? $moneyHtml($shipping) : '<div class="aed">FREE</div>';
+        $wrapAmount = (float)($order['gift_wrap_amount'] ?? 0);
+        $vatAmount = (float)($order['vat_amount'] ?? 0);
+        $extraRows = '';
+        if ($wrapAmount > 0) {
+            $extraRows .= '<tr><td class="lbl">Gift wrap</td><td class="money">' . $moneyHtml($wrapAmount) . '</td></tr>';
         }
-        
-        $pdf_path = $invoice_dir . '/invoice_' . $order_id . '.pdf';
-        $pdf->Output('F', $pdf_path);
-        
+        if ($vatAmount > 0) {
+            $extraRows .= '<tr><td class="lbl">VAT' . (!empty($order['trn']) ? ' (TRN ' . $e($order['trn']) . ')' : '') . '</td><td class="money">' . $moneyHtml($vatAmount) . '</td></tr>';
+        }
+
+        $html = PdfDocument::document(
+            PdfDocument::header('INVOICE', [
+                'Date: ' . $e($invoice_date),
+                'Invoice #: ' . $e($invoice_number),
+                'Order ID: #' . $order_id_int,
+            ])
+            . PdfDocument::parties(
+                'FROM',
+                'Aleppo Gift Trading LLC<br>Dubai, United Arab Emirates<br>Phone: +971 56 112 5320<br>Email: info@aleppogift.com',
+                'BILL TO',
+                implode('<br>', $billLines)
+            )
+            . PdfDocument::parties(
+                'PAYMENT',
+                'Method: ' . $e($paymentMethod) . '<br>Status: ' . $e($paymentStatus),
+                'SHIPPING',
+                implode('<br>', $shipLines)
+            )
+            . PdfDocument::itemsTable($rows)
+            . PdfDocument::totals(
+                '<tr><td class="lbl">Subtotal</td><td class="money">' . $moneyHtml($subtotal) . '</td></tr>'
+                . '<tr><td class="lbl">Shipping</td><td class="money">' . $shippingValue . '</td></tr>'
+                . $discountRow
+                . $extraRows
+                . '<tr class="grand"><td>GRAND TOTAL</td><td class="money">' . $moneyHtml($grandTotal) . '</td></tr>'
+            )
+            . $notesHtml
+            . PdfDocument::footer('Thank you for your order.')
+        );
+
+        $invoiceDir = __DIR__ . '/../invoice';
+        if (!is_dir($invoiceDir)) {
+            mkdir($invoiceDir, 0755, true);
+        }
+
+        $pdfPath = $invoiceDir . '/invoice_' . $order_id_int . '.pdf';
+        ArabicPdfRenderer::saveToFile($html, $pdfPath);
+
         return [
             'success' => true,
-            'file_path' => $pdf_path,
-            'full_path' => $pdf_path,
+            'file_path' => $pdfPath,
+            'full_path' => $pdfPath,
             'invoice_number' => $invoice_number
         ];
     }
+
+    public function generatePackingSlipPDF($order_id) {
+        $order_id_int = (int)$order_id;
+        $order = $this->db->query(
+            "SELECT o.*, c.fullname AS customer_name, c.phone AS customer_phone, c.address AS customer_address, c.city AS customer_city, c.country AS customer_country
+             FROM orders o LEFT JOIN customers c ON o.customer_id = c.id WHERE o.id = ?",
+            [$order_id_int]
+        )->fetch(PDO::FETCH_ASSOC);
+        if (!$order) {
+            throw new Exception('Order not found');
+        }
+        $items = $this->db->query(
+            "SELECT oi.*, p.name_en, p.name_ar FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ?",
+            [$order_id_int]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $hide = !empty($order['hide_prices']);
+        $rows = '';
+        foreach ($items as $item) {
+            $name = htmlspecialchars((string)($item['name_en'] ?: $item['name_ar']));
+            $price = $hide ? '' : ('<td>' . number_format((float)$item['price'], 2) . '</td>');
+            $rows .= '<tr><td>' . $name . '</td><td>' . (int)$item['quantity'] . '</td>' . $price . '</tr>';
+        }
+        $gift = '';
+        if (!empty($order['gift_recipient_name']) || !empty($order['gift_wrap'])) {
+            $gift = '<p>Recipient: ' . htmlspecialchars((string)$order['gift_recipient_name'])
+                . '<br>Phone: ' . htmlspecialchars((string)$order['gift_recipient_phone'])
+                . '<br>Card: ' . htmlspecialchars((string)$order['gift_card_message'])
+                . '<br>Gift wrap: ' . (!empty($order['gift_wrap']) ? 'yes' : 'no') . '</p>';
+        }
+        $html = '<h1>Packing slip #' . $order_id_int . '</h1>' . $gift
+            . '<p>' . htmlspecialchars((string)$order['customer_name']) . '<br>'
+            . htmlspecialchars((string)$order['customer_address']) . '<br>'
+            . htmlspecialchars((string)$order['customer_city']) . ' ' . htmlspecialchars((string)$order['customer_country']) . '</p>'
+            . '<table border="1" cellpadding="6"><tr><th>Item</th><th>Qty</th>' . ($hide ? '' : '<th>Price</th>') . '</tr>' . $rows . '</table>';
+        $path = __DIR__ . '/../invoice/packing_' . $order_id_int . '.pdf';
+        ArabicPdfRenderer::saveToFile($html, $path);
+        return $path;
+    }
 }
 
-// If called directly, generate invoice for the provided order ID
 if (basename($_SERVER['SCRIPT_NAME']) == basename(__FILE__) && (isset($_GET['order_id']) || isset($_GET['id']))) {
     $order_id = intval($_GET['order_id'] ?? $_GET['id'] ?? 0);
-    
+
     if ($order_id <= 0) {
         echo json_encode(['success' => false, 'error' => 'Invalid order ID provided']);
         exit;
     }
-    
+
     try {
         $generator = new PDFInvoiceGenerator();
         $result = $generator->generateInvoicePDF($order_id);
@@ -328,4 +338,3 @@ if (basename($_SERVER['SCRIPT_NAME']) == basename(__FILE__) && (isset($_GET['ord
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
 }
-?>

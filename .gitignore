@@ -30,6 +30,7 @@ public/quotations/*
 !public/quotations/.gitkeep
 public/invoice/*
 !public/invoice/.gitkeep
+storage/mail/*
 
 # IDE and Editor Files
 .vscode/
@@ -81,3 +82,28 @@ debug_*.php
 
 # Deployment backups (timestamped production backups)
 backups/
+
+# Generated customer invoices
+invoice/*.pdf
+
+# Local env / config copies
+.env_*
+config/config_*.php
+
+# Python
+__pycache__/
+*.pyc
+
+# Scratch / backup copies
+.htaccess_*
+.htaccess.new*
+*_0.php
+*_old.php
+*_99.php
+*_099.php
+*_002.php
+public/index00.php
+public/index7.php
+public/index99.php
+public/cart_3.php
+public/cart_8.php

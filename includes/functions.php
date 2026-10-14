@@ -16,8 +16,10 @@ if (basename($_SERVER['PHP_SELF']) === 'functions.php') {
  * @param string $string Input string
  * @return string Sanitized string
  */
-function sanitize($string) {
-    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+if (!function_exists('sanitize')) {
+    function sanitize($string) {
+        return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+    }
 }
 
 /**
@@ -44,6 +46,182 @@ function formatPriceDisplay($price, $includeSymbol = true) {
         return $symbol . ' ' . $formatted;
     }
     return $formatted;
+}
+
+/**
+ * Get AED to USD conversion rate used for display.
+ * @return float
+ */
+function getAedToUsdRate() {
+    if (function_exists('currency_rate')) {
+        $rate = currency_rate('USD');
+        if ($rate > 0) {
+            return $rate;
+        }
+    }
+    return defined('AED_TO_USD_RATE') ? (float)AED_TO_USD_RATE : 0.272294;
+}
+
+/**
+ * Web path of this store. Empty on https://aleppogift.com/, or the
+ * subdirectory prefix when the app is served from a folder such as
+ * /stores/aleppogift/.
+ */
+function store_base_path(): string {
+    static $base = null;
+    if ($base !== null) {
+        return $base;
+    }
+
+    $uri = str_replace('\\', '/', strtok($_SERVER['REQUEST_URI'] ?? '/', '?'));
+    // Direct access such as /stores/aleppogift/public/index.php keeps /public in the URL.
+    if (preg_match('#^(.*?/public)(?:/|$)#', $uri, $matches)) {
+        $base = rtrim($matches[1], '/');
+        return $base;
+    }
+
+    // Production rewrite hides /public, so the public URL starts at the site root.
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/');
+    if (preg_match('#^(.*?)/public(?:/|$)#', $script, $matches)) {
+        $base = rtrim($matches[1], '/');
+    } else {
+        $base = '';
+    }
+
+    return $base;
+}
+
+/**
+ * Root-relative URL for a storefront path.
+ */
+function store_url(string $path = ''): string {
+    $path = ltrim(str_replace('\\', '/', $path), '/');
+    $prefix = store_base_path();
+    if ($path === '') {
+        return $prefix === '' ? '/' : $prefix . '/';
+    }
+    return ($prefix === '' ? '' : $prefix) . '/' . $path;
+}
+
+/**
+ * True for empty or junk category/brand labels that must not appear in public filters.
+ */
+function is_placeholder_name($name): bool {
+    $normalized = strtolower(trim((string)$name));
+    return $normalized === '' || in_array($normalized, ['not defined', 'undefined', 'null', 'n/a', 'na', 'none'], true);
+}
+
+/**
+ * True when the Arabic title is missing or still the bulk-import placeholder.
+ */
+function is_placeholder_arabic_name($name): bool {
+    $normalized = trim((string)$name);
+    if ($normalized === '') {
+        return true;
+    }
+    return (bool)preg_match('/^new product\s*#\d+$/i', $normalized);
+}
+
+/**
+ * Resolve a brands.logo value to one web path under the public directory.
+ * Accepts a bare filename, uploads/brands/..., or public/uploads/brands/...,
+ * and keeps a doubled historical path when that is the file that exists on disk.
+ */
+function brand_logo_web_path($logo): string {
+    $logo = ltrim(str_replace('\\', '/', trim((string)$logo)), '/');
+    if ($logo === '') {
+        return 'assets/images/no-image.png';
+    }
+
+    $publicDir = dirname(__DIR__) . '/public/';
+    $candidates = [$logo];
+    if (str_starts_with($logo, 'public/')) {
+        $candidates[] = substr($logo, 7);
+    }
+    $candidates[] = 'uploads/brands/' . basename($logo);
+    $candidates[] = 'uploads/brands/' . $logo;
+
+    foreach (array_unique($candidates) as $webPath) {
+        $webPath = ltrim(preg_replace('#/+#', '/', $webPath), '/');
+        if (is_file($publicDir . $webPath)) {
+            return $webPath;
+        }
+    }
+
+    if (!str_contains($logo, '/')) {
+        return 'uploads/brands/' . $logo;
+    }
+    if (str_starts_with($logo, 'public/')) {
+        return ltrim(substr($logo, 7), '/');
+    }
+    if (str_starts_with($logo, 'uploads/')) {
+        return $logo;
+    }
+    return 'uploads/brands/' . $logo;
+}
+
+function brand_logo_filesystem_path($logo): ?string {
+    $webPath = brand_logo_web_path($logo);
+    if ($webPath === 'assets/images/no-image.png') {
+        return null;
+    }
+    $fullPath = dirname(__DIR__) . '/public/' . $webPath;
+    return is_file($fullPath) ? $fullPath : null;
+}
+
+/**
+ * Format amount in AED with USD equivalent.
+ * @param float $amount Amount in AED
+ * @param int $decimals Number of decimals
+ * @return string
+ */
+function formatAedUsd($amount, $decimals = 2) {
+    if (function_exists('format_store_money')) {
+        return format_store_money($amount, true);
+    }
+    $amount = (float)$amount;
+    $usd = $amount * getAedToUsdRate();
+    return 'AED ' . number_format($amount, $decimals) . ' (USD ' . number_format($usd, $decimals) . ')';
+}
+
+/**
+ * Format discount amount in AED with USD equivalent (negative display).
+ * @param float $amount Amount in AED
+ * @param int $decimals Number of decimals
+ * @return string
+ */
+function formatAedUsdDiscount($amount, $decimals = 2) {
+    $amount = abs((float)$amount);
+    $usd = $amount * getAedToUsdRate();
+    return '-AED ' . number_format($amount, $decimals) . ' (-USD ' . number_format($usd, $decimals) . ')';
+}
+
+/**
+ * Get a site setting value from the site_settings table.
+ * Returns $default if the table doesn't exist or key not found.
+ */
+function get_site_setting($db, $key, $default = '') {
+    try {
+        $row = $db->fetch("SELECT setting_value FROM site_settings WHERE setting_key = ?", [$key]);
+        return ($row !== false && $row !== null) ? $row['setting_value'] : $default;
+    } catch (\Exception $e) {
+        return $default;
+    }
+}
+
+/**
+ * Save a site setting value (INSERT or UPDATE).
+ */
+function set_site_setting($db, $key, $value) {
+    try {
+        $db->query(
+            "INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?",
+            [$key, $value, $value]
+        );
+        return true;
+    } catch (\Exception $e) {
+        return false;
+    }
 }
 
 /**
@@ -320,3 +498,5 @@ function verifyCsrfToken($token) {
 function csrfField() {
     echo '<input type="hidden" name="csrf_token" value="' . generateCsrfToken() . '">';
 }
+
+require_once __DIR__ . '/currencies.php';

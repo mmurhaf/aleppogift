@@ -27,11 +27,8 @@ foreach ($phpmailer_paths as $path) {
     }
 }
 
-// Import PHPMailer classes if available
-if ($GLOBALS['phpmailer_available']) {
-    use PHPMailer\PHPMailer\PHPMailer;
-    use PHPMailer\PHPMailer\Exception;
-}
+// Note: PHPMailer classes are loaded via require_once above
+// Use fully qualified names like PHPMailer\PHPMailer\PHPMailer in code
 
 /**
  * Send basic email using PHP's mail() function
@@ -63,7 +60,8 @@ function sendInvoiceEmail($to, $order_id, $attachmentPath) {
         return sendBasicEmail($to, $order_id, $attachmentPath);
     }
     
-    $mail = new PHPMailer(true);
+    // Use fully qualified class name since use statements can't be conditional
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
     try {
         $mail->isSMTP();
         $mail->Host = SMTP_HOST;

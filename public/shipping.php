@@ -1,131 +1,16 @@
-<?php
+﻿<?php
 session_start();
 require_once(__DIR__ . '/../includes/shipping.php');
+require_once(__DIR__ . '/../includes/currencies.php');
+require_once(__DIR__ . '/../includes/i18n.php');
 $shippingCost = null;
 $error = null;
 
-// USD conversion rate (1 AED = 0.27 USD approximately)
-$usdRate = 0.27;
+$usdRate = currency_rate('USD') ?: 0.272294;
 
-// Language support
-$lang = $_GET['lang'] ?? $_POST['lang'] ?? 'en';
-$lang = in_array($lang, ['en', 'ar']) ? $lang : 'en';
-
-// Language strings
-$translations = [
-    'en' => [
-        'title' => 'Shipping Calculator - AleppoGift',
-        'page_title' => 'Shipping Rates Calculator',
-        'page_subtitle' => 'Get instant shipping estimates for your order',
-        'estimate_shipping' => 'Estimate Your Shipping',
-        'shipping_rates' => 'Our Shipping Rates',
-        'country_label' => 'Destination Country *',
-        'select_country' => '-- Select Country --',
-        'city_label' => 'City (Optional)',
-        'city_placeholder' => 'Enter your city',
-        'city_info' => 'Some cities may have special rates (e.g., Al Gharbia)',
-        'weight_info' => 'For GCC countries, every 8kg creates a separate parcel',
-        'weight_label' => 'Package Weight (kg) *',
-        'weight_placeholder' => 'Enter weight',
-        'calculate_btn' => 'Calculate Shipping',
-        'region_country' => 'Region / Country',
-        'base_rate' => 'Base Rate',
-        'additional_rate' => 'Additional Rate',
-        'uae' => 'UAE',
-        'uae_base' => 'AED 30',
-        'uae_additional' => 'Flat rate (AED 60 for Al Gharbia)',
-        'oman' => 'Oman (All Cities)',
-        'oman_base' => 'AED 70 for 5kg',
-        'oman_additional' => 'AED 10/kg above 5kg',
-        'gcc_countries' => 'GCC Countries (Qatar, Kuwait, Saudi Arabia, Bahrain)',
-        'gcc_base' => 'AED 120 per parcel (8kg max)',
-        'gcc_additional' => 'AED 30/kg above 1kg per parcel',
-        'gcc_note' => 'Each 8kg creates a new parcel',
-        'other_countries' => 'Europe',
-        'other_base' => 'AED 220 for 1kg',
-        'other_additional' => 'AED 70/kg above 1kg',
-        'usa_others' => 'USA & Others',
-        'usa_base' => 'AED 300 for 1kg',
-        'usa_additional' => 'AED 80/kg above 1kg',
-        'shipping_examples' => 'Examples',
-        'example_22kg_qatar' => 'Qatar (22kg): 930 AED (~251 USD)',
-        'example_germany' => 'Germany (15kg): 1200 AED (~324 USD) • USA (10kg): 1020 AED (~275 USD)',
-        'footer_note' => 'Final shipping cost calculated during checkout based on your selections and total weight.',
-        'usd_note' => 'USD rates shown for reference only (1 AED ≈ 0.27 USD). Actual charges in AED.',
-        'shipping_result' => 'Estimated Shipping Cost',
-        'cost_breakdown' => 'Cost Breakdown',
-        'usd_equivalent' => 'USD Equivalent',
-        'currency_table_title' => 'International Currency Reference',
-        'currency_table_subtitle' => 'Sample shipping costs in major currencies (as of October 21, 2025)',
-        'currency_disclaimer' => 'Please note that exchange rates fluctuate daily; these values are for illustrative purposes only.',
-        'currency_name' => 'Currency',
-        'country_region' => 'Country/Region',
-        'exchange_rate_aed' => 'Rate (1 AED =)',
-        'sample_cost_30' => 'UAE Regular (30 AED)',
-        'sample_cost_120' => 'GCC Base (120 AED)',
-        'sample_cost_300' => 'International (300 AED)',
-        'back_to_shop' => 'Back to Shop',
-        'lang_english' => 'English',
-        'lang_arabic' => 'العربية'
-    ],
-    'ar' => [
-        'title' => 'حاسبة الشحن - هدية حلب',
-        'page_title' => 'حاسبة أسعار الشحن',
-        'page_subtitle' => 'احصل على تقديرات فورية لتكلفة الشحن لطلبك',
-        'estimate_shipping' => 'احسب تكلفة الشحن',
-        'shipping_rates' => 'أسعار الشحن لدينا',
-        'country_label' => 'البلد المقصود *',
-        'select_country' => '-- اختر البلد --',
-        'city_label' => 'المدينة (اختياري)',
-        'city_placeholder' => 'أدخل مدينتك',
-        'city_info' => 'بعض المدن قد تحتوي على أسعار خاصة (مثل الغربية)',
-        'weight_info' => 'لدول مجلس التعاون الخليجي، كل 8 كيلو ينشئ طرداً منفصلاً',
-        'weight_label' => 'وزن الطرد (كيلو) *',
-        'weight_placeholder' => 'أدخل الوزن',
-        'calculate_btn' => 'احسب تكلفة الشحن',
-        'region_country' => 'المنطقة / البلد',
-        'base_rate' => 'السعر الأساسي',
-        'additional_rate' => 'السعر الإضافي',
-        'uae' => 'الإمارات العربية المتحدة',
-        'uae_base' => '30 درهم',
-        'uae_additional' => 'سعر ثابت (60 درهم للغربية)',
-        'oman' => 'عُمان (جميع المدن)',
-        'oman_base' => '70 درهم لـ 5 كيلو',
-        'oman_additional' => '10 درهم/كيلو فوق 5 كيلو',
-        'gcc_countries' => 'دول مجلس التعاون الخليجي (قطر، الكويت، السعودية، البحرين)',
-        'gcc_base' => '120 درهم لكل طرد (8 كيلو حد أقصى)',
-        'gcc_additional' => '30 درهم/كيلو فوق 1 كيلو لكل طرد',
-        'gcc_note' => 'كل 8 كيلو ينشئ طرداً جديداً',
-        'other_countries' => 'أوروبا',
-        'other_base' => '220 درهم لـ 1 كيلو',
-        'other_additional' => '70 درهم/كيلو فوق 1 كيلو',
-        'usa_others' => 'أمريكا وبلدان أخرى',
-        'usa_base' => '300 درهم لـ 1 كيلو',
-        'usa_additional' => '80 درهم/كيلو فوق 1 كيلو',
-        'shipping_examples' => 'أمثلة',
-        'example_22kg_qatar' => 'قطر (22 كيلو): 930 درهم (~251 دولار أمريكي)',
-        'example_detailed_qatar' => 'الطرد الأول: 120 + (7×30) = 330 درهم | الطرد الثاني: 120 + (7×30) = 330 درهم | الطرد الثالث: 120 + (5×30) = 270 درهم',
-        'footer_note' => 'يتم حساب تكلفة الشحن النهائية أثناء الدفع بناءً على اختياراتك والوزن الإجمالي.',
-        'usd_note' => 'أسعار الدولار الأمريكي للمرجع فقط (1 درهم ≈ 0.27 دولار). الرسوم الفعلية بالدرهم الإماراتي.',
-        'shipping_result' => 'تقدير الشحن',
-        'cost_breakdown' => 'تفصيل التكلفة',
-        'usd_equivalent' => 'المعادل بالدولار الأمريكي',
-        'currency_table_title' => 'مرجع العملات الدولية',
-        'currency_table_subtitle' => 'عينات من تكاليف الشحن بالعملات الرئيسية (اعتباراً من 21 أكتوبر 2025)',
-        'currency_disclaimer' => 'يرجى ملاحظة أن أسعار الصرف تتقلب يومياً؛ هذه القيم للأغراض التوضيحية فقط.',
-        'currency_name' => 'العملة',
-        'country_region' => 'البلد/المنطقة',
-        'exchange_rate_aed' => 'السعر (1 درهم =)',
-        'sample_cost_30' => 'الإمارات عادي (30 درهم)',
-        'sample_cost_120' => 'دول الخليج أساسي (120 درهم)',
-        'sample_cost_300' => 'دولي (300 درهم)',
-        'back_to_shop' => 'العودة للمتجر',
-        'lang_english' => 'English',
-        'lang_arabic' => 'العربية'
-    ]
-];
-
-$t = $translations[$lang];
+$lang = store_lang();
+$rateLabel = currency_rates_label($lang === 'ar' ? 'ar' : 'en');
+$usdNoteRate = number_format($usdRate, 4);
 
 $selectedCountry = $_POST['country'] ?? '';
 $city = $_POST['city'] ?? '';
@@ -133,7 +18,7 @@ $weight = isset($_POST['weight']) ? floatval($_POST['weight']) : 1;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$selectedCountry || $weight <= 0) {
-        $error = "Please select a country and enter a valid weight.";
+        $error = t('shippingpage.error_invalid');
     } else {
         $shippingCost = calculateShippingCost($selectedCountry, $city, $weight);
     }
@@ -150,14 +35,12 @@ foreach ($countries as $name => $flag) {
 
 ?>
 <!DOCTYPE html>
-<html lang="<?= $lang ?>" <?= $lang === 'ar' ? 'dir="rtl"' : '' ?>>
+<html lang="<?= htmlspecialchars(store_lang_html()) ?>" dir="<?= store_lang_dir() ?>">
 <head>
+    <?php require_once(__DIR__ . '/../includes/google_tag.php'); ?>
     <meta charset="UTF-8">
-    <title><?= $t['title'] ?></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" onerror="this.onerror=null;this.href='https://stackpath.bootstrapcdn.com/bootstrap/5.3.2/css/bootstrap.min.css';">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" onerror="this.onerror=null;this.href='https://maxcdn.bootstrapcdn.com/font-awesome/6.4.0/css/all.min.css';">
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/header-fixes.css">
+    <title><?= te('shippingpage.title') ?></title>
+    <?php require __DIR__ . '/../includes/storefront_assets.php'; ?>
     <noscript>
         <style>
             /* Fallback styles if Bootstrap fails to load */
@@ -174,51 +57,62 @@ foreach ($countries as $name => $flag) {
             .table th, .table td { padding: 0.75rem; border-top: 1px solid #dee2e6; }
         </style>
     </noscript>
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Calculate your shipping costs with our easy-to-use shipping estimator. Get accurate rates based on your country, city, and package weight.">
-    <meta name="keywords" content="shipping, calculator, estimator, rates, AleppoGift">
-    <meta name="author" content="AleppoGift Team">
+    <meta name="description" content="<?= te('shippingpage.meta_description') ?>">
+    <meta name="keywords" content="<?= te('shippingpage.meta_keywords') ?>">
+    <meta name="author" content="Aleppo Gift">
+    <meta name="robots" content="index, follow">
+    <?= seo_lang_links('https://aleppogift.com/shipping.php') ?>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="<?= te('shippingpage.title') ?>">
+    <meta property="og:description" content="<?= te('shippingpage.og_description') ?>">
+    <meta property="og:image" content="https://aleppogift.com/assets/images/og-image.jpg">
+    <meta property="og:url" content="<?= htmlspecialchars(seo_canonical_url('https://aleppogift.com/shipping.php')) ?>">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Aleppo Gift">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= te('shippingpage.title') ?>">
+    <meta name="twitter:description" content="<?= te('shippingpage.twitter_description') ?>">
+    <meta name="twitter:image" content="https://aleppogift.com/assets/images/og-image.jpg">
+    
+    <!-- Structured Data for Service -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Shipping Calculator",
+      "description": "Calculate shipping costs for international delivery",
+      "provider": {
+        "@type": "Organization",
+        "name": "Aleppo Gift",
+        "url": "https://aleppogift.com"
+      },
+      "areaServed": [
+        {
+          "@type": "Country",
+          "name": "United Arab Emirates"
+        },
+        {
+          "@type": "Place",
+          "name": "GCC Countries"
+        },
+        {
+          "@type": "Place",
+          "name": "Worldwide"
+        }
+      ],
+      "serviceType": "International Shipping"
+    }
+    </script>
     <style>
-        :root {
-            --Aleppo-primary: #8B0000;  /* Deep red/maroon */
-            --Aleppo-secondary: #D4AF37;  /* Gold */
-            --Aleppo-light: #F8F1E5;  /* Cream/off-white */
-        }
-        .bg-primary {
-            background-color: var(--Aleppo-primary) !important;
-        }
-        .btn-primary {
-            background-color: var(--Aleppo-primary);
-            border-color: var(--Aleppo-primary);
-        }
-        .btn-primary:hover {
-            background-color: #6d0000;
-            border-color: #6d0000;
-        }
-        .btn-outline-primary {
-            color: var(--Aleppo-primary);
-            border-color: var(--Aleppo-primary);
-        }
-        .btn-outline-primary:hover {
-            background-color: var(--Aleppo-primary);
-            border-color: var(--Aleppo-primary);
-        }
-        .text-primary {
-            color: var(--Aleppo-primary) !important;
-        }
-        .border-primary {
-            border-color: var(--Aleppo-primary) !important;
-        }
         .table-hover tbody tr:hover {
-            background-color: rgba(139, 0, 0, 0.05);
-        }
-        .card-header {
-            border-bottom: 2px solid var(--Aleppo-secondary);
-            
+            background-color: rgba(212, 132, 14, 0.08);
         }
         .alert-success {
-            border-left: 4px solid var(--Aleppo-secondary);
+            border-left: 4px solid #d4840e;
         }
         
         /* RTL Support */
@@ -227,7 +121,7 @@ foreach ($countries as $name => $flag) {
         }
         html[dir="rtl"] .alert-success {
             border-left: none;
-            border-right: 4px solid var(--Aleppo-secondary);
+            border-right: 4px solid #d4840e;
         }
         html[dir="rtl"] .me-2 {
             margin-left: 0.5rem !important;
@@ -240,16 +134,6 @@ foreach ($countries as $name => $flag) {
         html[dir="rtl"] .ps-4 {
             padding-right: 1.5rem !important;
             padding-left: 0 !important;
-        }
-        
-        .lang-switcher {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-        html[dir="rtl"] .lang-switcher {
-            right: auto;
-            left: 20px;
         }
         
         /* Currency Table Responsive Improvements */
@@ -286,36 +170,43 @@ foreach ($countries as $name => $flag) {
         }
 
         .bg-info2 {
-    background-color: var(--Aleppo-primary);
+    background-color: #d4840e;
 }
+        
+        /* Prevent header flickering/blinking */
+        .modern-header, 
+        .navbar {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+            animation: none !important;
+            transition: none !important;
+        }
+        
+        header {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
     </style>
 </head>
-<body style="background-color: var(--Aleppo-light);">
+<body class="shipping-page">
 
 <?php require_once(__DIR__ . '/../includes/header.php'); ?>
 
-<!-- Language Switcher -->
-<div class="lang-switcher">
-    <div class="btn-group" role="group">
-        <a href="?lang=en<?= isset($_POST['country']) ? '&country=' . urlencode($_POST['country']) . '&city=' . urlencode($_POST['city']) . '&weight=' . urlencode($_POST['weight']) : '' ?>" 
-           class="btn <?= $lang === 'en' ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm">
-            <?= $t['lang_english'] ?>
-        </a>
-        <a href="?lang=ar<?= isset($_POST['country']) ? '&country=' . urlencode($_POST['country']) . '&city=' . urlencode($_POST['city']) . '&weight=' . urlencode($_POST['weight']) : '' ?>" 
-           class="btn <?= $lang === 'ar' ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm">
-            <?= $t['lang_arabic'] ?>
-        </a>
-    </div>
-</div>
-
-<div class="container py-4">
-
-    <div class="text-center mb-5">
-        <h1 class="display-5 fw-bold text-primary">
-            <i class="fas fa-shipping-fast me-2"></i> <?= $t['page_title'] ?>
-        </h1>
-        <p class="lead" style="color: var(--Aleppo-secondary);"><?= $t['page_subtitle'] ?></p>
-    </div>
+<main class="container store-main my-4">
+    <header class="page-hero">
+        <p class="page-kicker"><?= te('shippingpage.kicker') ?></p>
+        <h1><?= te('shippingpage.page_title') ?></h1>
+        <p class="page-lead"><?= te('shippingpage.page_subtitle') ?></p>
+        <div class="page-hero-tools">
+            <div class="btn-group" role="group" aria-label="<?= te('shippingpage.language_switcher') ?>">
+                <?php foreach (store_languages() as $langCode => $langMeta): ?>
+                <a href="<?= htmlspecialchars(lang_switch_url($langCode)) ?>" hreflang="<?= htmlspecialchars($langMeta['html']) ?>" lang="<?= htmlspecialchars($langMeta['html']) ?>"
+                   class="btn <?= $lang === $langCode ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm"><?= htmlspecialchars($langMeta['label']) ?></a>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </header>
 
     <div class="row g-4">
         <!-- Calculator Form Column -->
@@ -323,56 +214,55 @@ foreach ($countries as $name => $flag) {
             <div class="card shadow-sm border-primary">
                 <div class="card-header text-prime py-3">
                     <h3 class="h5 mb-0">
-                        <i class="fas fa-calculator me-2"></i> <?= $t['estimate_shipping'] ?>
+                        <i class="fas fa-calculator me-2"></i> <?= te('shippingpage.estimate_shipping') ?>
                     </h3>
                 </div>
                 <div class="card-body p-4">
                     <form method="post" id="shippingForm">
-                        <input type="hidden" name="lang" value="<?= $lang ?>">
                         <div class="mb-4">
-                            <label for="country" class="form-label fw-bold"><?= $t['country_label'] ?></label>
+                            <label for="country" class="form-label fw-bold"><?= te('shippingpage.country_label') ?></label>
                             <select id="country" name="country" class="form-select form-select-lg" required>
-                                <option value=""><?= $t['select_country'] ?></option>
+                                <option value=""><?= te('shippingpage.select_country') ?></option>
                                 <?= $countryOptions ?>
                             </select>
                             <?php if (empty($countryOptions)): ?>
                             <div class="alert alert-warning mt-2">
                                 <small><i class="fas fa-exclamation-triangle me-1"></i> 
-                                Countries not loaded. Please refresh the page.</small>
+                                <?= te('shippingpage.countries_not_loaded') ?></small>
                             </div>
                             <?php else: ?>
                             <small class="text-success">
                                 <i class="fas fa-check-circle me-1"></i> 
-                                <?= substr_count($countryOptions, '<option') ?> countries loaded
+                                <?= te('shippingpage.countries_loaded', ['count' => substr_count($countryOptions, '<option')]) ?>
                             </small>
                             <?php endif; ?>
                         </div>
                         
                         <div class="mb-4">
-                            <label for="city" class="form-label fw-bold"><?= $t['city_label'] ?></label>
+                            <label for="city" class="form-label fw-bold"><?= te('shippingpage.city_label') ?></label>
                             <input type="text" id="city" name="city" class="form-control form-control-lg" 
-                                   placeholder="<?= $t['city_placeholder'] ?>" value="<?= htmlspecialchars($city) ?>">
+                                   placeholder="<?= te('shippingpage.city_placeholder') ?>" value="<?= htmlspecialchars($city) ?>">
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle me-1"></i> <?= $t['city_info'] ?>
+                                <i class="fas fa-info-circle me-1"></i> <?= te('shippingpage.city_info') ?>
                             </small>
                         </div>
 
                         <div class="mb-4">
-                            <label for="weight" class="form-label fw-bold"><?= $t['weight_label'] ?></label>
+                            <label for="weight" class="form-label fw-bold"><?= te('shippingpage.weight_label') ?></label>
                             <div class="input-group">
                                 <input type="number" step="0.1" min="0.1" id="weight" name="weight" 
                                        class="form-control form-control-lg" required 
-                                       placeholder="<?= $t['weight_placeholder'] ?>"
+                                       placeholder="<?= te('shippingpage.weight_placeholder') ?>"
                                        value="<?= htmlspecialchars($weight) ?>">
-                                <span class="input-group-text">kg</span>
+                                <span class="input-group-text"><?= te('shippingpage.kg') ?></span>
                             </div>
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle me-1"></i> <?= $t['weight_info'] ?>
+                                <i class="fas fa-info-circle me-1"></i> <?= te('shippingpage.weight_info') ?>
                             </small>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-lg w-100 py-3">
-                            <i class="fas fa-calculator me-2"></i> <?= $t['calculate_btn'] ?>
+                            <i class="fas fa-calculator me-2"></i> <?= te('shippingpage.calculate_btn') ?>
                         </button>
                     </form>
 
@@ -387,19 +277,27 @@ foreach ($countries as $name => $flag) {
                                     <i class="fas fa-check-circle fa-3x" style="color: var(--Aleppo-secondary);"></i>
                                 </div>
                                 <div class="col-md-10">
-                                    <h4 class="mb-2"><?= $t['shipping_result'] ?></h4>
+                                    <h4 class="mb-2"><?= te('shippingpage.shipping_result') ?></h4>
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <p class="mb-1 fs-4 fw-bold text-primary">AED <?= number_format($shippingCost, 2) ?></p>
                                         </div>
                                         <div class="col-sm-6">
+                                            <?php
+                                            $quoteCurrency = selected_store_currency();
+                                            if ($quoteCurrency['code'] === 'AED') {
+                                                $quoteCurrency = currency_by_code('USD');
+                                            }
+                                            $quoteAmount = $shippingCost * (float)$quoteCurrency['rate'];
+                                            $quoteLabel = t('shippingpage.quote_equivalent', ['code' => $quoteCurrency['code']]);
+                                            ?>
                                             <p class="mb-1 fs-5 fw-semibold text-secondary">
-                                                USD <?= number_format($shippingCost * $usdRate, 2) ?>
+                                                <?= htmlspecialchars($quoteCurrency['prefix']) ?><?= number_format($quoteAmount, (int)$quoteCurrency['decimals']) ?>
                                             </p>
-                                            <small class="text-muted"><?= $t['usd_equivalent'] ?></small>
+                                            <small class="text-muted"><?= htmlspecialchars($quoteLabel) ?></small>
                                         </div>
                                     </div>
-                                    <small class="text-muted"><?= $t['cost_breakdown'] ?></small>
+                                    <small class="text-muted"><?= te('shippingpage.cost_breakdown') ?></small>
                                 </div>
                             </div>
                         </div>
@@ -408,8 +306,8 @@ foreach ($countries as $name => $flag) {
             </div>
             
             <div class="text-center mt-4">
-                <a href="checkout.php?lang=<?= $lang ?>" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left me-2"></i> <?= $t['back_to_shop'] ?>
+                <a href="checkout.php" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i> <?= te('shippingpage.back_to_shop') ?>
                 </a>
             </div>
         </div>
@@ -419,7 +317,7 @@ foreach ($countries as $name => $flag) {
             <div class="card shadow-sm border-primary h-100">
                 <div class="card-header text-prime py-3">
                     <h3 class="h5 mb-0">
-                        <i class="fas fa-clipboard-list me-2"></i> <?= $t['shipping_rates'] ?>
+                        <i class="fas fa-clipboard-list me-2"></i> <?= te('shippingpage.shipping_rates') ?>
                     </h3>
                 </div>
                 <div class="card-body p-0">
@@ -427,41 +325,41 @@ foreach ($countries as $name => $flag) {
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4"><?= $t['region_country'] ?></th>
-                                    <th><?= $t['base_rate'] ?></th>
-                                    <th><?= $t['additional_rate'] ?></th>
+                                    <th class="ps-4"><?= te('shippingpage.region_country') ?></th>
+                                    <th><?= te('shippingpage.base_rate') ?></th>
+                                    <th><?= te('shippingpage.additional_rate') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="ps-4"><strong><?= $t['uae'] ?></strong></td>
-                                    <td><?= $t['uae_base'] ?></td>
-                                    <td><?= $t['uae_additional'] ?></td>
+                                    <td class="ps-4"><strong><?= te('shippingpage.uae') ?></strong></td>
+                                    <td><?= te('shippingpage.uae_base') ?></td>
+                                    <td><?= te('shippingpage.uae_additional') ?></td>
                                 </tr>
                                 <tr>
-                                    <td class="ps-4"><strong><?= $t['oman'] ?></strong></td>
-                                    <td><?= $t['oman_base'] ?></td>
-                                    <td><?= $t['oman_additional'] ?></td>
+                                    <td class="ps-4"><strong><?= te('shippingpage.oman') ?></strong></td>
+                                    <td><?= te('shippingpage.oman_base') ?></td>
+                                    <td><?= te('shippingpage.oman_additional') ?></td>
                                 </tr>
                                 <tr>
-                                    <td class="ps-4"><strong><?= $t['gcc_countries'] ?></strong></td>
-                                    <td><?= $t['gcc_base'] ?></td>
-                                    <td><?= $t['gcc_additional'] ?></td>
+                                    <td class="ps-4"><strong><?= te('shippingpage.gcc_countries') ?></strong></td>
+                                    <td><?= te('shippingpage.gcc_base') ?></td>
+                                    <td><?= te('shippingpage.gcc_additional') ?></td>
                                 </tr>
                                 <tr>
                                     <td colspan="3" class="ps-4 text-muted">
-                                        <small><i class="fas fa-info-circle me-1"></i> <?= $t['gcc_note'] ?></small>
+                                        <small><i class="fas fa-info-circle me-1"></i> <?= te('shippingpage.gcc_note') ?></small>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="ps-4"><strong><?= $t['other_countries'] ?></strong></td>
-                                    <td><?= $t['other_base'] ?></td>
-                                    <td><?= $t['other_additional'] ?></td>
+                                    <td class="ps-4"><strong><?= te('shippingpage.other_countries') ?></strong></td>
+                                    <td><?= te('shippingpage.other_base') ?></td>
+                                    <td><?= te('shippingpage.other_additional') ?></td>
                                 </tr>
                                 <tr>
-                                    <td class="ps-4"><strong><?= $t['usa_others'] ?></strong></td>
-                                    <td><?= $t['usa_base'] ?></td>
-                                    <td><?= $t['usa_additional'] ?></td>
+                                    <td class="ps-4"><strong><?= te('shippingpage.usa_others') ?></strong></td>
+                                    <td><?= te('shippingpage.usa_base') ?></td>
+                                    <td><?= te('shippingpage.usa_additional') ?></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -470,34 +368,32 @@ foreach ($countries as $name => $flag) {
                 <div class="card-footer bg-light">
                     <div class="mb-3">
                         <i class="fas fa-info-circle text-primary me-2"></i>
-                        <small class="text-muted"><?= $t['footer_note'] ?></small>
+                        <small class="text-muted"><?= te('shippingpage.footer_note') ?></small>
                     </div>
                     <div class="mb-3">
                         <i class="fas fa-dollar-sign text-success me-2"></i>
-                        <small class="text-muted"><?= $t['usd_note'] ?></small>
+                        <small class="text-muted"><?= te('shippingpage.usd_note', ['rate' => $usdNoteRate]) ?></small>
                     </div>
                     
                     <!-- Important Notice -->
                     <div class="alert alert-warning alert-sm p-2 mb-3" style="font-size: 0.85rem;">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Important:</strong> Shipping costs are calculated based on destination and package dimensions. 
-                        The rates shown provide approximate estimates since item boxes vary in shapes and dimensions. 
-                        For GCC countries, parcels are limited to 8kg each - larger orders are split into multiple parcels.
+                        <strong><?= te('shippingpage.important') ?></strong> <?= te('shippingpage.important_text') ?>
                     </div>
                     
                     <div class="text-muted">
-                        <strong><?= $t['shipping_examples'] ?>:</strong><br>
+                        <strong><?= te('shippingpage.shipping_examples') ?>:</strong><br>
                         <div class="mt-2" style="font-size: 0.9rem;">
                             <div class="mb-2">
-                                <strong>• Qatar (22kg):</strong> 3 parcels → (8kg + 8kg + 6kg)<br>
-                                <span class="text-primary ms-3">Parcel 1: 120 + (7×30) = 330 AED</span><br>
-                                <span class="text-primary ms-3">Parcel 2: 120 + (7×30) = 330 AED</span><br>
-                                <span class="text-primary ms-3">Parcel 3: 120 + (5×30) = 270 AED</span><br>
-                                <span class="fw-bold text-success ms-3">Total: 930 AED (~252 USD)</span>
+                                <strong>• <?= te('shippingpage.example_qatar') ?></strong> <?= te('shippingpage.example_qatar_parcels') ?><br>
+                                <span class="text-primary ms-3"><?= te('shippingpage.parcel_line', ['n' => 1, 'calc' => '120 + (7×30) = 330']) ?></span><br>
+                                <span class="text-primary ms-3"><?= te('shippingpage.parcel_line', ['n' => 2, 'calc' => '120 + (7×30) = 330']) ?></span><br>
+                                <span class="text-primary ms-3"><?= te('shippingpage.parcel_line', ['n' => 3, 'calc' => '120 + (5×30) = 270']) ?></span><br>
+                                <span class="fw-bold text-success ms-3"><?= te('shippingpage.example_total', ['aed' => 930, 'usd' => number_format(930 * $usdRate, 0)]) ?></span>
                             </div>
                             <div class="mb-2">
-                                <strong>• Germany (15kg):</strong> Single parcel<br>
-                                <span class="text-primary ms-3">220 + (14×70) = 1,200 AED (~325 USD)</span>
+                                <strong>• <?= te('shippingpage.example_germany') ?></strong> <?= te('shippingpage.single_parcel') ?><br>
+                                <span class="text-primary ms-3"><?= te('shippingpage.amount_approx', ['calc' => '220 + (14×70) = 1,200', 'usd' => number_format(1200 * $usdRate, 0)]) ?></span>
                             </div>
                         </div>
                     </div>
@@ -512,69 +408,46 @@ foreach ($countries as $name => $flag) {
             <div class="card shadow-sm border-info">
                 <div class="card-header bg-info2 text-white py-3">
                     <h3 class="h5 mb-0">
-                        <i class="fas fa-globe me-2"></i> <?= $t['currency_table_title'] ?>
+                        <i class="fas fa-globe me-2"></i> <?= te('shippingpage.currency_table_title') ?>
                     </h3>
-                    <small class="opacity-75"><?= $t['currency_table_subtitle'] ?></small>
+                    <small class="opacity-75"><?= te('shippingpage.currency_table_subtitle', ['date' => $rateLabel]) ?></small>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 table-striped">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4" style="min-width: 120px;"><?= $t['currency_name'] ?></th>
-                                    <th class="d-none d-md-table-cell" style="min-width: 100px;"><?= $t['country_region'] ?></th>
+                                    <th class="ps-4" style="min-width: 120px;"><?= te('shippingpage.currency_name') ?></th>
+                                    <th class="d-none d-md-table-cell" style="min-width: 100px;"><?= te('shippingpage.country_region') ?></th>
                                     <th class="text-center" style="min-width: 80px;">
-                                        <small><?= $t['exchange_rate_aed'] ?></small>
+                                        <small><?= te('shippingpage.exchange_rate_aed') ?></small>
                                     </th>
                                     <th class="text-end d-none d-lg-table-cell" style="min-width: 70px;">
-                                        <small><?= $t['sample_cost_30'] ?></small>
+                                        <small><?= te('shippingpage.sample_cost_30') ?></small>
                                     </th>
                                     <th class="text-end" style="min-width: 70px;">
-                                        <small><?= $t['sample_cost_120'] ?></small>
+                                        <small><?= te('shippingpage.sample_cost_120') ?></small>
                                     </th>
                                     <th class="text-end d-none d-sm-table-cell" style="min-width: 70px;">
-                                        <small><?= $t['sample_cost_300'] ?></small>
+                                        <small><?= te('shippingpage.sample_cost_300') ?></small>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php 
-                                $currencies = [
-                                    ['name' => 'US Dollar (USD)', 'country' => 'United States', 'rate' => 0.272],
-                                    ['name' => 'Euro (EUR)', 'country' => 'Eurozone', 'rate' => 0.252],
-                                    ['name' => 'British Pound (GBP)', 'country' => 'United Kingdom', 'rate' => 0.215],
-                                    ['name' => 'Japanese Yen (JPY)', 'country' => 'Japan', 'rate' => 40.85],
-                                    ['name' => 'Canadian Dollar (CAD)', 'country' => 'Canada', 'rate' => 0.375],
-                                    ['name' => 'Australian Dollar (AUD)', 'country' => 'Australia', 'rate' => 0.410],
-                                    ['name' => 'Swiss Franc (CHF)', 'country' => 'Switzerland', 'rate' => 0.242],
-                                    ['name' => 'Chinese Yuan (CNY)', 'country' => 'China', 'rate' => 1.96],
-                                    ['name' => 'Indian Rupee (INR)', 'country' => 'India', 'rate' => 22.80],
-                                    ['name' => 'Saudi Riyal (SAR)', 'country' => 'Saudi Arabia', 'rate' => 1.02],
-                                    ['name' => 'Qatari Riyal (QAR)', 'country' => 'Qatar', 'rate' => 0.99],
-                                    ['name' => 'Kuwaiti Dinar (KWD)', 'country' => 'Kuwait', 'rate' => 0.083],
-                                    ['name' => 'Omani Rial (OMR)', 'country' => 'Oman', 'rate' => 0.105],
-                                    ['name' => 'Bahraini Dinar (BHD)', 'country' => 'Bahrain', 'rate' => 0.103],
-                                    ['name' => 'South Korean Won (KRW)', 'country' => 'South Korea', 'rate' => 365],
-                                    ['name' => 'Singapore Dollar (SGD)', 'country' => 'Singapore', 'rate' => 0.365],
-                                    ['name' => 'New Zealand Dollar (NZD)', 'country' => 'New Zealand', 'rate' => 0.445],
-                                    ['name' => 'South African Rand (ZAR)', 'country' => 'South Africa', 'rate' => 5.05],
-                                    ['name' => 'Brazilian Real (BRL)', 'country' => 'Brazil', 'rate' => 1.48],
-                                    ['name' => 'Mexican Peso (MXN)', 'country' => 'Mexico', 'rate' => 4.75]
-                                ];
-                                
-                                foreach ($currencies as $currency):
+                                foreach (currency_catalog() as $currency):
                                     $cost30 = 30 * $currency['rate'];
                                     $cost120 = 120 * $currency['rate'];
                                     $cost300 = 300 * $currency['rate'];
-                                    $decimals = ($currency['rate'] >= 1) ? 0 : 2;
+                                    $decimals = (int)$currency['decimals'];
                                 ?>
                                 <tr>
                                     <td class="ps-4">
-                                        <strong><?= $currency['name'] ?></strong>
-                                        <div class="d-md-none text-muted small mt-1"><?= $currency['country'] ?></div>
+                                        <strong><?= htmlspecialchars(t_or('currency.' . $currency['code'], $currency['name'])) ?> (<?= htmlspecialchars($currency['code']) ?>)</strong>
+                                        <div class="d-md-none text-muted small mt-1"><?= htmlspecialchars($currency['country']) ?></div>
                                     </td>
-                                    <td class="d-none d-md-table-cell"><?= $currency['country'] ?></td>
-                                    <td class="text-center font-monospace small"><?= number_format($currency['rate'], ($currency['rate'] >= 1) ? 2 : 3) ?></td>
+                                    <td class="d-none d-md-table-cell"><?= htmlspecialchars($currency['country']) ?></td>
+                                    <td class="text-center font-monospace small"><?= format_currency_rate((float)$currency['rate']) ?></td>
                                     <td class="text-end font-monospace small d-none d-lg-table-cell"><?= number_format($cost30, $decimals) ?></td>
                                     <td class="text-end font-monospace small"><?= number_format($cost120, $decimals) ?></td>
                                     <td class="text-end font-monospace small d-none d-sm-table-cell"><?= number_format($cost300, $decimals) ?></td>
@@ -587,13 +460,13 @@ foreach ($countries as $name => $flag) {
                 <div class="card-footer bg-light">
                     <small class="text-muted">
                         <i class="fas fa-info-circle me-2"></i>
-                        <?= $t['currency_disclaimer'] ?>
+                        <?= te('shippingpage.currency_disclaimer') ?>
                     </small>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 
 <?php require_once(__DIR__ . '/../includes/footer.php'); ?>
 
@@ -675,7 +548,7 @@ function initializeCountryDropdown() {
         console.warn('Countries not loaded properly, showing warning');
         const warningDiv = document.createElement('div');
         warningDiv.className = 'alert alert-warning mt-2';
-        warningDiv.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> Countries not loaded. Please refresh the page.</small>';
+        warningDiv.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> ' + <?= json_encode(te('shippingpage.countries_not_loaded'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?> + '</small>';
         countrySelect.parentNode.appendChild(warningDiv);
     }
 
@@ -683,19 +556,10 @@ function initializeCountryDropdown() {
         const country = this.value;
         const cityInput = document.getElementById('city');
         
-        // Language-specific placeholders
         const placeholders = {
-            'en': {
-                default: '<?= $t['city_placeholder'] ?>',
-                withCountry: 'Enter your city in '
-            },
-            'ar': {
-                default: '<?= $t['city_placeholder'] ?>',
-                withCountry: 'أدخل مدينتك في '
-            }
+            default: <?= json_encode(t('shippingpage.city_placeholder'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>,
+            withCountry: <?= json_encode(t('shippingpage.city_placeholder_in'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>
         };
-        
-        const currentLang = '<?= $lang ?>';
 
         // Check if the city input element exists before accessing its properties
         if (!cityInput) {
@@ -708,9 +572,9 @@ function initializeCountryDropdown() {
         
         // Update placeholder based on country and language
         if (country) {
-            cityInput.placeholder = placeholders[currentLang].withCountry + country;
+            cityInput.placeholder = placeholders.withCountry.replace('{country}', country);
         } else {
-            cityInput.placeholder = placeholders[currentLang].default;
+            cityInput.placeholder = placeholders.default;
         }
 
         console.log('Country changed to:', country);

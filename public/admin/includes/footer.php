@@ -1,36 +1,53 @@
-    </div> <!-- End container-fluid -->
-    
-    <!-- Footer -->
-    <footer class="bg-light text-center text-muted py-3 mt-5">
-        <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> AleppoGift Admin Panel. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <!-- Bootstrap JS -->
+        </main>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    
-    <!-- Additional page specific JS -->
     <?php if (isset($additional_js)) echo $additional_js; ?>
-    
     <script>
-        // Common admin functionality
-        $(document).ready(function() {
-            // Confirm delete actions
-            $('.delete-btn').on('click', function(e) {
-                if (!confirm('Are you sure you want to delete this item?')) {
-                    e.preventDefault();
+        (function () {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.querySelector('[data-sidebar-overlay]');
+            const toggleButton = document.querySelector('[data-sidebar-toggle]');
+
+            if (!sidebar || !overlay || !toggleButton) {
+                return;
+            }
+
+            function setSidebarState(isOpen) {
+                sidebar.classList.toggle('active', isOpen);
+                overlay.classList.toggle('active', isOpen);
+                document.body.classList.toggle('sidebar-open', isOpen);
+                toggleButton.classList.toggle('is-active', isOpen);
+                toggleButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            }
+
+            toggleButton.setAttribute('aria-expanded', 'false');
+
+            toggleButton.addEventListener('click', function () {
+                if (window.innerWidth > 991) {
+                    return;
+                }
+                setSidebarState(!sidebar.classList.contains('active'));
+            });
+
+            overlay.addEventListener('click', function () {
+                setSidebarState(false);
+            });
+
+            document.querySelectorAll('.sidebar-menu a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (window.innerWidth <= 991) {
+                        setSidebarState(false);
+                    }
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 991) {
+                    setSidebarState(false);
                 }
             });
-            
-            // Auto-hide alerts after 5 seconds
-            setTimeout(function() {
-                $('.alert').fadeOut();
-            }, 5000);
-        });
+        }());
     </script>
 </body>
 </html>

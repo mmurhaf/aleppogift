@@ -1,5 +1,9 @@
 
-
+var __ = function (k, p, fallback) {
+    var s = (window.AG_I18N && window.AG_I18N[k]) || fallback || k;
+    if (p) { for (var n in p) { s = s.split('{' + n + '}').join(p[n]); } }
+    return s;
+};
 
     $(document).ready(function () {
 		// Future JavaScript functions can be added here
@@ -21,7 +25,7 @@ console.log("AleppoGift JS loaded.");
                 <div id="${toastId}" class="toast ${toastClass}" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="toast-header">
                         <strong class="me-auto">${title}</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="${__('close', null, 'Close')}"></button>
                     </div>
                     <div class="toast-body text-white">
                         ${message}
@@ -87,7 +91,7 @@ console.log("AleppoGift JS loaded.");
             
             // Add loading state with enhanced animation
             button.addClass('loading');
-            button.html('<i class="fas fa-spinner fa-spin me-2"></i>Adding...');
+            button.html('<i class="fas fa-spinner fa-spin me-2"></i>' + __('adding', null, 'Adding...'));
             button.prop('disabled', true);
             
             $.post('ajax/add_to_cart.php', form.serialize(), function (res) {
@@ -103,7 +107,7 @@ console.log("AleppoGift JS loaded.");
             
             // Add loading state with enhanced animation
             button.addClass('loading');
-            button.html('<i class="fas fa-spinner fa-spin me-2"></i>Adding...');
+            button.html('<i class="fas fa-spinner fa-spin me-2"></i>' + __('adding', null, 'Adding...'));
             button.prop('disabled', true);
             
             $.post('ajax/add_to_cart.php', formData, function (res) {
@@ -131,12 +135,12 @@ console.log("AleppoGift JS loaded.");
                 
                 // Show success message
                 if (res.product_name) {
-                    showToast('Success', `${res.product_name} added to cart!`, 'success');
+                    showToast(__('toast_success', null, 'Success'), __('product_added', { name: res.product_name }, '{name} added to cart!'), 'success');
                 }
                 
                 // Enhanced success animation for btn-add-cart
                 button.removeClass('loading').addClass('success');
-                button.html('<i class="fas fa-check me-2"></i>Added!');
+                button.html('<i class="fas fa-check me-2"></i>' + __('added_excl', null, 'Added!'));
                 
                 setTimeout(() => {
                     button.removeClass('success');
@@ -144,7 +148,7 @@ console.log("AleppoGift JS loaded.");
                     button.prop('disabled', false);
                 }, 2000);
             } else {
-                showToast('Error', res.message || 'Failed to add product to cart', 'error');
+                showToast(__('toast_error', null, 'Error'), res.message || __('failed_to_add_product', null, 'Failed to add product to cart'), 'error');
                 button.removeClass('loading');
                 button.html(originalText);
                 button.prop('disabled', false);
@@ -153,48 +157,17 @@ console.log("AleppoGift JS loaded.");
 
         // Handle add to cart error
         function handleAddToCartError(xhr, button, originalText) {
-            let errorMsg = 'Network error. Please try again.';
+            let errorMsg = __('network_error', null, 'Network error. Please try again.');
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
             }
-            showToast('Error', errorMsg, 'error');
+            showToast(__('toast_error', null, 'Error'), errorMsg, 'error');
             button.removeClass('loading');
             button.html(originalText);
             button.prop('disabled', false);
         }
 
-        // Remove from cart
-        $(document).on('click', '.remove-item', function () {
-            const id = $(this).data('id');
-            const button = $(this);
-            
-            // Show loading state
-            button.prop('disabled', true);
-            
-            $.post('ajax/remove_from_cart.php', { product_id: id }, function (res) {
-                if (res.success) {
-                    $('#cart-count').text(res.count);
-                    $('#cart-count-toggle').text(res.count);
-                    $('#cart-count-mobile').text(res.count);
-                    
-                    // Reload both cart previews
-                    if (window.loadCartPreview) {
-                        loadCartPreview();
-                    }
-                    if (window.loadCartOffcanvas) {
-                        loadCartOffcanvas();
-                    }
-                    
-                    showToast('Success', res.message || 'Item removed from cart', 'success');
-                } else {
-                    showToast('Error', res.message || 'Failed to remove item', 'error');
-                }
-                button.prop('disabled', false);
-            }, 'json').fail(function() {
-                showToast('Error', 'Network error. Please try again.', 'error');
-                button.prop('disabled', false);
-            });
-        });
+        // Cart removal is handled once in storefront.js.
 
         // Update quantity
         $(document).on('click', '.update-qty', function () {
@@ -209,7 +182,7 @@ console.log("AleppoGift JS loaded.");
             
             // Don't allow decrease below 1
             if (action === 'decrease' && currentQuantity <= 1) {
-                showToast('Info', 'Minimum quantity is 1. Use remove button to delete item.', 'info');
+                showToast(__('toast_info', null, 'Info'), __('min_qty', null, 'Minimum quantity is 1. Use remove button to delete item.'), 'info');
                 return;
             }
             
@@ -218,7 +191,12 @@ console.log("AleppoGift JS loaded.");
             const originalIcon = button.find('i').attr('class');
             button.find('i').attr('class', 'fas fa-spinner fa-spin');
             
-            $.post('ajax/update_cart_qty.php', { product_id: id, action: action }, function (res) {
+            const qtyPayload = { product_id: id, action: action };
+            const cartKey = $(this).attr('data-key');
+            if (cartKey !== undefined && cartKey !== '') {
+                qtyPayload.cart_key = cartKey;
+            }
+            $.post('ajax/update_cart_qty.php', qtyPayload, function (res) {
                 if (res.success) {
                     $('#cart-count').text(res.count);
                     $('#cart-count-toggle').text(res.count);
@@ -245,52 +223,60 @@ console.log("AleppoGift JS loaded.");
                         }
                     }
                 } else {
-                    showToast('Warning', res.message || 'Cannot update quantity', 'warning');
+                    showToast(__('toast_warning', null, 'Warning'), res.message || __('qty_update_failed', null, 'Cannot update quantity'), 'warning');
                 }
                 
                 // Reset button
                 button.prop('disabled', false);
                 button.find('i').attr('class', originalIcon);
             }, 'json').fail(function() {
-                showToast('Error', 'Network error. Please try again.', 'error');
+                showToast(__('toast_error', null, 'Error'), __('network_error', null, 'Network error. Please try again.'), 'error');
                 button.prop('disabled', false);
                 button.find('i').attr('class', originalIcon);
             });
         });
 
         // Function to update cart item total on cart page
+        function storeMoneyLabel(amount, withReference) {
+            if (typeof window.formatStoreMoney === 'function') {
+                return window.formatStoreMoney(amount, !!withReference);
+            }
+            return 'AED ' + (Number(amount) || 0).toFixed(2);
+        }
+
         function updateCartItemTotal(cartItem, newQuantity) {
-            // Try to find price element - support multiple selectors
-            let priceText = cartItem.find('.current-price').text();
-            if (!priceText) {
-                priceText = cartItem.find('.item-price').text();
+            const unitAed = parseFloat(cartItem.find('[data-unit-aed]').attr('data-unit-aed') || '');
+            let newTotal = NaN;
+            if (!isNaN(unitAed)) {
+                newTotal = unitAed * newQuantity;
+            } else {
+                let priceText = cartItem.find('.current-price').text();
+                if (!priceText) {
+                    priceText = cartItem.find('.item-price').text();
+                }
+                const price = parseFloat(priceText.replace(/[^\d.]/g, ''));
+                if (isNaN(price)) {
+                    console.warn('Could not parse price from:', priceText);
+                    return;
+                }
+                newTotal = price * newQuantity;
             }
-            
-            const price = parseFloat(priceText.replace(/[^\d.]/g, ''));
-            if (isNaN(price)) {
-                console.warn('Could not parse price from:', priceText);
-                return;
-            }
-            
-            const newTotal = price * newQuantity;
-            
-            // Try to update total element - support multiple selectors
+
+            const label = storeMoneyLabel(newTotal, true);
             const totalElement = cartItem.find('.item-total-price');
             if (totalElement.length) {
                 totalElement.fadeOut(150, function() {
-                    $(this).html('<strong>AED ' + newTotal.toFixed(2) + '</strong>').fadeIn(150);
+                    $(this).html('<strong>' + label + '</strong>').fadeIn(150);
                 });
             } else {
-                // Alternative selector for cart.php
                 const altTotalElement = cartItem.find('.item-total');
                 if (altTotalElement.length) {
                     altTotalElement.fadeOut(150, function() {
-                        $(this).text('AED ' + newTotal.toFixed(2)).fadeIn(150);
+                        $(this).text(label).fadeIn(150);
                     });
                 }
             }
-            
-            // Update cart summary totals
+
             if (typeof updateCartSummary === 'function') {
                 updateCartSummary();
             }
@@ -308,8 +294,16 @@ console.log("AleppoGift JS loaded.");
                 return;
             }
             
+            let subtotalAed = 0;
+            let pricedFromAed = 0;
             cartItems.each(function() {
-                // Try different selectors for item total
+                const unitAed = parseFloat($(this).find('[data-unit-aed]').attr('data-unit-aed') || '');
+                const qty = parseInt($(this).find('.quantity-display').text(), 10);
+                if (!isNaN(unitAed) && !isNaN(qty)) {
+                    subtotalAed += unitAed * qty;
+                    pricedFromAed++;
+                    return;
+                }
                 let totalText = $(this).find('.item-total-price strong').text();
                 if (!totalText) {
                     totalText = $(this).find('.item-total').text();
@@ -320,101 +314,45 @@ console.log("AleppoGift JS loaded.");
                     subtotal += total;
                 }
             });
+            if (pricedFromAed > 0) {
+                subtotal = subtotalAed;
+            }
             
             console.log('Cart subtotal calculated:', subtotal);
             
             // Update subtotal in summary - try multiple selectors
+            const subtotalLabel = storeMoneyLabel(subtotal, true);
             const subtotalElement = $('.summary-row:first .fw-bold');
             if (subtotalElement.length) {
-                subtotalElement.text('AED ' + subtotal.toFixed(2));
+                subtotalElement.text(subtotalLabel);
             } else {
-                // Alternative selector for cart.php
-                $('.summary-row:first span:last-child').text('AED ' + subtotal.toFixed(2));
+                $('.summary-row:first span:last-child').text(subtotalLabel);
             }
             
-            // Update grand total - try multiple selectors
             const grandTotalElement = $('.grand-total .text-success');
             if (grandTotalElement.length) {
-                grandTotalElement.text('AED ' + subtotal.toFixed(2));
+                grandTotalElement.text(subtotalLabel);
             } else {
-                // Alternative selector for cart.php (including shipping)
-                const shipping = 30; // Default shipping cost
-                $('.grand-total span:last-child').text('AED ' + (subtotal + shipping).toFixed(2));
+                const shipping = 30;
+                $('.grand-total span:last-child').text(storeMoneyLabel(subtotal + shipping, true));
             }
         }
         
         // Make updateCartSummary globally available
         window.updateCartSummary = updateCartSummary;
 
-        // Enhanced remove from cart with confirmation for cart page
-        $(document).on('click', '.remove-item', function (e) {
-            e.preventDefault();
-            
-            const id = $(this).data('id');
-            const button = $(this);
-            const cartItem = button.closest('.cart-item-modern, .cart-item-preview');
-            
-            // Show confirmation for cart page (not preview)
-            if (cartItem.hasClass('cart-item-modern')) {
-                if (!confirm('Are you sure you want to remove this item from your cart?')) {
-                    return;
-                }
-            }
-            
-            // Show loading state
-            const originalHtml = button.html();
-            button.html('<i class="fas fa-spinner fa-spin"></i>');
-            button.prop('disabled', true);
-            
-            $.post('ajax/remove_from_cart.php', { product_id: id }, function (res) {
-                if (res.success) {
-                    $('#cart-count').text(res.count);
-                    $('#cart-count-toggle').text(res.count);
-                    
-                    // Animate item removal
-                    cartItem.fadeOut(300, function() {
-                        $(this).remove();
-                        
-                        // Reload cart preview (cache-busted + debug)
-                        if (window.loadCartPreview) {
-                            loadCartPreview();
-                        }
-                        if (window.loadCartOffcanvas) {
-                            loadCartOffcanvas();
-                        }
-                        
-                        // If on cart page and no items left, reload page
-                        if (window.location.pathname.includes('cart.php') && res.count === 0) {
-                            location.reload();
-                        } else if (cartItem.hasClass('cart-item-modern')) {
-                            // Update cart summary
-                            updateCartSummary();
-                        }
-                    });
-                    
-                    showToast('Success', res.message || 'Item removed from cart', 'success');
-                } else {
-                    showToast('Error', res.message || 'Failed to remove item', 'error');
-                    button.html(originalHtml);
-                    button.prop('disabled', false);
-                }
-            }, 'json').fail(function() {
-                showToast('Error', 'Network error. Please try again.', 'error');
-                button.html(originalHtml);
-                button.prop('disabled', false);
-            });
-        });
+        // Cart removal is handled once in storefront.js.
 
         // Enhanced addToCart function for button clicks (not forms)
         window.addToCart = function(productId, quantity = 1) {
             // Client-side validation
             if (!productId || productId <= 0) {
-                showToast('Error', 'Invalid product selected', 'error');
+                showToast(__('toast_error', null, 'Error'), __('invalid_product_selected', null, 'Invalid product selected'), 'error');
                 return;
             }
             
             if (!quantity || quantity <= 0) {
-                showToast('Error', 'Invalid quantity', 'error');
+                showToast(__('toast_error', null, 'Error'), __('invalid_quantity', null, 'Invalid quantity'), 'error');
                 return;
             }
             
@@ -423,7 +361,7 @@ console.log("AleppoGift JS loaded.");
             
             // Show loading state if button exists
             if (button) {
-                button.html('<i class="fas fa-spinner fa-spin me-2"></i>Adding...');
+                button.html('<i class="fas fa-spinner fa-spin me-2"></i>' + __('adding', null, 'Adding...'));
                 button.prop('disabled', true);
             }
             
@@ -432,15 +370,25 @@ console.log("AleppoGift JS loaded.");
                 quantity: quantity 
             }, function (res) {
                 if (res.success) {
-                    // Update cart counters
-                    $('#cart-count').text(res.count);
-                    $('#cart-count-toggle').text(res.count);
+                    // Update every cart badge, including the mobile one.
+                    if (typeof updateCartCount === 'function') {
+                        updateCartCount(res.count);
+                    } else {
+                        $('#cart-count, #cart-count-toggle, #cart-count-mobile').text(res.count);
+                    }
                     
-                    // Reload cart preview (cache-busted + debug)
-                    (function(){ const _cb = 't=' + Date.now(); console.log('Reloading cart preview (addToCart)'); $('#cartPreview').load('ajax/cart_preview.php?' + _cb); })();
-                    
-                    // Show success message
-                    showToast('Success', res.message || 'Item added to cart!', 'success');
+                    if (window.cartPreviewTimeout) {
+                        clearTimeout(window.cartPreviewTimeout);
+                        window.cartPreviewTimeout = null;
+                    }
+                    if (window.matchMedia('(max-width: 991.98px)').matches && window.bootstrap) {
+                        var addedDrawer = document.getElementById('cartOffcanvas');
+                        if (addedDrawer) bootstrap.Offcanvas.getOrCreateInstance(addedDrawer).show();
+                    } else {
+                        var addedPreview = document.getElementById('cartPreview');
+                        if (addedPreview) addedPreview.style.display = 'block';
+                        if (window.loadCartPreview) window.loadCartPreview();
+                    }
                     
                     // Animate cart button
                     const cartButton = $('[onclick="toggleCart()"]');
@@ -449,13 +397,13 @@ console.log("AleppoGift JS loaded.");
                     
                 } else {
                     // Enhanced error handling
-                    let errorMessage = res.message || 'Failed to add item to cart';
+                    let errorMessage = res.message || __('failed_to_add_item', null, 'Failed to add item to cart');
                     if (res.error_code === 'INVALID_PRODUCT_ID') {
-                        errorMessage = 'Please select a valid product';
+                        errorMessage = __('select_valid_product', null, 'Please select a valid product');
                     } else if (res.error_code === 'INVALID_QUANTITY') {
-                        errorMessage = 'Please select a valid quantity';
+                        errorMessage = __('select_valid_quantity', null, 'Please select a valid quantity');
                     }
-                    showToast('Error', errorMessage, 'error');
+                    showToast(__('toast_error', null, 'Error'), errorMessage, 'error');
                 }
                 
                 // Reset button
@@ -464,7 +412,7 @@ console.log("AleppoGift JS loaded.");
                     button.prop('disabled', false);
                 }
             }, 'json').fail(function(xhr) {
-                let errorMsg = 'Network error. Please try again.';
+                let errorMsg = __('network_error', null, 'Network error. Please try again.');
                 try {
                     const response = JSON.parse(xhr.responseText);
                     if (response && response.message) {
@@ -473,7 +421,7 @@ console.log("AleppoGift JS loaded.");
                 } catch(e) {
                     // Keep default error message
                 }
-                showToast('Error', errorMsg, 'error');
+                showToast(__('toast_error', null, 'Error'), errorMsg, 'error');
                 if (button) {
                     button.html(originalText);
                     button.prop('disabled', false);
@@ -516,35 +464,15 @@ console.log("AleppoGift JS loaded.");
         };
 
 
-    // Close cart when clicking outside
     document.addEventListener('click', function(event) {
         const cartPreview = document.getElementById('cartPreview');
-        const cartButton = document.querySelector('[onclick="toggleCart()"]');
-
-        // If preview isn't present, nothing to do
+        const cartButton = document.getElementById('cart-toggle-desktop');
         if (!cartPreview) return;
-
-        // Determine visibility safely
         const isVisible = window.getComputedStyle(cartPreview).display !== 'none';
-
-        // If visible and click is outside both preview and toggle button, hide preview
-        const clickedOutsidePreview = !cartPreview.contains(event.target);
-        const clickedOutsideButton = cartButton ? !cartButton.contains(event.target) : true;
-
-        if (isVisible && clickedOutsidePreview && clickedOutsideButton) {
-            // If using Offcanvas, let bootstrap handle it; otherwise hide inline preview
-            const cartOffcanvas = document.getElementById('cartOffcanvas');
-            if (cartOffcanvas) {
-                try {
-                    const bs = bootstrap.Offcanvas.getInstance(cartOffcanvas);
-                    if (bs) bs.hide();
-                } catch (e) {
-                    cartOffcanvas.classList.remove('show');
-                }
-            } else {
-                cartPreview.style.display = 'none';
-            }
-        }
+        if (!isVisible) return;
+        if (cartPreview.contains(event.target)) return;
+        if (cartButton && cartButton.contains(event.target)) return;
+        cartPreview.style.display = 'none';
     });
     
 // Share functions for social media
@@ -580,12 +508,12 @@ function shareToFacebook(text) {
 
 function shareToInstagram(text) {
     // Instagram doesn't have direct sharing, this would typically open the app
-    alert('Copy this link to share on Instagram: ' + text);
+    alert(__('share_copy_instagram', { link: text }, 'Copy this link to share on Instagram: {link}'));
 }
 
 function shareToTikTok(text) {
     // TikTok sharing implementation
-    alert('Copy this link to share on TikTok: ' + text);
+    alert(__('share_copy_tiktok', { link: text }, 'Copy this link to share on TikTok: {link}'));
 }
 
 // Enhanced cart functionality
@@ -625,15 +553,8 @@ function updateCartCount(count) {
     $('#cart-count-toggle').text(countInt);
     $('#cart-count-mobile').text(countInt);
     
-    // Handle badge visibility
-    const badges = ['#cart-count', '#cart-count-toggle', '#cart-count-mobile'];
-    badges.forEach(badge => {
-        const element = $(badge);
-        if (countInt === 0) {
-            element.hide();
-        } else {
-            element.show();
-        }
+    ['#cart-count', '#cart-count-toggle', '#cart-count-mobile'].forEach(badge => {
+        $(badge).show();
     });
 }
 
@@ -646,14 +567,14 @@ window.proceedToCheckout = function() {
     const cartCount = parseInt($('#cart-count').text()) || 0;
     
     if (cartCount === 0) {
-        showToast('Info', 'Your cart is empty. Add some items first!', 'info');
+        showToast(__('toast_info', null, 'Info'), __('empty_cart_notice', null, 'Your cart is empty. Add some items first!'), 'info');
         return;
     }
     
     // Show loading state
     const checkoutBtn = event.target;
     const originalText = checkoutBtn.innerHTML;
-    checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + __('processing', null, 'Processing...');
     checkoutBtn.disabled = true;
     
     // Small delay for better UX
@@ -674,7 +595,7 @@ $(document).ready(function() {
             console.log('🛒 Loading cart preview...');
             
             // Force reload cart preview every time offcanvas is shown
-            $('#cartPreview').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">Loading cart...</p></div>');
+            $('#cartPreview').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">' + __('loading', null, 'Loading...') + '</span></div><p class="mt-2 text-muted">' + __('loading_cart', null, 'Loading cart...') + '</p></div>');
             
             // Add timestamp to prevent caching
             const timestamp = new Date().getTime();
@@ -683,7 +604,7 @@ $(document).ready(function() {
             $('#cartPreview').load(url, function(response, status, xhr) {
                 if (status === "error") {
                     console.error('❌ Cart preview load failed:', xhr.status, xhr.statusText);
-                    $(this).html('<div class="text-center p-4"><p class="text-danger">Error loading cart contents</p><button class="btn btn-sm btn-primary" onclick="location.reload()">Refresh Page</button></div>');
+                    $(this).html('<div class="text-center p-4"><p class="text-danger">' + __('error_loading_cart_contents', null, 'Error loading cart contents') + '</p><button class="btn btn-sm btn-primary" onclick="location.reload()">' + __('refresh_page', null, 'Refresh Page') + '</button></div>');
                 } else {
                     console.log('✅ Cart preview loaded successfully');
                     console.log('Response length:', response.length);
@@ -691,7 +612,7 @@ $(document).ready(function() {
                     // Verify content is not empty
                     if (response.trim().length === 0) {
                         console.warn('⚠️ Empty response from cart preview');
-                        $(this).html('<div class="text-center p-4"><p class="text-warning">Cart preview returned empty response</p><button class="btn btn-sm btn-primary" onclick="location.reload()">Refresh Page</button></div>');
+                        $(this).html('<div class="text-center p-4"><p class="text-warning">' + __('empty_preview_response', null, 'Cart preview returned empty response') + '</p><button class="btn btn-sm btn-primary" onclick="location.reload()">' + __('refresh_page', null, 'Refresh Page') + '</button></div>');
                     }
                 }
             });
@@ -716,6 +637,11 @@ $(document).ready(function() {
                 window.updateCartSummary();
             }
         }, 500);
+    }
+
+    // Storefront owns add-to-cart, toasts, and badges after this file's copy is registered.
+    if (typeof window.__installStorefront === 'function') {
+        window.__installStorefront();
     }
 });
 

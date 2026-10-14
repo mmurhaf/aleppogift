@@ -128,16 +128,12 @@ elseif (isset($_GET['id'])) {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Regenerate Invoice - AleppoGift Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f8f9fc; }
+<?php
+$page_title = 'Regenerate Invoice';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
+        .regenerate-invoice-page { background-color: #f8f9fc; }
         .card { box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); border: none; }
         .card-header { background-color: #f8f9fc; border-bottom: 1px solid #e3e6f0; }
         .alert { border: none; }
@@ -246,9 +242,7 @@ elseif (isset($_GET['id'])) {
             }
         }
     </style>
-</head>
-<body>
-    <div class="container-fluid py-4">
+    <div class="regenerate-invoice-page container-fluid py-4">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h3 mb-0 text-gray-800">Regenerate Invoice</h1>
@@ -355,7 +349,9 @@ elseif (isset($_GET['id'])) {
                                 <!-- Add Product Row (Hidden by default) -->
                                 <tr id="add-product-row" style="display: none;" class="table-warning">
                                     <td>
-                                        <select class="form-select form-select-sm" id="new-product-select">
+                                        <input type="text" class="form-control form-control-sm mb-1" id="product-search" 
+                                               placeholder="Search by ID, name..." autocomplete="off">
+                                        <select class="form-select form-select-sm" id="new-product-select" size="5">
                                             <option value="">Select a product...</option>
                                         </select>
                                     </td>
@@ -665,8 +661,6 @@ elseif (isset($_GET['id'])) {
         <?php endif; ?>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <!-- Toast Notification Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="notification-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -751,7 +745,7 @@ elseif (isset($_GET['id'])) {
         }
 
         // Populate product select dropdown
-        function populateProductSelect() {
+        function populateProductSelect(searchTerm = '') {
             const select = document.getElementById('new-product-select');
             select.innerHTML = '<option value="">Select a product...</option>';
             
@@ -759,19 +753,40 @@ elseif (isset($_GET['id'])) {
             const existingProductIds = Array.from(document.querySelectorAll('#order-items-body tr[data-product-id]'))
                 .map(row => parseInt(row.dataset.productId));
             
-            products.forEach(product => {
-                // Skip if product already in order
+            // Filter products based on search term
+            const filteredProducts = products.filter(product => {
                 if (existingProductIds.includes(product.id)) {
-                    return;
+                    return false;
                 }
                 
+                if (searchTerm) {
+                    const search = searchTerm.toLowerCase();
+                    const idMatch = product.id.toString().includes(search);
+                    const nameMatch = product.name_en.toLowerCase().includes(search);
+                    return idMatch || nameMatch;
+                }
+                
+                return true;
+            });
+            
+            filteredProducts.forEach(product => {
                 const option = document.createElement('option');
                 option.value = product.id;
-                option.textContent = `${product.name_en} - AED ${parseFloat(product.price).toFixed(2)}`;
+                option.textContent = `#${product.id} - ${product.name_en} - AED ${parseFloat(product.price).toFixed(2)}`;
                 option.dataset.price = product.price;
                 option.dataset.stock = product.stock;
+                option.dataset.name = product.name_en;
                 select.appendChild(option);
             });
+            
+            // Show count
+            if (filteredProducts.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = searchTerm ? 'No products found' : 'All products already added';
+                option.disabled = true;
+                select.appendChild(option);
+            }
         }
 
         // Show add product row
@@ -780,6 +795,8 @@ elseif (isset($_GET['id'])) {
             document.getElementById('add-product-row').style.display = '';
             document.getElementById('new-product-quantity').value = 1;
             document.getElementById('new-product-price').textContent = '-';
+            document.getElementById('product-search').value = '';
+            setTimeout(() => document.getElementById('product-search').focus(), 100);
         }
 
         // Hide add product row
@@ -790,6 +807,12 @@ elseif (isset($_GET['id'])) {
 
         // Update price display when product selected
         document.addEventListener('DOMContentLoaded', function() {
+            // Product search functionality
+            const searchInput = document.getElementById('product-search');
+            searchInput.addEventListener('input', function() {
+                populateProductSelect(this.value);
+            });
+            
             const select = document.getElementById('new-product-select');
             select.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
@@ -1249,5 +1272,5 @@ elseif (isset($_GET['id'])) {
             }
         });
     </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

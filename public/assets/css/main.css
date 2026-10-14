@@ -38,28 +38,28 @@ body {
 
 :root {
   /* Primary Colors */
-  --primary-50: #FEF3E7;
-  --primary-100: #FDE4C4;
-  --primary-200: #FCCC88;
-  --primary-300: #FAB14B;
-  --primary-400: #F7951D;
-  --primary-500: #E67B2E; /* Main brand color */
-  --primary-600: #C66524;
-  --primary-700: #A3511D;
-  --primary-800: #7F3F17;
-  --primary-900: #5C2E11;
+  --primary-50: #fff8ee;
+  --primary-100: #ffe8bf;
+  --primary-200: #ffd98f;
+  --primary-300: #f5c842;
+  --primary-400: #e9af3b;
+  --primary-500: #d4840e; /* Warm amber brand base */
+  --primary-600: #b8620a;
+  --primary-700: #9a4a0a;
+  --primary-800: #7a3708;
+  --primary-900: #572706;
 
   /* Neutral Colors */
-  --gray-50: #FAFBFC;
-  --gray-100: #F4F6F8;
-  --gray-200: #E9ECEF;
-  --gray-300: #DEE2E6;
-  --gray-400: #CED4DA;
-  --gray-500: #ADB5BD;
-  --gray-600: #6C757D;
-  --gray-700: #495057;
-  --gray-800: #343A40;
-  --gray-900: #212529;
+  --gray-50: #fffaf2;
+  --gray-100: #f8eddc;
+  --gray-200: #ecdcc2;
+  --gray-300: #ddc8a6;
+  --gray-400: #c7ab81;
+  --gray-500: #a58860;
+  --gray-600: #7e6243;
+  --gray-700: #5e472f;
+  --gray-800: #3f2d1c;
+  --gray-900: #23170d;
 
   /* Semantic Colors */
   --success-50: #F0FDF4;
@@ -77,10 +77,11 @@ body {
   --error-600: #DC2626;
   --error-700: #B91C1C;
 
-  --info-50: #EFF6FF;
-  --info-500: #3B82F6;
-  --info-600: #2563EB;
-  --info-700: #1D4ED8;
+  --info-50: #fff4df;
+  --info-200: #f2cb8f;
+  --info-500: #c47a18;
+  --info-600: #a45f12;
+  --info-700: #7f470d;
 
   /* Text Colors */
   --text-primary: var(--gray-900);
@@ -89,15 +90,31 @@ body {
   --text-inverse: #FFFFFF;
 
   /* Background Colors */
-  --bg-primary: #FFFFFF;
+  --bg-primary: #fff8ee;
   --bg-secondary: var(--gray-50);
   --bg-tertiary: var(--gray-100);
   --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Legacy compatibility aliases for shared older stylesheets */
+  --primary: var(--primary-500);
+  --primary-dark: var(--primary-700);
+  --secondary: #3a1c0a;
+  --accent: var(--primary-300);
+  --success: var(--success-500);
+  --warning: var(--warning-500);
+  --danger: var(--error-500);
+  --white: #ffffff;
+  --border-radius: var(--radius);
+  --border-radius-lg: var(--radius-lg);
 
   /* Border Colors */
   --border-primary: var(--gray-200);
   --border-secondary: var(--gray-300);
   --border-focus: var(--primary-500);
+
+  /* Emphasis Tokens */
+  --primary-gradient: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  --focus-ring: rgba(212, 132, 14, 0.25);
 
   /* Spacing Scale */
   --space-1: 0.25rem;   /* 4px */
@@ -178,15 +195,16 @@ p {
   color: var(--text-secondary);
 }
 
-a {
+a:where(:not(.product-icon-btn)) {
   color: var(--primary-600);
   text-decoration: none;
-  transition: color var(--transition);
+  transition: color var(--transition), text-decoration-color var(--transition);
 }
 
-a:hover {
+a:where(:not(.product-icon-btn)):hover {
   color: var(--primary-700);
   text-decoration: underline;
+  text-decoration-color: rgba(184, 98, 10, 0.55);
 }
 
 /* ==========================================================================
@@ -263,6 +281,7 @@ a:hover {
 
 .card:hover {
   box-shadow: var(--shadow-md);
+  border-color: rgba(212, 132, 14, 0.25);
   transform: translateY(-2px);
 }
 
@@ -308,14 +327,15 @@ a:hover {
 
 /* Button Variants */
 .btn-primary {
-  background: var(--primary-500);
+  background: var(--primary-gradient);
   color: var(--text-inverse);
+  box-shadow: 0 6px 16px rgba(154, 74, 10, 0.24);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-600);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 10px 22px rgba(122, 55, 8, 0.3);
 }
 
 .btn-secondary {
@@ -334,7 +354,7 @@ a:hover {
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: var(--primary-500);
+  background: var(--primary-gradient);
   color: var(--text-inverse);
 }
 
@@ -543,7 +563,8 @@ a:hover {
   top: 0;
   z-index: var(--z-sticky);
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition);
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .modern-header {
@@ -625,8 +646,7 @@ a:hover {
 
 /* Cart Button & Search Styles */
 .cart-btn,
-.cart-button-header,
-.btn-outline-primary {
+.cart-button-header {
   position: relative !important;
   background: var(--primary-500) !important;
   color: var(--text-inverse) !important;
@@ -642,8 +662,7 @@ a:hover {
 }
 
 .cart-btn:hover,
-.cart-button-header:hover,
-.btn-outline-primary:hover {
+.cart-button-header:hover {
   background: var(--primary-600) !important;
   border-color: var(--primary-600) !important;
   color: var(--text-inverse) !important;
@@ -667,8 +686,7 @@ a:hover {
 }
 
 .cart-badge,
-.cart-count-badge,
-.badge {
+.cart-count-badge {
   position: absolute !important;
   top: -8px !important;
   right: -8px !important;
@@ -736,14 +754,18 @@ a:hover {
   background-image: none !important;
   position: relative;
   width: 24px;
-  height: 24px;
+  height: 3px;
+  display: block;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: all 0.3s ease;
 }
 
 .navbar-toggler-icon::before,
-.navbar-toggler-icon::after,
-.navbar-toggler-icon {
+.navbar-toggler-icon::after {
   content: '';
   position: absolute;
+  left: 0;
   width: 24px;
   height: 3px;
   background: var(--text-primary);
@@ -816,6 +838,7 @@ a:hover {
   }
 
   .navbar-nav {
+    display: none !important;
     position: absolute;
     top: 100%;
     left: 0;
@@ -827,6 +850,14 @@ a:hover {
     gap: var(--space-3);
     box-shadow: var(--shadow-lg);
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+
+  .navbar-nav.show {
+    display: flex !important;
+  }
+
+  .navbar-collapse.show .navbar-nav {
+    display: flex !important;
   }
 
   .nav-link {
@@ -851,7 +882,10 @@ a:hover {
 
 .hero-section,
 .modern-hero {
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--gray-50) 100%);
+  background:
+    radial-gradient(80% 80% at 12% 0%, rgba(245, 200, 66, 0.2), transparent 58%),
+    linear-gradient(135deg, var(--primary-50) 0%, var(--gray-50) 100%);
+  border: 1px solid rgba(212, 132, 14, 0.2);
   padding: var(--space-16) 0;
   border-radius: var(--radius-lg);
   margin: var(--space-8) 0;
@@ -1055,7 +1089,7 @@ a:hover {
 
 .product-card:hover {
   box-shadow: var(--shadow-xl);
-  transform: translateY(-8px);
+  transform: translateY(-8px) scale(1.02);
   border-color: var(--primary-200);
 }
 
@@ -1311,24 +1345,6 @@ a:hover {
   100% { transform: scale(1); }
 }
 
-.quick-view-btn {
-  background: var(--gray-100);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-primary);
-  padding: var(--space-3);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quick-view-btn:hover {
-  background: var(--gray-200);
-  color: var(--text-primary);
-}
-
 /* Responsive Product Grid */
 @media (max-width: 640px) {
   .product-grid {
@@ -1361,36 +1377,6 @@ a:hover {
   .product-image {
     height: 200px;
   }
-}
-
-.product-content {
-  padding: var(--space-5);
-}
-
-.product-title {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  margin-bottom: var(--space-2);
-  color: var(--text-primary);
-}
-
-.product-price {
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--primary-600);
-  margin-bottom: var(--space-4);
-}
-
-.product-price-old {
-  font-size: var(--text-base);
-  color: var(--text-muted);
-  text-decoration: line-through;
-  margin-left: var(--space-2);
-}
-
-.product-actions {
-  display: flex;
-  gap: var(--space-3);
 }
 
 /* ==========================================================================
@@ -2017,21 +2003,6 @@ a:hover {
   animation: spin 0.8s linear infinite;
 }
 
-/* Hamburger Menu Animation */
-.navbar-toggler-icon.active::before {
-  transform: rotate(45deg);
-  top: 0;
-}
-
-.navbar-toggler-icon.active::after {
-  transform: rotate(-45deg);
-  top: 0;
-}
-
-.navbar-toggler-icon.active {
-  background: transparent;
-}
-
 /* Scroll to Top Button */
 .scroll-to-top {
   position: fixed;
@@ -2069,10 +2040,6 @@ a:hover {
 .product-card,
 .card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.product-card:hover {
-  transform: translateY(-8px) scale(1.02);
 }
 
 /* Skeleton Loading */
@@ -2199,7 +2166,7 @@ a:hover {
 .nav-link:focus-visible {
   outline: 2px solid var(--primary-500);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(230, 123, 46, 0.2);
+  box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
 /* Dark Mode Preparation */

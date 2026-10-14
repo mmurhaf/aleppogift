@@ -10,10 +10,13 @@ require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
 
-// Require admin login
-require_admin_login();
-
+start_session_safely();
 header('Content-Type: application/json');
+
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 try {
     // Get JSON input
@@ -30,6 +33,17 @@ try {
     // Search products by name or SKU
     $searchTerm = '%' . $query . '%';
     
+    $params = [
+        'search_en' => $searchTerm,
+        'search_ar' => $searchTerm,
+        'search_sku' => $searchTerm,
+    ];
+    $idClause = '';
+    if (ctype_digit($query)) {
+        $idClause = ' OR p.id = :product_id';
+        $params['product_id'] = (int)$query;
+    }
+
     $products = $db->query("
         SELECT 
             p.id,
@@ -46,14 +60,13 @@ try {
              LIMIT 1) as image_path
         FROM products p
         WHERE p.status = 1 
-        AND (p.name_en LIKE :search 
-             OR p.name_ar LIKE :search 
-             OR p.sku LIKE :search)
+        AND (p.name_en LIKE :search_en 
+             OR p.name_ar LIKE :search_ar 
+             OR p.sku LIKE :search_sku
+             {$idClause})
         ORDER BY p.name_en ASC
         LIMIT 20
-    ", [
-        'search' => $searchTerm
-    ])->fetchAll(PDO::FETCH_ASSOC);
+    ", $params)->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([
         'success' => true,

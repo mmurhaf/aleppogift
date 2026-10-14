@@ -34,6 +34,12 @@ if (!$order) {
     exit('Order not found.');
 }
 
+require_once('../includes/order_email_layout.php');
+if (!ag_order_invoice_allowed($order)) {
+    http_response_code(403);
+    exit('An invoice is issued after this cash-on-delivery order is paid.');
+}
+
 $invoice_file = "../invoice/invoice_{$order_id}.pdf";
 
 // ✅ Allow access if session proves ownership

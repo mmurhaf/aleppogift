@@ -46,13 +46,71 @@ function formatIpDisplay($ip) {
  * Format country for display with flag
  */
 function formatCountry($country, $countryCode) {
-    if (empty($countryCode) || $countryCode === 'XX' || $countryCode === 'LO') {
-        return '<i class="fas fa-globe text-muted me-2"></i> ' . ($country ?: 'Unknown');
+    $countryName = htmlspecialchars($country ?: 'Unknown', ENT_QUOTES, 'UTF-8');
+
+    if (empty($countryCode)) {
+        return '<i class="fas fa-globe text-muted me-2"></i> ' . $countryName;
     }
-    
-    // Convert country code to lowercase for flag-icon-css
-    $code = strtolower($countryCode);
-    return '<span class="fi fi-' . $code . ' me-2"></span> ' . ($country ?: 'Unknown');
+
+    $code = strtoupper(trim($countryCode));
+    if ($code === 'XX' || $code === 'LO' || !preg_match('/^[A-Z]{2}$/', $code)) {
+        return '<i class="fas fa-globe text-muted me-2"></i> ' . $countryName;
+    }
+
+    $codeLower = strtolower($code);
+    $flagAlt = htmlspecialchars($code . ' flag', ENT_QUOTES, 'UTF-8');
+
+    // Use image flags for consistent rendering across Windows/browser font combinations.
+    return '<img src="https://flagcdn.com/16x12/' . $codeLower . '.png" '
+        . 'srcset="https://flagcdn.com/32x24/' . $codeLower . '.png 2x" '
+        . 'width="16" height="12" class="me-2" alt="' . $flagAlt . '" '
+        . 'loading="lazy" decoding="async" '
+        . 'onerror="this.onerror=null;this.style.display=\'none\';if(this.nextElementSibling){this.nextElementSibling.style.display=\'inline-block\';}">'
+        . '<i class="fas fa-globe text-muted me-2" style="display:none;"></i>'
+        . $countryName;
+}
+
+/**
+ * Build a readable suspicion reason for dashboard tables
+ */
+function buildSuspicionReason($row, $highTrafficThreshold) {
+    $reasons = [];
+
+    if (!empty($row['ua_flag'])) {
+        $reasons[] = 'Suspicious user agent';
+    }
+    if (!empty($row['probe_hits']) && (int)$row['probe_hits'] > 0) {
+        $reasons[] = 'Scanner/probing URLs';
+    }
+    if (!empty($row['ref_spam_hits']) && (int)$row['ref_spam_hits'] > 0) {
+        $reasons[] = 'Spam referer pattern';
+    }
+    if (!empty($row['visit_count']) && (int)$row['visit_count'] >= $highTrafficThreshold) {
+        $reasons[] = 'Abnormally high activity';
+    }
+
+    if (empty($reasons)) {
+        return 'Heuristic anomaly';
+    }
+
+    return implode(', ', $reasons);
+}
+
+/**
+ * Format timestamp for display as Dubai local time (+04:00)
+ * Input is expected to be already converted in SQL.
+ */
+function formatDubaiDateTime($dateTime, $format = 'M d, Y H:i:s') {
+    if (empty($dateTime)) {
+        return '-';
+    }
+
+    try {
+        $dubai = new DateTime($dateTime, new DateTimeZone('Asia/Dubai'));
+        return $dubai->format($format);
+    } catch (Exception $e) {
+        return date($format, strtotime($dateTime));
+    }
 }
 
 // Get date range from query parameters
@@ -98,24 +156,33 @@ if (strtotime($startDate) > strtotime($endDate)) {
     $endDate = $temp;
 }
 
+$visitDateExpr = "DATE(CONVERT_TZ(visit_time, '+00:00', '+04:00'))";
+$visitDateTimeExpr = "CONVERT_TZ(visit_time, '+00:00', '+04:00')";
+
 // Get visitor statistics
 $stats = [];
 
 // Total Unique Visitors
 $stats['total_visitors'] = $db->fetch(
-    "SELECT COUNT(DISTINCT ip_address) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    "SELECT COUNT(DISTINCT ip_address) as count FROM visitors WHERE $visitDateExpr BETWEEN ? AND ?",
     [$startDate, $endDate]
 )['count'];
 
 // Total Visits
 $stats['total_visits'] = $db->fetch(
-    "SELECT COUNT(*) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    "SELECT COUNT(*) as count FROM visitors WHERE $visitDateExpr BETWEEN ? AND ?",
     [$startDate, $endDate]
 )['count'];
 
 // Average visits per day
 $daysDiff = max(1, (strtotime($endDate) - strtotime($startDate)) / 86400 + 1);
 $stats['avg_visits_per_day'] = round($stats['total_visits'] / $daysDiff, 1);
+
+// Traffic quality heuristics (helps separate likely customers from machines/scanners)
+$machineUserAgentRegex = 'bot|crawler|spider|headless|selenium|phantom|scrapy|python|curl|wget|go-http-client|httpclient|okhttp|node-fetch|aiohttp|java/';
+$suspiciousPageRegex = 'wp-admin|wp-login|xmlrpc|\\.env|phpmyadmin|adminer|/boaform|/cgi-bin|/vendor/phpunit|/\\.git';
+$suspiciousRefererRegex = 'semalt|darodar|buttons-for-website|trafficmonetize|free-share-buttons';
+$highTrafficThreshold = max(80, (int)($daysDiff * 15));
 
 // Returning visitors (IPs with more than 1 visit)
 $stats['returning_visitors'] = $db->fetch(
@@ -124,10 +191,10 @@ $stats['returning_visitors'] = $db->fetch(
      WHERE ip_address IN (
          SELECT ip_address 
          FROM visitors 
-         WHERE DATE(visit_time) BETWEEN ? AND ?
+         WHERE $visitDateExpr BETWEEN ? AND ?
          GROUP BY ip_address 
          HAVING COUNT(*) > 1
-     ) AND DATE(visit_time) BETWEEN ? AND ?",
+     ) AND $visitDateExpr BETWEEN ? AND ?",
     [$startDate, $endDate, $startDate, $endDate]
 )['count'];
 
@@ -145,15 +212,94 @@ $stats['conversion_rate'] = $stats['total_visitors'] > 0
     ? round(($conversions / $stats['total_visitors']) * 100, 2) 
     : 0;
 
+// Suspicious / machine-like traffic summary
+$suspiciousTraffic = $db->fetch(
+    "SELECT
+        COUNT(*) AS suspicious_visits,
+        COUNT(DISTINCT ip_address) AS suspicious_visitors
+     FROM visitors v
+     WHERE DATE(CONVERT_TZ(v.visit_time, '+00:00', '+04:00')) BETWEEN ? AND ?
+       AND (
+            LOWER(COALESCE(v.user_agent, '')) REGEXP ?
+            OR LOWER(COALESCE(v.page_url, '')) REGEXP ?
+            OR LOWER(COALESCE(v.referer, '')) REGEXP ?
+            OR v.ip_address IN (
+                SELECT ip_address FROM (
+                    SELECT ip_address
+                    FROM visitors
+                    WHERE $visitDateExpr BETWEEN ? AND ?
+                    GROUP BY ip_address
+                    HAVING COUNT(*) >= ?
+                ) heavy_ips
+            )
+       )",
+    [
+        $startDate,
+        $endDate,
+        $machineUserAgentRegex,
+        $suspiciousPageRegex,
+        $suspiciousRefererRegex,
+        $startDate,
+        $endDate,
+        $highTrafficThreshold
+    ]
+);
+
+$stats['suspicious_visits'] = (int)($suspiciousTraffic['suspicious_visits'] ?? 0);
+$stats['suspicious_visitors'] = (int)($suspiciousTraffic['suspicious_visitors'] ?? 0);
+$stats['estimated_real_visits'] = max(0, (int)$stats['total_visits'] - $stats['suspicious_visits']);
+$stats['estimated_real_visitors'] = max(0, (int)$stats['total_visitors'] - $stats['suspicious_visitors']);
+$stats['suspicious_rate'] = $stats['total_visits'] > 0
+    ? round(($stats['suspicious_visits'] / $stats['total_visits']) * 100, 1)
+    : 0;
+$stats['quality_conversion_rate'] = $stats['estimated_real_visitors'] > 0
+    ? round(($conversions / $stats['estimated_real_visitors']) * 100, 2)
+    : 0;
+
+// Top suspicious IPs in the selected period
+$suspiciousIps = $db->fetchAll(
+    "SELECT
+        ip_address,
+        COUNT(*) AS visit_count,
+          MAX($visitDateTimeExpr) AS last_visit,
+        MAX(country) AS country,
+        MAX(country_code) AS country_code,
+        MAX(CASE WHEN LOWER(COALESCE(user_agent, '')) REGEXP ? THEN 1 ELSE 0 END) AS ua_flag,
+        SUM(CASE WHEN LOWER(COALESCE(page_url, '')) REGEXP ? THEN 1 ELSE 0 END) AS probe_hits,
+        SUM(CASE WHEN LOWER(COALESCE(referer, '')) REGEXP ? THEN 1 ELSE 0 END) AS ref_spam_hits
+     FROM visitors
+      WHERE $visitDateExpr BETWEEN ? AND ?
+     GROUP BY ip_address
+     HAVING ua_flag = 1
+        OR probe_hits > 0
+        OR ref_spam_hits > 0
+        OR visit_count >= ?
+     ORDER BY visit_count DESC, last_visit DESC
+     LIMIT 20",
+    [
+        $machineUserAgentRegex,
+        $suspiciousPageRegex,
+        $suspiciousRefererRegex,
+        $startDate,
+        $endDate,
+        $highTrafficThreshold
+    ]
+);
+
+$suspiciousIpMap = [];
+foreach ($suspiciousIps as $suspiciousIp) {
+    $suspiciousIpMap[$suspiciousIp['ip_address']] = $suspiciousIp;
+}
+
 // Daily visitor trend
 $dailyVisitors = $db->fetchAll(
     "SELECT 
-        DATE(visit_time) as date,
+        $visitDateExpr as date,
         COUNT(*) as total_visits,
         COUNT(DISTINCT ip_address) as unique_visitors
      FROM visitors 
-     WHERE DATE(visit_time) BETWEEN ? AND ?
-     GROUP BY DATE(visit_time)
+     WHERE $visitDateExpr BETWEEN ? AND ?
+     GROUP BY $visitDateExpr
      ORDER BY date ASC",
     [$startDate, $endDate]
 );
@@ -161,11 +307,11 @@ $dailyVisitors = $db->fetchAll(
 // Hourly distribution (for current period)
 $hourlyDistribution = $db->fetchAll(
     "SELECT 
-        HOUR(visit_time) as hour,
+        HOUR($visitDateTimeExpr) as hour,
         COUNT(*) as visits
      FROM visitors 
-     WHERE DATE(visit_time) BETWEEN ? AND ?
-     GROUP BY HOUR(visit_time)
+     WHERE $visitDateExpr BETWEEN ? AND ?
+     GROUP BY HOUR($visitDateTimeExpr)
      ORDER BY hour ASC",
     [$startDate, $endDate]
 );
@@ -173,12 +319,12 @@ $hourlyDistribution = $db->fetchAll(
 // Day of week distribution
 $weekdayDistribution = $db->fetchAll(
     "SELECT 
-        DAYNAME(visit_time) as day_name,
-        DAYOFWEEK(visit_time) as day_num,
+        DAYNAME($visitDateTimeExpr) as day_name,
+        DAYOFWEEK($visitDateTimeExpr) as day_num,
         COUNT(*) as visits
      FROM visitors 
-     WHERE DATE(visit_time) BETWEEN ? AND ?
-     GROUP BY DAYNAME(visit_time), DAYOFWEEK(visit_time)
+     WHERE $visitDateExpr BETWEEN ? AND ?
+     GROUP BY DAYNAME($visitDateTimeExpr), DAYOFWEEK($visitDateTimeExpr)
      ORDER BY day_num ASC",
     [$startDate, $endDate]
 );
@@ -188,12 +334,12 @@ $topVisitors = $db->fetchAll(
     "SELECT 
         ip_address,
         COUNT(*) as visit_count,
-        MIN(visit_time) as first_visit,
-        MAX(visit_time) as last_visit,
+          MIN($visitDateTimeExpr) as first_visit,
+          MAX($visitDateTimeExpr) as last_visit,
         MAX(country) as country,
         MAX(country_code) as country_code
      FROM visitors 
-     WHERE DATE(visit_time) BETWEEN ? AND ?
+      WHERE $visitDateExpr BETWEEN ? AND ?
      GROUP BY ip_address
      ORDER BY visit_count DESC
      LIMIT 20",
@@ -202,7 +348,7 @@ $topVisitors = $db->fetchAll(
 
 // Recent visitors
 $recentVisitors = $db->fetchAll(
-    "SELECT ip_address, visit_time, country, country_code 
+    "SELECT ip_address, $visitDateTimeExpr AS visit_time, country, country_code 
      FROM visitors 
      ORDER BY visit_time DESC 
      LIMIT 50"
@@ -216,7 +362,7 @@ $visitorsByCountry = $db->fetchAll(
         COUNT(*) as visits,
         COUNT(DISTINCT ip_address) as unique_visitors
      FROM visitors 
-     WHERE DATE(visit_time) BETWEEN ? AND ?
+    WHERE $visitDateExpr BETWEEN ? AND ?
      GROUP BY country, country_code
      ORDER BY visits DESC
      LIMIT 15",
@@ -230,12 +376,12 @@ $prevEndDate = date('Y-m-d', strtotime($startDate . " -1 day"));
 
 $prevStats = [];
 $prevStats['total_visits'] = $db->fetch(
-    "SELECT COUNT(*) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    "SELECT COUNT(*) as count FROM visitors WHERE $visitDateExpr BETWEEN ? AND ?",
     [$prevStartDate, $prevEndDate]
 )['count'];
 
 $prevStats['total_visitors'] = $db->fetch(
-    "SELECT COUNT(DISTINCT ip_address) as count FROM visitors WHERE DATE(visit_time) BETWEEN ? AND ?",
+    "SELECT COUNT(DISTINCT ip_address) as count FROM visitors WHERE $visitDateExpr BETWEEN ? AND ?",
     [$prevStartDate, $prevEndDate]
 )['count'];
 
@@ -317,7 +463,7 @@ $pageTitle = "Visitor Analytics";
                 <small class="text-muted">
                     <i class="fas fa-info-circle me-1"></i>
                     <?php echo date('M d, Y', strtotime($startDate)); ?> - <?php echo date('M d, Y', strtotime($endDate)); ?>
-                    (<?php echo round($daysDiff); ?> days)
+                    (<?php echo round($daysDiff); ?> days, timezone: UTC+04:00 Dubai)
                 </small>
             </div>
         </div>
@@ -412,6 +558,52 @@ $pageTitle = "Visitor Analytics";
             </div>
         </div>
     </div><!-- End Statistics Cards Row -->
+
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Estimated Real Visitors</h6>
+                            <h3 class="mb-0"><?php echo number_format($stats['estimated_real_visitors']); ?></h3>
+                            <small class="text-muted">
+                                <?php echo number_format($stats['estimated_real_visits']); ?> visits from likely human traffic
+                            </small>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-user-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card border-danger h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Suspicious / Machine Traffic</h6>
+                            <h3 class="mb-0"><?php echo number_format($stats['suspicious_visitors']); ?></h3>
+                            <small class="text-muted">
+                                <?php echo number_format($stats['suspicious_visits']); ?> visits (<?php echo $stats['suspicious_rate']; ?>% of traffic)
+                            </small>
+                        </div>
+                        <div class="text-danger">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-light border mb-4" role="alert">
+        <i class="fas fa-shield-alt text-primary me-2"></i>
+        Traffic quality filtering is heuristic-based. Estimated customer conversion on likely-human visitors: <strong><?php echo $stats['quality_conversion_rate']; ?>%</strong>.
+        High-activity threshold for this period: <strong><?php echo number_format($highTrafficThreshold); ?> visits/IP</strong>.
+    </div>
 
     <!-- Charts Row 1 -->
     <div class="row mb-4">
@@ -537,6 +729,9 @@ $pageTitle = "Visitor Analytics";
                                 <tr>
                                     <td>
                                         <code><?php echo htmlspecialchars(formatIpDisplay($visitor['ip_address'])); ?></code>
+                                        <?php if (isset($suspiciousIpMap[$visitor['ip_address']])): ?>
+                                            <span class="badge bg-danger ms-1">Suspicious</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <span title="<?php echo htmlspecialchars($visitor['country'] ?? 'Unknown'); ?>">
@@ -547,10 +742,10 @@ $pageTitle = "Visitor Analytics";
                                         <span class="badge bg-primary"><?php echo number_format($visitor['visit_count']); ?></span>
                                     </td>
                                     <td>
-                                        <small><?php echo date('M d, H:i', strtotime($visitor['first_visit'])); ?></small>
+                                        <small><?php echo formatDubaiDateTime($visitor['first_visit'], 'M d, H:i'); ?></small>
                                     </td>
                                     <td>
-                                        <small><?php echo date('M d, H:i', strtotime($visitor['last_visit'])); ?></small>
+                                        <small><?php echo formatDubaiDateTime($visitor['last_visit'], 'M d, H:i'); ?></small>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -595,7 +790,7 @@ $pageTitle = "Visitor Analytics";
                                         </span>
                                     </td>
                                     <td>
-                                        <small><?php echo date('M d, Y H:i:s', strtotime($visitor['visit_time'])); ?></small>
+                                        <small><?php echo formatDubaiDateTime($visitor['visit_time'], 'M d, Y H:i:s'); ?></small>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -611,6 +806,49 @@ $pageTitle = "Visitor Analytics";
             </div>
         </div>
     </div><!-- End Tables Row -->
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-user-secret me-2"></i>Suspicious / Machine-like IPs</h5>
+                    <small class="text-muted">Heuristic detection</small>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (!empty($suspiciousIps)): ?>
+                    <div class="table-responsive" style="max-height: 360px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="sticky-top bg-white">
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Country</th>
+                                    <th class="text-end">Visits</th>
+                                    <th>Reason</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($suspiciousIps as $ipRow): ?>
+                                <tr>
+                                    <td><code><?php echo htmlspecialchars(formatIpDisplay($ipRow['ip_address'])); ?></code></td>
+                                    <td><?php echo formatCountry($ipRow['country'] ?? null, $ipRow['country_code'] ?? null); ?></td>
+                                    <td class="text-end"><span class="badge bg-danger"><?php echo number_format($ipRow['visit_count']); ?></span></td>
+                                    <td><small><?php echo htmlspecialchars(buildSuspicionReason($ipRow, $highTrafficThreshold)); ?></small></td>
+                                    <td><small><?php echo formatDubaiDateTime($ipRow['last_visit'], 'M d, Y H:i'); ?></small></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No suspicious traffic detected in this date range.</p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div><!-- End main-content -->
 

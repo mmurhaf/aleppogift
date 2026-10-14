@@ -7,10 +7,11 @@
 // Start output buffering to catch any errors
 ob_start();
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=UTF-8');
 
 try {
     require_once(__DIR__ . '/../../includes/bootstrap.php');
+    require_once(__DIR__ . '/../../includes/pdf_catalog_image.php');
 } catch (Exception $e) {
     ob_end_clean();
     echo json_encode([
@@ -82,6 +83,7 @@ try {
             p.id,
             p.name_en,
             p.name_ar,
+            p.price,
             c.name_en as category_name, 
             b.name_en as brand_name,
             (SELECT pi.image_path FROM product_images pi WHERE pi.product_id = p.id AND pi.is_main = 1 LIMIT 1) as main_image
@@ -104,30 +106,7 @@ try {
                 $_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($product['main_image'], '/')
             ];
             
-            $imageFound = false;
-            foreach ($possiblePaths as $imagePath) {
-                if (file_exists($imagePath) && is_file($imagePath)) {
-                    try {
-                        $imageData = @file_get_contents($imagePath);
-                        if ($imageData !== false) {
-                            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                            $mimeType = finfo_file($finfo, $imagePath);
-                            finfo_close($finfo);
-                            
-                            $base64 = base64_encode($imageData);
-                            $product['main_image'] = "data:$mimeType;base64,$base64";
-                            $imageFound = true;
-                            break;
-                        }
-                    } catch (Exception $e) {
-                        error_log("Image conversion error for {$imagePath}: " . $e->getMessage());
-                    }
-                }
-            }
-            
-            if (!$imageFound) {
-                $product['main_image'] = null;
-            }
+            $product['main_image'] = catalog_pdf_data_url_from_candidates($possiblePaths, 260, 58);
         }
     }
     unset($product); // Break reference
@@ -140,7 +119,7 @@ try {
         'products' => $products,
         'filters' => $filters,
         'total' => count($products)
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
     // Clear output buffer
@@ -150,5 +129,5 @@ try {
     echo json_encode([
         'success' => false,
         'error' => 'Failed to fetch products: ' . $e->getMessage()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }

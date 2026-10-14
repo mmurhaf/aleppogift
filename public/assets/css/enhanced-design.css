@@ -1,87 +1,27 @@
 /* ENHANCED MODERN DESIGN - AleppoGift Website */
 
 :root {
-  /* Enhanced Color Palette */
-  --primary: #E67B2E;
-  --primary-dark: #C66524;
-  --primary-light: #F5A65B;
-  --secondary: #2C3E50;
-  --accent: #3498DB;
+  /* Enhanced Color Palette - unique to enhanced-design.css */
+  --primary: #d4840e;
+  --primary-dark: #b8620a;
+  --primary-light: #f5c842;
+  --secondary: #2c1505;
+  --accent: #f5c842;
   --success: #27AE60;
-  --warning: #F39C12;
+  --warning: #f5c842;
   --danger: #E74C3C;
-  
-  /* Grayscale */
-  --black: #1A1A1A;
-  --gray-900: #212529;
-  --gray-800: #343A40;
-  --gray-700: #495057;
-  --gray-600: #6C757D;
-  --gray-500: #ADB5BD;
-  --gray-400: #CED4DA;
-  --gray-300: #DEE2E6;
-  --gray-200: #E9ECEF;
-  --gray-100: #F8F9FA;
-  --white: #FFFFFF;
-  
-  /* Background & Layout */
-  --bg-primary: #FAFBFC;
-  --bg-secondary: #F4F6F8;
-  --bg-card: #FFFFFF;
+  --black: #23170d;
+  --white: #ffffff;
+  --bg-card: #fff8ee;
   
   /* Typography */
   --font-primary: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-secondary: 'Playfair Display', Georgia, serif;
   
-  /* Spacing */
+  /* Border Radius */
   --border-radius: 12px;
   --border-radius-sm: 8px;
   --border-radius-lg: 16px;
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.2);
-  
-  /* Transitions */
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Enhanced Global Styles */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: var(--font-primary);
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  color: var(--gray-800);
-  line-height: 1.7;
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Enhanced Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-secondary);
-  font-weight: 600;
-  color: var(--gray-900);
-  line-height: 1.3;
-  margin-bottom: 1rem;
-}
-
-h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
-h2 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
-h3 { font-size: clamp(1.25rem, 3vw, 2rem); }
-
-/* Enhanced Container */
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
 }
 
 /* Wide container for modern layouts */

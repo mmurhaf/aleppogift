@@ -8,20 +8,52 @@ require_admin_login();
 
 $db = new Database();
 
-// Fetch all customers
-$sql = "SELECT * FROM customers ORDER BY id DESC";
-$customers = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+$search = trim($_GET['q'] ?? '');
+$sort = $_GET['sort'] ?? 'newest';
+$orderBy = 'c.id DESC';
+if ($sort === 'oldest') {
+    $orderBy = 'c.id ASC';
+} elseif ($sort === 'name') {
+    $orderBy = 'c.fullname ASC';
+}
+
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 50;
+$params = [];
+$where = '';
+if ($search !== '') {
+    $where = " WHERE c.fullname LIKE :q_name OR c.email LIKE :q_email OR c.phone LIKE :q_phone OR c.city LIKE :q_city OR c.country LIKE :q_country";
+    $search_like = '%' . $search . '%';
+    $params['q_name'] = $search_like;
+    $params['q_email'] = $search_like;
+    $params['q_phone'] = $search_like;
+    $params['q_city'] = $search_like;
+    $params['q_country'] = $search_like;
+}
+
+$totalCustomers = (int)$db->query("SELECT COUNT(*) FROM customers c" . $where, $params)->fetchColumn();
+$totalPages = max(1, (int)ceil($totalCustomers / $perPage));
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
+$offset = ($page - 1) * $perPage;
+
+$customers = $db->query(
+    "SELECT c.*, (SELECT COUNT(*) FROM orders o WHERE o.customer_id = c.id) AS order_count
+     FROM customers c" . $where . " ORDER BY $orderBy LIMIT $perPage OFFSET $offset",
+    $params
+)->fetchAll(PDO::FETCH_ASSOC);
+
+$pagerQuery = http_build_query(array_filter([
+    'q' => $search,
+    'sort' => $sort !== 'newest' ? $sort : null,
+]));
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Management - AleppoGift</title>
-    <link rel="icon" href="../assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+<?php
+$page_title = 'Customers';
+require_once __DIR__ . '/includes/header.php';
+?>
+<style>
         
         body {
             background-color: var(--light-bg);
@@ -83,8 +115,6 @@ $customers = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             font-size: 0.8rem;
         }
     </style>
-</head>
-<body>
     <div class="container-fluid py-4">
         <!-- Dashboard Header -->
         <div class="dashboard-header">
@@ -107,38 +137,23 @@ $customers = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         </div>
 
         <!-- Customer Filters -->
-        <div class="row mb-4">
+        <form class="row mb-4 g-2" method="get" action="customers.php">
             <div class="col-md-6">
                 <div class="input-group search-container">
-                    <input type="text" class="form-control" placeholder="Search customers...">
-                    <button class="btn btn-outline-secondary" type="button">
+                    <input type="text" name="q" class="form-control" placeholder="Search name, email, phone, or city" value="<?php echo htmlspecialchars($search); ?>">
+                    <button class="btn btn-outline-secondary" type="submit">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
             </div>
-            <div class="col-md-6 text-end">
-                <div class="btn-group">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        Filter by Status
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#">All Customers</a></li>
-                        <li><a class="dropdown-item" href="#">Active</a></li>
-                        <li><a class="dropdown-item" href="#">Inactive</a></li>
-                    </ul>
-                </div>
-                <div class="btn-group ms-2">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        Sort By
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#">Newest First</a></li>
-                        <li><a class="dropdown-item" href="#">Oldest First</a></li>
-                        <li><a class="dropdown-item" href="#">A-Z Name</a></li>
-                    </ul>
-                </div>
+            <div class="col-md-6 text-md-end">
+                <select name="sort" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
+                    <option value="newest" <?php echo $sort === 'newest' ? 'selected' : ''; ?>>Newest first</option>
+                    <option value="oldest" <?php echo $sort === 'oldest' ? 'selected' : ''; ?>>Oldest first</option>
+                    <option value="name" <?php echo $sort === 'name' ? 'selected' : ''; ?>>Name A–Z</option>
+                </select>
             </div>
-        </div>
+        </form>
 
         <!-- Customers Table -->
         <div class="card shadow mb-4 customer-table">
@@ -193,8 +208,12 @@ $customers = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                                     </span>
                                 </td>
                                 <td>
-                                    <?php echo date('M j, Y', strtotime($customer['created_at'])); ?>
-                                    <div class="text-muted small"><?php echo date('h:i A', strtotime($customer['created_at'])); ?></div>
+                                    <?php if (!empty($customer['created_at'])): ?>
+                                        <?php echo date('M j, Y', strtotime($customer['created_at'])); ?>
+                                        <div class="text-muted small"><?php echo date('h:i A', strtotime($customer['created_at'])); ?></div>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <a href="view_customer.php?id=<?php echo $customer['id']; ?>" 
@@ -217,21 +236,22 @@ $customers = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         </div>
 
         <!-- Pagination -->
-        <nav aria-label="Page navigation" class="mt-4">
+        <?php if ($totalCustomers === 0): ?>
+            <p class="text-muted">No customers match this search.</p>
+        <?php elseif ($totalPages > 1): ?>
+        <nav aria-label="Customer pages" class="mt-4">
             <ul class="pagination justify-content-center">
-                <li class="page-item disabled">
-                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $page - 1; ?><?php echo $pagerQuery !== '' ? '&' . $pagerQuery : ''; ?>">Previous</a>
                 </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#">Next</a>
+                <li class="page-item disabled"><span class="page-link"><?php echo $page; ?> / <?php echo $totalPages; ?></span></li>
+                <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $page + 1; ?><?php echo $pagerQuery !== '' ? '&' . $pagerQuery : ''; ?>">Next</a>
                 </li>
             </ul>
         </nav>
+        <?php endif; ?>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

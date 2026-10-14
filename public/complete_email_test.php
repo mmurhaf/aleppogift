@@ -201,7 +201,7 @@
                     
                     echo "<br><strong>Troubleshooting suggestions:</strong><br>";
                     echo "1. Check SMTP password in config/config.php<br>";
-                    echo "2. Try alternative password: Salem1972#i<br>";
+                    echo "2. Try alternative password: ********<br>";
                     echo "3. Verify port 465 is not blocked<br>";
                     echo "4. Contact iPage support for SMTP settings</div>";
                 }

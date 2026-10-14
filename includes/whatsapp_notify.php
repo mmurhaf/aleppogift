@@ -1,22 +1,12 @@
 <?php
-function sendAdminWhatsApp($order_id, $name, $total, $method = 'COD', $customer_phone = '', $city = '', $country = '') {
+function sendAdminWhatsApp($order_id, $name, $total, $method = 'COD') {
     $phone = '971561125320';
-    $apikey = '5574813';
+    $apikey = defined('CALLMEBOT_API_KEY') ? CALLMEBOT_API_KEY : '';
 
     $methodLabel = ($method === 'COD') ? '💵 COD' : '💳 Paid';
 
     // Build plain message first (raw, with line breaks)
-    $message = "📦 New Order - AleppoGift\nOrder ID: #$order_id\n$methodLabel\nCustomer: $name";
-    if ($customer_phone) {
-        $message .= "\nPhone: $customer_phone";
-    }
-    if ($city || $country) {
-        $location = trim(($city ? $city : '') . ($city && $country ? ', ' : '') . ($country ? $country : ''));
-        if ($location) {
-            $message .= "\nLocation: $location";
-        }
-    }
-    $message .= "\nTotal: AED $total";
+    $message = "📦 New Order - AleppoGift\nOrder ID: #$order_id\n$methodLabel\nCustomer: $name\nTotal: AED $total";
 
     // URL-encode the whole message
     $messageEncoded = urlencode($message);
@@ -25,6 +15,8 @@ function sendAdminWhatsApp($order_id, $name, $total, $method = 'COD', $customer_
 
     $ch = curl_init($url);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);  // 5 seconds to connect
+	curl_setopt($ch, CURLOPT_TIMEOUT, 10);         // 10 seconds total timeout
 	$result = curl_exec($ch);
 
 	if (curl_errno($ch)) {

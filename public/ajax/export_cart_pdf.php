@@ -1,273 +1,189 @@
 <?php
 /**
- * Export Cart to PDF
- * Generates a PDF with cart items with option to include or exclude prices
+ * Export the current cart as a PDF.
+ * prices=no omits unit prices, line totals, and the summary.
  */
 
-session_start();
 require_once(__DIR__ . '/../../includes/bootstrap.php');
-require_once(__DIR__ . '/../../vendor/fpdf/fpdf.php');
+require_once(__DIR__ . '/../../includes/ProductImageResolver.php');
+require_once(__DIR__ . '/../../includes/ArabicPdfRenderer.php');
+require_once(__DIR__ . '/../../includes/PdfDocument.php');
 
-$db = new Database();
-
-// Check if cart exists
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
     http_response_code(400);
     die('Cart is empty');
 }
 
-// Get option to include prices (default: yes)
-$includePrices = isset($_GET['prices']) && $_GET['prices'] === 'no' ? false : true;
+$includePrices = !(isset($_GET['prices']) && $_GET['prices'] === 'no');
+$rate = defined('AED_TO_USD_RATE') ? (float)AED_TO_USD_RATE : 0.2723;
+$shipping = 30.00;
 
-// Create PDF
-class CartPDF extends FPDF {
-    private $includePrices;
-    function __construct($includePrices = true) {
-        parent::__construct();
-        $this->includePrices = $includePrices;
-    }
-    // Header unchanged
-    function Header() {
-        // Logo or header image (if exists)
-        $logoPath = __DIR__ . '/../../assets/images/logo.png';
-        if (file_exists($logoPath)) {
-            $this->Image($logoPath, 10, 6, 30);
-        }
-        
-        // Title
-        $this->SetFont('Arial', 'B', 20);
-        $this->SetTextColor(230, 123, 46); // Orange color
-        $this->Cell(0, 10, 'AleppoGift - Shopping Cart', 0, 0, 'C');
-        $this->Ln(15);
-        
-        // Date
-        $this->SetFont('Arial', '', 10);
-        $this->SetTextColor(100, 100, 100);
-        $this->Cell(0, 5, 'Generated: ' . date('F d, Y H:i'), 0, 0, 'R');
-        $this->Ln(10);
-        
-        // Horizontal line
-        $this->SetDrawColor(230, 123, 46);
-        $this->SetLineWidth(0.5);
-        $this->Line(10, $this->GetY(), 200, $this->GetY());
-        $this->Ln(5);
-    }
-    
-    function Footer() {
-        $this->SetY(-15);
-        $this->SetFont('Arial', 'I', 8);
-        $this->SetTextColor(150, 150, 150);
-        $this->Cell(0, 10, 'Page ' . $this->PageNo() . ' | AleppoGift - Your Premium Shopping Destination', 0, 0, 'C');
-    }
-    
-    function CartTable($header, $data) {
-        // Colors and fonts
-        $this->SetFillColor(230, 123, 46); // Orange
-        $this->SetTextColor(255, 255, 255);
-        $this->SetDrawColor(200, 200, 200);
-        $this->SetLineWidth(0.3);
-        $this->SetFont('Arial', 'B', 11);
-        // Add image column
-        if ($this->includePrices) {
-            $w = array(15, 25, 50, 40, 20, 25, 30); // #, Img, Name, Variation, Qty, Price, Total
-        } else {
-            $w = array(15, 25, 70, 60, 25); // #, Img, Name, Variation, Qty
-        }
-        // Header
-        for ($i = 0; $i < count($header); $i++) {
-            $this->Cell($w[$i], 7, $header[$i], 1, 0, 'C', true);
-        }
-        $this->Ln();
-        // Data
-        $this->SetFillColor(245, 245, 245);
-        $this->SetTextColor(0, 0, 0);
-        $this->SetFont('Arial', '', 10);
-        $fill = false;
-        $itemNumber = 1;
-        foreach ($data as $row) {
-            $startY = $this->GetY();
-            $maxHeight = 18; // Height for image row
-            if ($startY > 250) {
-                $this->AddPage();
-                $startY = $this->GetY();
-            }
-            if ($this->includePrices) {
-                $this->Cell($w[0], $maxHeight, $itemNumber++, 'LR', 0, 'C', $fill);
-                // Image
-                if (!empty($row[1]) && file_exists($row[1])) {
-                    $this->Image($row[1], $this->GetX(), $this->GetY(), 16, 16);
-                }
-                $this->Cell($w[1], $maxHeight, '', 'LR', 0, 'C', $fill);
-                $x = $this->GetX();
-                $this->MultiCell($w[2], 8, $row[2], 'LR', 'L', $fill);
-                $height1 = $this->GetY() - $startY;
-                $maxHeight = max($maxHeight, $height1);
-                $this->SetXY($x + $w[2], $startY);
-                $this->MultiCell($w[3], 8, $row[3], 'LR', 'L', $fill);
-                $height2 = $this->GetY() - $startY;
-                $maxHeight = max($maxHeight, $height2);
-                $this->SetXY($x + $w[2] + $w[3], $startY);
-                $this->Cell($w[4], $maxHeight, $row[4], 'LR', 0, 'C', $fill);
-                $this->Cell($w[5], $maxHeight, $row[5], 'LR', 0, 'R', $fill);
-                $this->Cell($w[6], $maxHeight, $row[6], 'LR', 0, 'R', $fill);
-            } else {
-                $this->Cell($w[0], $maxHeight, $itemNumber++, 'LR', 0, 'C', $fill);
-                if (!empty($row[1]) && file_exists($row[1])) {
-                    $this->Image($row[1], $this->GetX(), $this->GetY(), 16, 16);
-                }
-                $this->Cell($w[1], $maxHeight, '', 'LR', 0, 'C', $fill);
-                $x = $this->GetX();
-                $this->MultiCell($w[2], 8, $row[2], 'LR', 'L', $fill);
-                $height1 = $this->GetY() - $startY;
-                $maxHeight = max($maxHeight, $height1);
-                $this->SetXY($x + $w[2], $startY);
-                $this->MultiCell($w[3], 8, $row[3], 'LR', 'L', $fill);
-                $height2 = $this->GetY() - $startY;
-                $maxHeight = max($maxHeight, $height2);
-                $this->SetXY($x + $w[2] + $w[3], $startY);
-                $this->Cell($w[4], $maxHeight, $row[4], 'LR', 0, 'C', $fill);
-            }
-            $this->Ln();
-            $fill = !$fill;
-        }
-        // Closing line
-        $this->Cell(array_sum($w), 0, '', 'T');
-    }
-    
-    function SummaryBox($subtotal, $shipping, $total) {
-        $this->Ln(10);
-        $this->SetFont('Arial', 'B', 12);
-        $this->SetFillColor(245, 245, 245);
-        
-        // Summary box
-        $boxWidth = 70;
-        $boxX = $this->GetPageWidth() - $boxWidth - 10;
-        $this->SetX($boxX);
-        
-        $this->SetFont('Arial', '', 11);
-        $this->Cell($boxWidth/2, 8, 'Subtotal:', 0, 0, 'L', true);
-        $this->Cell($boxWidth/2, 8, 'AED ' . number_format($subtotal, 2), 0, 1, 'R', true);
-        
-        $this->SetX($boxX);
-        $this->Cell($boxWidth/2, 8, 'Shipping:', 0, 0, 'L', true);
-        $this->Cell($boxWidth/2, 8, 'AED ' . number_format($shipping, 2), 0, 1, 'R', true);
-        
-        $this->SetX($boxX);
-        $this->SetFont('Arial', 'B', 12);
-        $this->SetFillColor(230, 123, 46);
-        $this->SetTextColor(255, 255, 255);
-        $this->Cell($boxWidth/2, 10, 'Total:', 1, 0, 'L', true);
-        $this->Cell($boxWidth/2, 10, 'AED ' . number_format($total, 2), 1, 1, 'R', true);
-        $this->SetTextColor(0, 0, 0);
-    }
-    
-    function InfoBox() {
-        $this->Ln(15);
-        $this->SetFont('Arial', 'I', 9);
-        $this->SetTextColor(100, 100, 100);
-        
-        $this->SetFillColor(250, 250, 250);
-        $this->MultiCell(0, 5, "Note: This is a cart export for your reference. To complete your purchase, please visit our website and proceed to checkout. Prices and availability are subject to change.", 1, 'L', true);
-        
-        $this->Ln(5);
-        $this->SetFont('Arial', 'B', 10);
-        $this->SetTextColor(230, 123, 46);
-        $this->Cell(0, 5, 'Contact Information:', 0, 1);
-        $this->SetFont('Arial', '', 9);
-        $this->SetTextColor(0, 0, 0);
-        $this->Cell(0, 5, 'Website: www.aleppogift.com', 0, 1);
-        $this->Cell(0, 5, 'Email: info@aleppogift.com', 0, 1);
-    }
-}
+$e = static function ($value): string {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+};
 
 try {
-    // Initialize PDF
-    $pdf = new CartPDF($includePrices);
-    $pdf->AddPage();
-    
-    // Prepare table header
-    if ($includePrices) {
-        $header = array('#', 'Image', 'Product Name', 'Variation', 'Qty', 'Price', 'Total');
-    } else {
-        $header = array('#', 'Image', 'Product Name', 'Variation', 'Qty');
+    $db = new Database();
+    $pricedCart = function_exists('priceCart')
+        ? priceCart($db, $_SESSION['cart'])
+        : ['lines' => [], 'bundles' => [], 'catalog_total' => 0, 'bundle_discount' => 0, 'total' => 0];
+
+    $orderedKeys = [];
+    foreach ($pricedCart['bundles'] as $bundleGroup) {
+        foreach ($bundleGroup['line_keys'] as $key) {
+            if (isset($_SESSION['cart'][$key])) {
+                $orderedKeys[] = $key;
+            }
+        }
     }
-    // Prepare data
-    $data = array();
-    $grandTotal = 0;
-    foreach ($_SESSION['cart'] as $item) {
+    $orderedKeys = array_values(array_unique($orderedKeys, SORT_REGULAR));
+    $seen = array_flip($orderedKeys);
+    foreach (array_keys($_SESSION['cart']) as $key) {
+        if (!isset($seen[$key])) {
+            $orderedKeys[] = $key;
+        }
+    }
+
+    $imageBases = [
+        __DIR__ . '/../../',
+        __DIR__ . '/../../public/',
+        __DIR__ . '/../../public/uploads/products/',
+        __DIR__ . '/../../uploads/products/',
+    ];
+
+    $rows = '';
+    $index = 1;
+    $pieceCount = 0;
+
+    foreach ($orderedKeys as $key) {
+        $item = $_SESSION['cart'][$key] ?? null;
+        $line = $pricedCart['lines'][$key] ?? null;
+        if (!$item || !$line || empty($line['active'])) {
+            continue;
+        }
+
         $product = $db->query(
-            "SELECT * FROM products WHERE id = :id AND status = 1",
-            ['id' => $item['product_id']]
+            "SELECT p.*,
+                    COALESCE(pi_variant.image_path, pi_main.image_path) AS selected_image,
+                    pv.size AS variation_size,
+                    pv.color AS variation_color
+             FROM products p
+             LEFT JOIN product_variations pv ON pv.id = :variation_id AND pv.product_id = p.id
+             LEFT JOIN product_images pi_variant ON pv.image_id = pi_variant.id
+             LEFT JOIN product_images pi_main ON pi_main.product_id = p.id AND pi_main.is_main = 1
+             WHERE p.id = :product_id
+             LIMIT 1",
+            [
+                'variation_id' => $line['variation_id'] ?? null,
+                'product_id' => $line['product_id'],
+            ]
         )->fetch(PDO::FETCH_ASSOC);
+
         if (!$product) {
             continue;
         }
-        // Get main image path
-        $main_image = $db->query(
-            "SELECT image_path FROM product_images WHERE product_id = :pid AND is_main = 1 LIMIT 1",
-            ['pid' => $item['product_id']]
-        )->fetchColumn();
-        if ($main_image) {
-            // Try to resolve the image path
-            $img_path = __DIR__ . '/../../' . ltrim($main_image, '/');
-            if (!file_exists($img_path)) {
-                $img_path = __DIR__ . '/../uploads/products/' . basename($main_image);
-            }
-        } else {
-            $img_path = __DIR__ . '/../uploads/products/default.jpg';
-        }
-        $price = $product['price'];
-        $variationText = "Standard";
-        if (!empty($item['variation_id'])) {
-            $variation = $db->query(
-                "SELECT * FROM product_variations WHERE id = :id",
-                ['id' => $item['variation_id']]
-            )->fetch(PDO::FETCH_ASSOC);
-            if ($variation) {
-                $variationText = "Size: {$variation['size']}, Color: {$variation['color']}";
-                $price += $variation['additional_price'];
-            }
-        }
-        $total = $price * $item['quantity'];
-        $grandTotal += $total;
+
+        $qty = (int)$line['quantity'];
+        $pieceCount += $qty;
+        $rawName = html_entity_decode((string)loc_field($product, 'name'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $rawName = trim(strip_tags($rawName));
+        $name = $e($rawName !== '' ? $rawName : 'Product');
+
+        $variantBits = array_filter([
+            trim((string)($product['variation_color'] ?? '')),
+            trim((string)($product['variation_size'] ?? '')),
+        ], static function ($bit) {
+            return $bit !== '';
+        });
+        $variantLine = $variantBits
+            ? '<div class="muted">' . $e(implode(' / ', $variantBits)) . '</div>'
+            : '';
+
+        $bundleName = trim((string)($line['bundle_name_en'] ?? ''));
+        $bundleLine = $bundleName !== ''
+            ? '<div class="muted">Bundle: ' . $e($bundleName) . '</div>'
+            : '';
+
+        $imageDataUri = ProductImageResolver::resolveAsDataUri(
+            (string)($product['selected_image'] ?? ''),
+            $imageBases
+        );
+        $imageHtml = $imageDataUri
+            ? '<img class="product-image" width="42" height="42" src="' . $e($imageDataUri) . '" alt="">'
+            : '<span class="muted">—</span>';
+
+        $rowClass = ($index % 2 === 0) ? ' class="alt"' : '';
+        $rows .= '<tr' . $rowClass . '>'
+            . '<td class="center">' . $index++ . '</td>'
+            . '<td class="center">' . $imageHtml . '</td>'
+            . '<td class="desc"><div class="pname">' . $name . '</div>' . $variantLine . $bundleLine . '</td>'
+            . '<td class="center">' . $qty . '</td>';
+
         if ($includePrices) {
-            $data[] = array(
-                $product['name_en'], // 0
-                $img_path,           // 1
-                $product['name_en'], // 2
-                $variationText,      // 3
-                $item['quantity'],   // 4
-                'AED ' . number_format($price, 2), // 5
-                'AED ' . number_format($total, 2)  // 6
-            );
-        } else {
-            $data[] = array(
-                $product['name_en'], // 0
-                $img_path,           // 1
-                $product['name_en'], // 2
-                $variationText,      // 3
-                $item['quantity']    // 4
-            );
+            $catalogUnit = (float)$line['catalog_unit'];
+            $chargedUnit = $qty > 0 ? (float)$line['line_total'] / $qty : $catalogUnit;
+            $unitHtml = PdfDocument::money($chargedUnit, $rate);
+            if ((float)$line['line_total'] + 0.001 < (float)$line['catalog_line_total']) {
+                $unitHtml .= '<div class="muted">Catalog AED ' . $e(number_format($catalogUnit, 2)) . '</div>';
+            }
+            $rows .= '<td class="money">' . $unitHtml . '</td>'
+                . '<td class="money">' . PdfDocument::money((float)$line['line_total'], $rate) . '</td>';
         }
+
+        $rows .= '</tr>';
     }
-    // Draw table
-    $pdf->CartTable($header, $data);
-    
-    // Add summary if prices included
+
+    $colspan = $includePrices ? 6 : 4;
+    if ($rows === '') {
+        $rows = '<tr><td class="center muted" colspan="' . $colspan . '">No available products in this cart</td></tr>';
+    }
+
+    $itemCount = max(0, $index - 1);
+    $itemLabel = $itemCount === 1 ? '1 product' : $itemCount . ' products';
+    $pieceLabel = $pieceCount === 1 ? '1 piece' : $pieceCount . ' pieces';
+
+    $summaryLeft = '<strong>' . $e($itemLabel) . '</strong><br>' . $e($pieceLabel);
+    $summaryRight = $includePrices
+        ? 'Amounts are listed in AED.<br>The USD equivalent is shown under each amount.<br>Shipping shown is the UAE estimate.'
+        : 'Prices are hidden in this copy.<br>Current prices are on aleppogift.com.';
+
+    $body = PdfDocument::header('SHOPPING CART', [
+        'Generated: ' . $e(date('F j, Y g:i A')),
+        $e($itemLabel . ' · ' . $pieceLabel),
+    ])
+        . PdfDocument::parties('YOUR CART', $summaryLeft, $includePrices ? 'PRICES' : 'NOTE', $summaryRight)
+        . PdfDocument::itemsTable($rows, $includePrices);
+
     if ($includePrices) {
-        $shipping = 30.00;
-        $pdf->SummaryBox($grandTotal, $shipping, $grandTotal + $shipping);
+        $catalogTotal = (float)$pricedCart['catalog_total'];
+        $bundleDiscount = (float)$pricedCart['bundle_discount'];
+        $goodsTotal = (float)$pricedCart['total'];
+        $payable = $goodsTotal + $shipping;
+
+        $totalRows = '<tr><td class="lbl">Subtotal</td><td class="money">' . PdfDocument::money($catalogTotal, $rate) . '</td></tr>';
+        if ($bundleDiscount > 0.001) {
+            $totalRows .= '<tr class="discount"><td class="lbl">Bundle discount</td><td class="money">'
+                . PdfDocument::money($bundleDiscount, $rate, true) . '</td></tr>';
+        }
+        $totalRows .= '<tr><td class="lbl">Shipping</td><td class="money">' . PdfDocument::money($shipping, $rate) . '</td></tr>'
+            . '<tr class="grand"><td>TOTAL</td><td class="money">' . PdfDocument::money($payable, $rate) . '</td></tr>';
+
+        $body .= PdfDocument::totals($totalRows);
     }
-    
-    // Add info box
-    $pdf->InfoBox();
-    
-    // Output PDF
+
+    $body .= '<div class="notice">This is a cart export for your reference. To complete your purchase, visit aleppogift.com and proceed to checkout. Prices and availability are subject to change.</div>';
+    if ($includePrices) {
+        $body .= PdfDocument::footer('Thank you for shopping with Aleppo Gift.');
+    } else {
+        $body .= '<div class="footer">Thank you for shopping with Aleppo Gift.'
+            . '<br>www.aleppogift.com &nbsp;|&nbsp; info@aleppogift.com</div>';
+    }
+
     $filename = 'AleppoGift_Cart_' . date('Y-m-d') . ($includePrices ? '_with_prices' : '_without_prices') . '.pdf';
-    $pdf->Output('D', $filename);
-    
-} catch (Exception $e) {
-    error_log("Cart PDF Export Error: " . $e->getMessage());
+    ArabicPdfRenderer::streamDownload(PdfDocument::document($body), $filename);
+    exit;
+} catch (Exception $exception) {
+    error_log('Cart PDF Export Error: ' . $exception->getMessage());
     http_response_code(500);
-    die('Failed to generate PDF: ' . $e->getMessage());
+    die('Failed to generate PDF: ' . $exception->getMessage());
 }

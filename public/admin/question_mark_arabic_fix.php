@@ -7,14 +7,14 @@
  * Host: mmurhaf50350.ipagemysql.com
  * Database: aleppogift
  * User: mmurhaf
- * Password: Salem1972#i
+ * Password: ********
  */
 
 // Database configuration
 $db_host = 'mmurhaf50350.ipagemysql.com';
 $db_name = 'aleppogift';
 $db_user = 'mmurhaf';
-$db_pass = 'Salem1972#i';
+$db_pass = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
 
 // Set proper headers for UTF-8
 header('Content-Type: text/html; charset=utf-8');

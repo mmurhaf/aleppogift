@@ -204,76 +204,27 @@ function sendPaymentLinkEmail($toEmail, $toName, $orderId, $paymentLink, $invoic
     error_log("📧 Sending payment link email for Order #$orderId to $toEmail");
     
     try {
-        $subject = "Complete Your Payment - Order #$orderId - AleppoGift";
-        
-        $message = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <title>Payment Link</title>
-        </head>
-        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-            <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
-                    <h1 style='color: white; margin: 0; font-size: 28px;'>🛍️ AleppoGift</h1>
-                </div>
-                
-                <div style='background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
-                    <h2 style='color: #667eea; margin-top: 0;'>Complete Your Payment</h2>
-                    
-                    <p>Dear " . htmlspecialchars($toName) . ",</p>
-                    
-                    <p>Thank you for your order! Your order <strong>#$orderId</strong> has been created and is ready for payment.</p>
-                    
-                    <div style='background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #667eea;'>
-                        <h3 style='margin-top: 0; color: #667eea;'>📦 Order Details</h3>
-                        <p>Order Number: <strong>#$orderId</strong></p>
-                        <p>Your invoice is attached to this email.</p>
-                    </div>
-                    
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='" . htmlspecialchars($paymentLink) . "' 
-                           style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-                                  color: white; 
-                                  padding: 15px 40px; 
-                                  text-decoration: none; 
-                                  border-radius: 25px; 
-                                  font-weight: bold; 
-                                  font-size: 16px;
-                                  display: inline-block;'>
-                            💳 Complete Payment Now
-                        </a>
-                    </div>
-                    
-                    <div style='background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;'>
-                        <p style='margin: 0;'><strong>⏰ Payment Link Validity:</strong> This link is valid for 7 days.</p>
-                    </div>
-                    
-                    <h3 style='color: #667eea;'>What Happens Next?</h3>
-                    <ul style='line-height: 1.8;'>
-                        <li>Click the button above to complete your payment securely</li>
-                        <li>Once payment is confirmed, we'll process your order immediately</li>
-                        <li>You'll receive a shipping confirmation with tracking details</li>
-                    </ul>
-                    
-                    <div style='margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;'>
-                        <p style='margin: 0; color: #666; font-size: 14px;'>
-                            <strong>Need Help?</strong><br>
-                            Email: " . (defined('EMAIL_FROM') ? EMAIL_FROM : 'info@aleppogift.ae') . "<br>
-                            Phone: +971 56 112 5320<br>
-                            Website: <a href='" . (defined('SITE_URL') ? SITE_URL : 'https://aleppogift.ae') . "' style='color: #667eea;'>aleppogift.ae</a>
-                        </p>
-                    </div>
-                </div>
-                
-                <div style='text-align: center; margin-top: 20px; color: #999; font-size: 12px;'>
-                    <p>© " . date('Y') . " AleppoGift. Premium Quality Products.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        ";
+        $subject = "Complete payment for order #$orderId — AleppoGift";
+        require_once __DIR__ . '/order_email_layout.php';
+        $name = trim((string)$toName) !== '' ? $toName : 'there';
+        $inner = '<p style="margin:0 0 8px;font-family:' . ag_email_font_serif() . ';font-size:18px;color:#2d2b22;">Dear ' . ag_email_h($name) . ',</p>'
+            . '<p style="margin:0 0 22px;">Thank you. Order <strong style="font-weight:500;color:#2d2b22;">#' . (int)$orderId . '</strong> is ready for payment. This link stays open for 7 days.</p>'
+            . ag_email_button($paymentLink, 'Complete payment')
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-top:28px;">'
+            . ag_email_heading('What happens next')
+            . ag_email_steps([
+                'Open the secure payment page.',
+                'Once payment is confirmed, we prepare the order.',
+                'We send tracking details when it ships.',
+            ])
+            . '</td></tr></table>'
+            . ag_email_help_line();
+        $message = ag_email_shell(
+            'Complete payment for AleppoGift order #' . (int)$orderId . '. The link is valid for 7 days.',
+            'Order #' . (int)$orderId,
+            'Complete your payment',
+            $inner
+        );
         
         $headers = "MIME-Version: 1.0" . "\r\n";
         $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";

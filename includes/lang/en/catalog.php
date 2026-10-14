@@ -1,0 +1,108 @@
+<?php
+return [
+    // Home meta
+    'catalog.home_title' => 'Aleppo Gift - Tableware, Coffee Cups & Home Accessories UAE',
+    'catalog.home_description' => 'Shop tableware, plates, glasses, cups, mugs, Arabic coffee cups, tea cups, trays, vases, blankets, pillows, and home accessories at Aleppo Gift in the UAE.',
+    'catalog.home_og_title' => 'Aleppo Gift - Tableware & Home Accessories UAE',
+    'catalog.home_og_description' => 'Discover plates, glasses, cups, mugs, coffee cups, trays, vases, blankets, pillows, and home accessories with UAE delivery.',
+    'catalog.home_twitter_description' => 'Shop tableware, coffee cups, glassware, trays, vases, blankets, pillows, and home accessories in the UAE.',
+
+    // Home hero & notices
+    'catalog.hero_badge' => 'Tableware & gifts · UAE',
+    'catalog.hero_title' => 'The Art of Elegant Hosting',
+    'catalog.hero_subtitle' => 'Plates, cups, trays, and home gifts, with cash on delivery across the UAE.',
+    'catalog.shop_products' => 'Shop products',
+    'catalog.ask_whatsapp' => 'Ask on WhatsApp',
+    'catalog.promises' => 'Shopping promises',
+    'catalog.promise_currency' => 'Prices in your currency',
+    'catalog.promise_cod' => 'Cash on delivery',
+    'catalog.promise_delivery' => 'UAE delivery',
+    'catalog.promise_confirm' => 'We confirm availability',
+    'catalog.notice_title' => 'Availability & payment',
+    'catalog.notice_summary_availability' => 'All products are subject to availability. Confirm with us on WhatsApp.',
+    'catalog.notice_summary_payment' => 'Shown in your currency, charged in AED. Cash on delivery is recommended.',
+    'catalog.notice_confirm_on' => 'All products are subject to availability. Confirm with us on',
+    'catalog.whatsapp' => 'WhatsApp',
+    'catalog.notice_place_order' => 'You can also place the order and we will confirm stock and delivery.',
+    'catalog.notice_cod' => 'With cash on delivery you pay only when the items arrive.',
+
+    // Bundles
+    'catalog.bundles' => 'Bundles',
+    'catalog.bundles_subtitle' => 'Buy the set and keep the discount',
+    'catalog.percent_off' => '{percent}% off',
+    'catalog.add_bundle' => 'Add bundle to cart',
+
+    // Listing & filters
+    'catalog.shop_collection' => 'Shop the collection',
+    'catalog.shop_by_category' => 'Shop by category',
+    'catalog.all' => 'All',
+    'catalog.category' => 'Category',
+    'catalog.brand' => 'Brand',
+    'catalog.all_categories' => 'All categories',
+    'catalog.all_brands' => 'All brands',
+    'catalog.reset' => 'Reset',
+    'catalog.clear_filters' => 'Clear all filters',
+    'catalog.export_pdf' => 'Export results to PDF',
+    'catalog.min_aed' => 'Min AED',
+    'catalog.max_aed' => 'Max AED',
+    'catalog.products_count' => '{count} products',
+    'catalog.page_of' => 'Page {page} of {pages}',
+    'catalog.products_found' => 'Products ({count} found)',
+    'catalog.pagination' => 'Products pagination',
+    'catalog.previous' => 'Previous',
+    'catalog.next' => 'Next',
+    'catalog.no_products' => 'No products found',
+    'catalog.no_products_hint' => 'Try another category, brand, or search.',
+    'catalog.view_all' => 'View all products',
+
+    // Product cards
+    'catalog.view_details' => 'View {name} details',
+    'catalog.save_wishlist' => 'Save to wishlist',
+    'catalog.save_item_wishlist' => 'Save {name} to wishlist',
+    'catalog.add_item_cart' => 'Add {name} to cart',
+    'catalog.ask_item_whatsapp' => 'Ask about {name} on WhatsApp',
+    'catalog.share' => 'Share',
+    'catalog.share_item' => 'Share {name}',
+    'catalog.whatsapp_interest' => 'aleppogift: I am interested in this product: {name} - {url}',
+    'catalog.img_alt' => '{name} - {brand} {category} | Aleppo Gift UAE',
+    'catalog.alt_brand_fallback' => 'Premium',
+    'catalog.alt_category_fallback' => 'Gift',
+    'catalog.share_text' => 'Check out this product at Aleppo Gift: {name} - AED {price} - Product Code: {id}',
+    'catalog.share_unsupported' => 'Sharing is not supported in this browser. Please copy the link manually:',
+
+    // PDF export
+    'catalog.pdf_generating' => 'Generating PDF...',
+    'catalog.pdf_wait' => 'Please wait while we prepare your document',
+    'catalog.pdf_failed' => 'Failed to fetch products',
+    'catalog.pdf_error' => 'Error: {message}',
+    'catalog.pdf_error_generating' => 'Error generating PDF: {message}',
+
+    // Social proof
+    'catalog.customer_gallery' => 'Customer gallery',
+    'catalog.real_proof' => 'Real Customer Proof',
+    'catalog.trust_title' => 'Customers trust Aleppo Gift before they pay',
+    'catalog.trust_text' => 'Showcasing real feedback, including moderated WhatsApp conversations from happy customers.',
+    'catalog.read_testimonials' => 'Read All Testimonials',
+    'catalog.chat_whatsapp' => 'Chat on WhatsApp',
+    'catalog.proof_alt' => 'WhatsApp customer proof from {name}',
+    'catalog.privacy_protected' => 'Privacy protected',
+
+    // Brands showcase
+    'catalog.shop_by_brand' => 'Shop by brand',
+    'catalog.brands_soon' => 'Brands coming soon',
+
+    // Products page meta
+    'catalog.products_title' => 'Shop Tableware & Home Accessories | Aleppo Gift UAE',
+    'catalog.products_description' => 'Browse tableware, plates, glasses, cups, mugs, Arabic coffee cups, tea cups, trays, vases, blankets, pillows, and home accessories with UAE delivery.',
+    'catalog.products_lead' => 'Browse tableware, drinkware, coffee cups, trays, vases, blankets, pillows, and home accessories.',
+    'catalog.category_lead' => 'Pieces in {name}.',
+    'catalog.brand_lead' => 'Pieces from {name}.',
+    'catalog.search_title' => 'Search: {query}',
+    'catalog.search_lead' => 'Results for “{query}”.',
+    'catalog.category_meta_title' => '{name} | Aleppo Gift UAE',
+    'catalog.category_meta_description' => 'Browse {name} at Aleppo Gift. Explore tableware and home accessory pieces with delivery across the UAE.',
+    'catalog.brand_meta_title' => '{name} Products | Aleppo Gift UAE',
+    'catalog.brand_meta_description' => 'Browse {name} products at Aleppo Gift, including tableware, drinkware, serving pieces, and home accessories with UAE delivery.',
+    'catalog.search_meta_title' => 'Search: {query} | Aleppo Gift UAE',
+    'catalog.search_meta_description' => "Search results for '{query}' across Aleppo Gift tableware, cups, trays, glassware, and home accessories.",
+];

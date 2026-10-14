@@ -44,7 +44,7 @@ try {
     if (empty($raw_product_id)) {
         echo json_encode([
             'success' => false, 
-            'message' => 'Product ID is required',
+            'message' => t('cart.product_id_required'),
             'error_code' => 'MISSING_PRODUCT_ID'
         ]);
         exit;
@@ -54,7 +54,7 @@ try {
     if ($product_id === false || $product_id < 1) {
         echo json_encode([
             'success' => false, 
-            'message' => 'Invalid product ID',
+            'message' => t('cart.invalid_product_id'),
             'error_code' => 'INVALID_PRODUCT_ID'
         ]);
         exit;
@@ -81,15 +81,18 @@ try {
     // At this point, we have valid product_id and quantity
 
     // Validate product exists and is active
+    $publishedSql = ag_has_column($db, 'products', 'listing_status')
+        ? " AND (listing_status IS NULL OR listing_status = '' OR listing_status = 'published')"
+        : '';
     $product = $db->query(
-        "SELECT id, name_en, price, stock, status FROM products WHERE id = :id AND status = 1", 
+        "SELECT id, name_en, name_ar, price, stock, status FROM products WHERE id = :id AND status = 1 $publishedSql", 
         ['id' => $product_id]
     )->fetch(PDO::FETCH_ASSOC);
 
     if (!$product) {
         echo json_encode([
             'success' => false, 
-            'message' => 'Product not found or not available'
+            'message' => t('cart.product_unavailable')
         ]);
         exit;
     }
@@ -98,7 +101,7 @@ try {
     if ($product['stock'] !== null && $product['stock'] < $quantity) {
         echo json_encode([
             'success' => false, 
-            'message' => 'Insufficient stock. Available: ' . $product['stock']
+            'message' => t('cart.insufficient_stock', ['stock' => $product['stock']])
         ]);
         exit;
     }
@@ -113,7 +116,7 @@ try {
         if (!$variation) {
             echo json_encode([
                 'success' => false, 
-                'message' => 'Invalid product variation'
+                'message' => t('cart.invalid_variation')
             ]);
             exit;
         }
@@ -122,7 +125,7 @@ try {
         if ($variation['stock'] !== null && $variation['stock'] < $quantity) {
             echo json_encode([
                 'success' => false, 
-                'message' => 'Insufficient variation stock. Available: ' . $variation['stock']
+                'message' => t('cart.insufficient_variation_stock', ['stock' => $variation['stock']])
             ]);
             exit;
         }
@@ -133,42 +136,29 @@ try {
         $_SESSION['cart'] = [];
     }
 
-    // Create unique cart key for product + variation combination
-    $cart_key = $product_id . '_' . ($variation_id ?? 0);
-
-    // Check if we already have this exact item in cart
-    $existing_quantity = 0;
-    $existing_key = null;
-    foreach ($_SESSION['cart'] as $key => $item) {
-        if ($item['product_id'] == $product_id && 
-            ($item['variation_id'] ?? null) == $variation_id) {
-            $existing_quantity = $item['quantity'];
-            $existing_key = $key;
-            break;
-        }
-    }
-
-    $new_total_quantity = $existing_quantity + $quantity;
-
-    // Check total stock again
+    $reserved = cartReservedQuantity($_SESSION['cart'], $product_id, $variation_id);
+    $new_total_quantity = $reserved + $quantity;
     $stock_limit = $variation_id ? $variation['stock'] : $product['stock'];
     if ($stock_limit !== null && $new_total_quantity > $stock_limit) {
         echo json_encode([
-            'success' => false, 
-            'message' => 'Cannot add more items. Total would exceed stock limit: ' . $stock_limit
+            'success' => false,
+            'message' => t('cart.exceeds_stock', ['stock' => $stock_limit])
         ]);
         exit;
     }
 
-    // Add or update item in cart
-    if ($existing_key !== null) {
-        $_SESSION['cart'][$existing_key]['quantity'] = $new_total_quantity;
+    $existing = findCartItem($_SESSION['cart'], $product_id, $variation_id);
+    if ($existing) {
+        $_SESSION['cart'][$existing['key']]['quantity'] += $quantity;
     } else {
+        $bundleLine = findCartItem($_SESSION['cart'], $product_id, $variation_id, 'bundle');
         $_SESSION['cart'][] = [
             'product_id' => $product_id,
             'quantity' => $quantity,
             'variation_id' => $variation_id,
-            'added_at' => time()
+            'added_at' => time(),
+            'line_role' => $bundleLine ? 'extra' : 'standalone',
+            'bundle_id' => $bundleLine['item']['bundle_id'] ?? null,
         ];
     }
 
@@ -177,15 +167,16 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => 'Product added to cart successfully',
+        'message' => t('cart.added'),
         'count' => $total_count,
-        'product_name' => $product['name_en']
+        'cart_count' => $total_count,
+        'product_name' => loc_field($product, 'name')
     ]);
 
 } catch (Exception $e) {
     error_log("Add to cart error: " . $e->getMessage());
     echo json_encode([
         'success' => false, 
-        'message' => 'An error occurred. Please try again.'
+        'message' => t('error_generic')
     ]);
 }

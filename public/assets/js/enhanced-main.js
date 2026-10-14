@@ -1,6 +1,12 @@
 // Enhanced AleppoGift Website JavaScript
 // Modern interactions and improved user experience
 
+var __ = function (k, p, fallback) {
+    var s = (window.AG_I18N && window.AG_I18N[k]) || fallback || k;
+    if (p) { for (var n in p) { s = s.split('{' + n + '}').join(p[n]); } }
+    return s;
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize all components - cart disabled to prevent conflicts
@@ -83,23 +89,7 @@ function initializeProductCards() {
             });
         }
         
-        // Wishlist functionality
-        const wishlistBtn = card.querySelector('.btn-wishlist');
-        if (wishlistBtn) {
-            wishlistBtn.addEventListener('click', function() {
-                this.classList.toggle('active');
-                const icon = this.querySelector('i');
-                if (this.classList.contains('active')) {
-                    icon.classList.remove('far');
-                    icon.classList.add('fas');
-                    showToast('Added to wishlist!', 'success');
-                } else {
-                    icon.classList.remove('fas');
-                    icon.classList.add('far');
-                    showToast('Removed from wishlist', 'info');
-                }
-            });
-        }
+        // Wishlist is handled by storefront.js so the choice survives reload.
     });
 }
 
@@ -107,7 +97,7 @@ function initializeProductCards() {
 function addToCart(productId, productName, button) {
     // Client-side validation
     if (!productId || productId <= 0) {
-        showToast('Invalid product selected', 'error');
+        showToast(__('invalid_product_selected', null, 'Invalid product selected'), 'error');
         button.classList.remove('loading');
         return;
     }
@@ -126,38 +116,38 @@ function addToCart(productId, productName, button) {
         
         if (data.success) {
             // Success animation
-            button.innerHTML = '<i class="fas fa-check me-2"></i>Added!';
+            button.innerHTML = '<i class="fas fa-check me-2"></i>' + __('added_excl', null, 'Added!');
             button.classList.add('success');
             
             // Update cart count
             updateCartCount();
             
             // Show success toast
-            showToast(`${productName} added to cart!`, 'success');
+            showToast(__('product_added', { name: productName }, '{name} added to cart!'), 'success');
             
             // Reset button after 2 seconds
             setTimeout(() => {
-                button.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>Add to Cart';
+                button.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>' + __('add_to_cart', null, 'Add to Cart');
                 button.classList.remove('success');
             }, 2000);
             
         } else {
             // Enhanced error handling
-            let errorMessage = data.message || 'Failed to add to cart';
+            let errorMessage = data.message || __('failed_to_add', null, 'Failed to add to cart');
             if (data.error_code === 'INVALID_PRODUCT_ID') {
-                errorMessage = 'Please select a valid product';
+                errorMessage = __('select_valid_product', null, 'Please select a valid product');
             } else if (data.error_code === 'INVALID_QUANTITY') {
-                errorMessage = 'Please select a valid quantity';
+                errorMessage = __('select_valid_quantity', null, 'Please select a valid quantity');
             }
             
             // Error state
-            button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error';
+            button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>' + __('toast_error', null, 'Error');
             button.classList.add('error');
             showToast(errorMessage, 'error');
             
             // Reset button after 3 seconds
             setTimeout(() => {
-                button.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>Add to Cart';
+                button.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>' + __('add_to_cart', null, 'Add to Cart');
                 button.classList.remove('error');
             }, 3000);
         }
@@ -165,8 +155,8 @@ function addToCart(productId, productName, button) {
     .catch(error => {
         console.error('Error:', error);
         button.classList.remove('loading');
-        button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error';
-        showToast('Network error. Please try again.', 'error');
+        button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>' + __('toast_error', null, 'Error');
+        showToast(__('network_error', null, 'Network error. Please try again.'), 'error');
     });
 }
 
@@ -179,7 +169,7 @@ function openQuickView(productId) {
         <div class="quick-view-content">
             <div class="loading-spinner">
                 <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading product details...</p>
+                <p>${__('loading_product_details', null, 'Loading product details...')}</p>
             </div>
             <button class="close-modal" onclick="closeQuickView()">&times;</button>
         </div>
@@ -217,25 +207,25 @@ function openQuickView(productId) {
                 if (data.success) {
                     displayProductDetails(modal, data.product);
                 } else {
-                    showError(modal, data.error || 'Failed to load product details');
+                    showError(modal, data.error || __('product_details_failed', null, 'Failed to load product details'));
                 }
             } catch (parseError) {
                 console.error('JSON Parse Error:', parseError);
-                showError(modal, 'Invalid response format: ' + text.substring(0, 100));
+                showError(modal, __('invalid_response_format', { details: text.substring(0, 100) }, 'Invalid response format: {details}'));
             }
         })
         .catch(error => {
             console.error('Fetch Error:', error);
             console.error('Error type:', error.constructor.name);
             console.error('Error message:', error.message);
-            showError(modal, `Network error: ${error.message}`);
+            showError(modal, __('network_error_with_message', { message: error.message }, 'Network error: {message}'));
         });
 }
 
 function displayProductDetails(modal, product) {
     const content = modal.querySelector('.quick-view-content');
     const priceAED = parseFloat(product.price);
-    const priceUSD = (priceAED / 3.68).toFixed(2);
+    const priceUSD = (typeof window.usdFromAed === 'function' ? window.usdFromAed(priceAED) : (priceAED * (window.AED_TO_USD_RATE || 0.2723)).toFixed(2));
     
     content.innerHTML = `
         <button class="close-modal" onclick="closeQuickView()">&times;</button>
@@ -245,25 +235,25 @@ function displayProductDetails(modal, product) {
             </div>
             <div class="product-details-section">
                 <h3 class="product-title">${product.name_en}</h3>
-                ${product.category_name ? `<p class="product-category"><strong>Category:</strong> ${product.category_name}</p>` : ''}
-                ${product.brand_name ? `<p class="product-brand"><strong>Brand:</strong> ${product.brand_name}</p>` : ''}
+                ${product.category_name ? `<p class="product-category"><strong>${__('category_label', null, 'Category:')}</strong> ${product.category_name}</p>` : ''}
+                ${product.brand_name ? `<p class="product-brand"><strong>${__('brand_label', null, 'Brand:')}</strong> ${product.brand_name}</p>` : ''}
                 
                 <div class="product-price">
-                    <span class="price-aed"><img src="assets/svg/UAE_Dirham_Symbol.svg" alt="AED" class="uae-symbol">${priceAED.toLocaleString()}</span>
-                    <span class="price-usd">($${priceUSD})</span>
+                    <span class="price-aed">${typeof window.formatStoreMoney === 'function' ? window.formatStoreMoney(priceAED, false) : priceAED.toLocaleString()}</span>
+                    <span class="price-usd">${window.AG_CURRENCY && window.AG_CURRENCY.code !== 'AED' ? '(AED ' + priceAED.toFixed(2) + ')' : '($' + priceUSD + ')'}</span>
                 </div>
                 
                 ${product.description_en ? `<div class="product-description">
-                    <h4>Description</h4>
+                    <h4>${__('description', null, 'Description')}</h4>
                     <p>${product.description_en}</p>
                 </div>` : ''}
                 
                 <div class="product-actions">
                     <button class="btn btn-primary add-to-cart-modal" data-id="${product.id}" data-name="${product.name_en}">
-                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                        <i class="fas fa-shopping-cart me-2"></i>${__('add_to_cart', null, 'Add to Cart')}
                     </button>
                     <a href="product.php?id=${product.id}" class="btn btn-secondary">
-                        <i class="fas fa-eye me-2"></i>View Full Details
+                        <i class="fas fa-eye me-2"></i>${__('view_full_details', null, 'View Full Details')}
                     </a>
                 </div>
             </div>
@@ -279,7 +269,7 @@ function displayProductDetails(modal, product) {
             
             // Add loading state
             this.classList.add('loading');
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + __('adding', null, 'Adding...');
             
             addToCart(productId, productName, this);
         });
@@ -292,9 +282,9 @@ function showError(modal, errorMessage) {
         <button class="close-modal" onclick="closeQuickView()">&times;</button>
         <div class="error-message">
             <i class="fas fa-exclamation-triangle"></i>
-            <h3>Error</h3>
+            <h3>${__('toast_error', null, 'Error')}</h3>
             <p>${errorMessage}</p>
-            <button class="btn btn-secondary" onclick="closeQuickView()">Close</button>
+            <button class="btn btn-secondary" onclick="closeQuickView()">${__('close', null, 'Close')}</button>
         </div>
     `;
 }
@@ -312,11 +302,13 @@ function closeQuickView() {
 
 // Scroll to top functionality
 function initializeScrollToTop() {
-    // Create scroll to top button
+    if (document.querySelector('.scroll-to-top')) {
+        return;
+    }
     const scrollBtn = document.createElement('button');
     scrollBtn.className = 'scroll-to-top';
     scrollBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-    scrollBtn.title = 'Back to top';
+    scrollBtn.title = __('back_to_top', null, 'Back to top');
     document.body.appendChild(scrollBtn);
     
     // Show/hide based on scroll position
@@ -401,7 +393,7 @@ function initializeFilters() {
             const submitBtn = this.querySelector('.filter-submit');
             if (submitBtn) {
                 submitBtn.classList.add('loading');
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Filtering...';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + __('filtering', null, 'Filtering...');
             }
         });
     }

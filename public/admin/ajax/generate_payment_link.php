@@ -11,7 +11,7 @@ try {
     require_once($root_dir . '/includes/session_helper.php');
     require_once($root_dir . '/config/config.php');
     require_once($root_dir . '/includes/Database.php');
-    require_once($root_dir . '/includes/generate_payment_link.php');
+    require_once($root_dir . '/includes/ZiinaPayment.php');
 
     // Start session and check admin login
     start_session_safely();
@@ -59,9 +59,25 @@ try {
         exit;
     }
     
-    // Generate payment link
-    $paymentLinkGenerator = new PaymentLinkGenerator($db);
-    $paymentLink = $paymentLinkGenerator->generatePaymentLink($orderId, $order['total_amount']);
+    // Generate Ziina payment link
+    $ziina = new ZiinaPayment();
+    $ziinaMessage = 'AleppoGift Order #' . $orderId;
+    $ziinaResult = $ziina->createPaymentIntent($orderId, $order['total_amount'], $ziinaMessage);
+
+    if (!$ziinaResult['success']) {
+        throw new Exception($ziinaResult['error'] ?? 'Ziina payment intent creation failed');
+    }
+
+    $paymentLink = $ziinaResult['payment_url'];
+    $ziinaPaymentId = $ziinaResult['payment_id'] ?? null;
+
+    // Store the Ziina payment ID against the order
+    if ($ziinaPaymentId) {
+        $db->query(
+            "UPDATE orders SET payment_reference = :ref WHERE id = :id",
+            ['ref' => $ziinaPaymentId, 'id' => $orderId]
+        );
+    }
     
     // Prepare response
     echo json_encode([

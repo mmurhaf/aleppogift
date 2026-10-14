@@ -19,7 +19,7 @@ try {
     require_once($root_dir . '/includes/session_helper.php');
     require_once($root_dir . '/config/config.php');
     require_once($root_dir . '/includes/Database.php');
-    require_once($root_dir . '/includes/generate_payment_link.php');
+    require_once($root_dir . '/includes/ZiinaPayment.php');
 
     // Start session and check admin login
     start_session_safely();
@@ -150,7 +150,7 @@ try {
     
     $orderId = $pdo->lastInsertId();
     
-    // Create a dummy order item for the payment
+    // Create a dummy order item for the payment description.
     $db->query("
         INSERT INTO order_items (
             order_id,
@@ -168,19 +168,35 @@ try {
             :total
         )
     ", [
-        'order_id' => $orderId,
+        'order_id'     => $orderId,
         'product_name' => $description,
-        'price' => $amount,
-        'total' => $amount
+        'price'        => $amount,
+        'total'        => $amount
     ]);
     
-    // Generate payment link
-    $paymentLinkGenerator = new PaymentLinkGenerator($db);
-    $paymentLink = $paymentLinkGenerator->generatePaymentLink($orderId, $amount);
-    
-    // Commit transaction
+    // Commit transaction before calling Ziina API
     $pdo->commit();
-    
+
+    // Generate Ziina payment link (outside transaction)
+    $ziina = new ZiinaPayment();
+    $ziinaMessage = $description ?: 'AleppoGift Quick Payment';
+    $ziinaResult = $ziina->createPaymentIntent($orderId, $amount, $ziinaMessage);
+
+    if (!$ziinaResult['success']) {
+        throw new Exception($ziinaResult['error'] ?? 'Ziina payment intent creation failed');
+    }
+
+    $paymentLink = $ziinaResult['payment_url'];
+    $ziinaPaymentId = $ziinaResult['payment_id'] ?? null;
+
+    // Store the Ziina payment ID against the order
+    if ($ziinaPaymentId) {
+        $db->query(
+            "UPDATE orders SET payment_reference = :ref WHERE id = :id",
+            ['ref' => $ziinaPaymentId, 'id' => $orderId]
+        );
+    }
+
     // Return success response
     echo json_encode([
         'success' => true,
@@ -188,13 +204,13 @@ try {
         'order_id' => $orderId,
         'customer_id' => $customerId,
         'amount' => $amount,
-        'payment_reference' => $paymentReference,
+        'payment_reference' => $ziinaPaymentId ?? $paymentReference,
         'message' => 'Payment link created successfully'
     ]);
     
 } catch (Exception $e) {
     // Rollback on error
-    if ($pdo->inTransaction()) {
+    if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
     
