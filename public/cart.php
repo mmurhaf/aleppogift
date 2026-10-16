@@ -99,8 +99,9 @@ if (isset($_POST['update_quantity'])) {
                 $stock = $variation['stock'] ?? $stock;
             }
             $reserved = cartReservedQuantity($_SESSION['cart'], (int)$line['product_id'], $line['variation_id'] ?? null, $key);
-            if ($stock !== null && ($reserved + $new_quantity) > (int)$stock) {
-                $_SESSION['cart_error'] = t('cart.stock_limit', ['stock' => (int)$stock]);
+            $available = max(0, (int)$stock - $reserved);
+            if ($stock !== null && $new_quantity > $available) {
+                $_SESSION['cart_error'] = t('cart.stock_limit', ['stock' => $available]);
             } else {
                 $_SESSION['cart'][$key]['quantity'] = $new_quantity;
             }
@@ -135,7 +136,7 @@ if (!empty($invalid_items)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= te('cart.page_title') ?></title>
     <?php require __DIR__ . '/../includes/storefront_assets.php'; ?>
-    <link rel="stylesheet" href="<?= htmlspecialchars(store_url('assets/css/cart.css')) ?>?v=20261007a">
+    <link rel="stylesheet" href="<?= htmlspecialchars(store_url('assets/css/cart.css')) ?>?v=20261016a">
     
 </head>
 <body>
@@ -399,7 +400,7 @@ if (!empty($invalid_items)) {
     <!-- JavaScript -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/main.js?v=20261012i18n"></script>
+    <script src="assets/js/main.js?v=20261016qty"></script>
     <script src="assets/js/enhanced-main.js?v=20261012i18n"></script>
 
     <script>
@@ -470,14 +471,77 @@ if (!empty($invalid_items)) {
                 form.submit();
             }
             
+            let quantitySubmitting = false;
+
+            function submitCartQuantity(itemKey, newQty) {
+                if (quantitySubmitting) {
+                    return;
+                }
+                const key = parseInt(itemKey, 10);
+                const qty = parseInt(newQty, 10);
+                if (!Number.isFinite(key) || key < 0 || !Number.isFinite(qty) || qty < 1) {
+                    return;
+                }
+                quantitySubmitting = true;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'cart.php';
+                form.innerHTML =
+                    '<input type="hidden" name="update_quantity" value="1">' +
+                    '<input type="hidden" name="item_key" value="' + key + '">' +
+                    '<input type="hidden" name="quantity" value="' + qty + '">';
+                document.body.appendChild(form);
+                form.submit();
+            }
+
+            document.querySelectorAll('.cart-items .quantity-input').forEach(input => {
+                input.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        this.blur();
+                    }
+                });
+                input.addEventListener('wheel', function (event) {
+                    event.preventDefault();
+                }, { passive: false });
+                input.addEventListener('change', function () {
+                    if (this.dataset.suppressCommit === '1') {
+                        delete this.dataset.suppressCommit;
+                        return;
+                    }
+                    const original = parseInt(this.dataset.qty, 10) || 1;
+                    const typed = parseInt(this.value, 10);
+                    if (!Number.isFinite(typed) || typed < 1) {
+                        this.value = String(original);
+                        showNotification(<?= json_encode(t('cart.min_quantity'), JSON_UNESCAPED_UNICODE) ?>, 'info');
+                        return;
+                    }
+                    const newQty = Math.min(typed, 9999);
+                    this.value = String(newQty);
+                    if (newQty === original) {
+                        return;
+                    }
+                    submitCartQuantity(this.dataset.key, newQty);
+                });
+            });
+
             document.querySelectorAll('.cart-items .update-qty').forEach(button => {
+                button.addEventListener('mousedown', function () {
+                    const input = this.closest('.quantity-control').querySelector('.quantity-input');
+                    if (input) {
+                        input.dataset.suppressCommit = '1';
+                    }
+                });
                 button.addEventListener('click', function(event) {
                     event.preventDefault();
                     event.stopPropagation();
                     const itemKey = this.dataset.key || this.dataset.id;
                     const action = this.dataset.action;
-                    const quantityDisplay = this.closest('.quantity-control').querySelector('.quantity-display');
-                    const currentQty = parseInt(quantityDisplay.textContent, 10) || 1;
+                    const quantityControl = this.closest('.quantity-control');
+                    const quantityInput = quantityControl.querySelector('.quantity-input');
+                    const currentQty = quantityInput
+                        ? (parseInt(quantityInput.value, 10) || parseInt(quantityInput.dataset.qty, 10) || 1)
+                        : (parseInt(quantityControl.querySelector('.quantity-display').textContent, 10) || 1);
                     let newQty = action === 'increase' ? currentQty + 1 : currentQty - 1;
 
                     if (newQty < 1) {
@@ -487,15 +551,7 @@ if (!empty($invalid_items)) {
                         return;
                     }
 
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = 'cart.php';
-                    form.innerHTML =
-                        '<input type="hidden" name="update_quantity" value="1">' +
-                        '<input type="hidden" name="item_key" value="' + itemKey + '">' +
-                        '<input type="hidden" name="quantity" value="' + newQty + '">';
-                    document.body.appendChild(form);
-                    form.submit();
+                    submitCartQuantity(itemKey, Math.min(newQty, 9999));
                 });
             });
 

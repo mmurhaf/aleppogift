@@ -1352,7 +1352,7 @@ unset($_SESSION['checkout_error']); ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-<script src="assets/js/main.js?v=20261012i18n"></script>
+<script src="assets/js/main.js?v=20261016qty"></script>
 <script src="assets/js/enhanced-main.js?v=20261012i18n"></script>
 
 </body>

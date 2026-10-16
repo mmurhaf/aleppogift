@@ -374,6 +374,120 @@
         if (mobile.addEventListener) mobile.addEventListener('change', sync);
     }
 
+    function commitPreviewQuantity(input, newQty) {
+        var original = parseInt(input.getAttribute('data-qty'), 10) || 1;
+        if (!isFinite(newQty) || newQty < 1) {
+            input.value = String(original);
+            showToast(__('min_qty', null, 'Minimum quantity is 1. Use remove button to delete item.'), 'info');
+            return;
+        }
+        newQty = Math.min(newQty, 9999);
+        if (newQty === original) {
+            input.value = String(original);
+            return;
+        }
+        var wrap = input.closest('.cart-preview-qty');
+        var cartKey = input.getAttribute('data-key');
+        input.disabled = true;
+        if (wrap) {
+            wrap.querySelectorAll('.update-qty').forEach(function (btn) { btn.disabled = true; });
+        }
+        var body = new URLSearchParams();
+        body.set('product_id', input.getAttribute('data-id') || '');
+        body.set('action', 'set');
+        body.set('quantity', String(newQty));
+        if (cartKey !== null && cartKey !== '') body.set('cart_key', cartKey);
+        fetch(cartEndpoint('update_cart_qty.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin',
+            body: body.toString()
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data.success) throw new Error(data.message || __('qty_update_failed', null, 'Cannot update quantity'));
+                updateCartCount(data.count);
+                input.value = String(data.new_quantity);
+                input.setAttribute('data-qty', String(data.new_quantity));
+                var jobs = [];
+                if (document.getElementById('cart-items-preview')) jobs.push(loadCartHtml('#cart-items-preview'));
+                var offcanvas = document.getElementById('cart-items-offcanvas');
+                if (offcanvas) jobs.push(loadCartHtml('#cart-items-offcanvas'));
+                return Promise.all(jobs);
+            })
+            .catch(function (error) {
+                input.value = String(original);
+                showToast(error.message || __('qty_update_failed', null, 'Cannot update quantity'), 'error');
+            })
+            .then(function () {
+                input.disabled = false;
+                if (wrap) wrap.querySelectorAll('.update-qty').forEach(function (btn) { btn.disabled = false; });
+            });
+    }
+
+    function bindPreviewQuantity() {
+        if (window.__storefrontQtyBound) return;
+        window.__storefrontQtyBound = true;
+
+        document.addEventListener('mousedown', function (event) {
+            var button = event.target.closest && event.target.closest('.cart-preview-qty .update-qty');
+            if (!button) return;
+            var input = button.closest('.cart-preview-qty').querySelector('.quantity-input');
+            if (input) input.setAttribute('data-suppress-commit', '1');
+        });
+
+        document.addEventListener('focusin', function (event) {
+            var input = event.target;
+            if (!input.classList || !input.classList.contains('quantity-input')) return;
+            input.removeAttribute('data-suppress-commit');
+            if (input.dataset.wheelBound !== '1') {
+                input.dataset.wheelBound = '1';
+                input.addEventListener('wheel', function (wheelEvent) {
+                    wheelEvent.preventDefault();
+                }, { passive: false });
+            }
+            if (typeof input.select === 'function') input.select();
+        });
+
+        document.addEventListener('keydown', function (event) {
+            var input = event.target;
+            if (!input.classList || !input.classList.contains('quantity-input')) return;
+            if (!input.closest('.cart-preview-qty') || event.key !== 'Enter') return;
+            event.preventDefault();
+            input.blur();
+        });
+
+        document.addEventListener('change', function (event) {
+            var input = event.target;
+            if (!input.classList || !input.classList.contains('quantity-input')) return;
+            if (!input.closest('.cart-preview-qty')) return;
+            if (input.getAttribute('data-suppress-commit') === '1') {
+                input.removeAttribute('data-suppress-commit');
+                return;
+            }
+            commitPreviewQuantity(input, parseInt(input.value, 10));
+        });
+
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest && event.target.closest('.cart-preview-qty .update-qty');
+            if (!button) return;
+            event.preventDefault();
+            event.stopPropagation();
+            var input = button.closest('.cart-preview-qty').querySelector('.quantity-input');
+            if (!input) return;
+            input.removeAttribute('data-suppress-commit');
+            var current = parseInt(input.value, 10);
+            if (!isFinite(current) || current < 1) current = parseInt(input.getAttribute('data-qty'), 10) || 1;
+            var next = button.getAttribute('data-action') === 'increase' ? current + 1 : current - 1;
+            if (next < 1) {
+                showToast(__('min_qty', null, 'Minimum quantity is 1. Use remove button to delete item.'), 'info');
+                input.value = String(current);
+                return;
+            }
+            commitPreviewQuantity(input, next);
+        });
+    }
+
     function installStorefront() {
         window.showToast = showToast;
         window.updateCartCount = updateCartCount;
@@ -390,6 +504,7 @@
         bindHeaderChrome();
         bindCarousels();
         bindFooterColumns();
+        bindPreviewQuantity();
 
         if (!window.__storefrontClickBound) {
             window.__storefrontClickBound = true;

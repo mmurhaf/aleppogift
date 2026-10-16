@@ -169,16 +169,29 @@ console.log("AleppoGift JS loaded.");
 
         // Cart removal is handled once in storefront.js.
 
-        // Update quantity
+        function readQuantityControl(control) {
+            if (!control || !control.length) {
+                return NaN;
+            }
+            if (control.is('input, textarea')) {
+                return parseInt(control.val(), 10);
+            }
+            return parseInt(control.text(), 10);
+        }
+
+        // Cart preview quantity is handled in storefront.js so it works on pages without jQuery.
         $(document).on('click', '.update-qty', function () {
-            const id = $(this).data('id');
-            const action = $(this).data('action');
             const button = $(this);
+            if (button.closest('.cart-preview-qty').length) {
+                return;
+            }
+            const id = button.data('id');
+            const action = button.data('action');
             const quantityDisplay = button.siblings('.quantity-display').length 
                 ? button.siblings('.quantity-display') 
                 : button.closest('.quantity-controls, .quantity-controls-small').find('.quantity-display');
             
-            const currentQuantity = parseInt(quantityDisplay.text()) || 1;
+            const currentQuantity = readQuantityControl(quantityDisplay) || 1;
             
             // Don't allow decrease below 1
             if (action === 'decrease' && currentQuantity <= 1) {
@@ -212,9 +225,13 @@ console.log("AleppoGift JS loaded.");
                     
                     // Update quantity display with animation
                     if (res.new_quantity !== undefined) {
-                        quantityDisplay.fadeOut(150, function() {
-                            $(this).text(res.new_quantity).fadeIn(150);
-                        });
+                        if (quantityDisplay.is('input')) {
+                            quantityDisplay.val(res.new_quantity);
+                        } else {
+                            quantityDisplay.fadeOut(150, function() {
+                                $(this).text(res.new_quantity).fadeIn(150);
+                            });
+                        }
                         
                         // Update total price if on cart page
                         const cartItem = button.closest('.cart-item-modern');
@@ -298,7 +315,8 @@ console.log("AleppoGift JS loaded.");
             let pricedFromAed = 0;
             cartItems.each(function() {
                 const unitAed = parseFloat($(this).find('[data-unit-aed]').attr('data-unit-aed') || '');
-                const qty = parseInt($(this).find('.quantity-display').text(), 10);
+                const qtyControl = $(this).find('.quantity-display');
+                const qty = parseInt(qtyControl.is('input') ? qtyControl.val() : qtyControl.text(), 10);
                 if (!isNaN(unitAed) && !isNaN(qty)) {
                     subtotalAed += unitAed * qty;
                     pricedFromAed++;

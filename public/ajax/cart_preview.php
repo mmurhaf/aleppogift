@@ -152,7 +152,9 @@ try {
         <?php endif; ?>
         <div class="cart-preview-qty" aria-label="<?= te('cart.quantity') ?>">
             <button type="button" class="update-qty" data-key="<?= (int)$key ?>" data-id="<?= (int)$item['product_id'] ?>" data-action="decrease" aria-label="<?= te('cart.decrease_qty') ?>">−</button>
-            <span><?= (int)$item['quantity'] ?></span>
+            <input type="number" class="quantity-input" min="1" max="9999" step="1" inputmode="numeric" autocomplete="off"
+                   value="<?= (int)$item['quantity'] ?>" data-qty="<?= (int)$item['quantity'] ?>" data-key="<?= (int)$key ?>" data-id="<?= (int)$item['product_id'] ?>"
+                   aria-label="<?= te('cart.quantity') ?>">
             <button type="button" class="update-qty" data-key="<?= (int)$key ?>" data-id="<?= (int)$item['product_id'] ?>" data-action="increase" aria-label="<?= te('cart.increase_qty') ?>">+</button>
         </div>
     </div>

@@ -29,11 +29,15 @@
             <?php elseif ($role === 'extra' || $role === 'replacement'): ?>
                 <p class="item-variation"><?= te($role === 'replacement' ? 'cart.replacement_item' : 'cart.added_item') ?></p>
             <?php endif; ?>
-            <div class="item-price" data-unit-aed="<?= htmlspecialchars((string)$price) ?>">
-                <?php if ($lineTotal + 0.001 < ($price * $item['quantity'])): ?>
-                    <s class="text-muted"><?php echo formatAedUsd($price); ?></s>
+            <?php
+                $chargedUnit = (int)$item['quantity'] > 0 ? $lineTotal / (int)$item['quantity'] : (float)$price;
+                $listUnit = isset($priced['list_unit']) ? (float)$priced['list_unit'] : (float)$price;
+            ?>
+            <div class="item-price" data-unit-aed="<?= htmlspecialchars((string)$chargedUnit) ?>">
+                <?php if ($listUnit > $chargedUnit + 0.009): ?>
+                    <s class="text-muted"><?php echo formatAedUsd($listUnit); ?></s>
                 <?php endif; ?>
-                <?= te('cart.price_each', ['price' => formatAedUsd($item['quantity'] > 0 ? $lineTotal / $item['quantity'] : $price)]) ?>
+                <?= te('cart.price_each', ['price' => formatAedUsd($chargedUnit)]) ?>
             </div>
         </div>
         <div class="item-controls">
@@ -41,7 +45,9 @@
                 <button type="button" class="update-qty" data-key="<?= (int)$key ?>" data-id="<?= (int)$key ?>" data-action="decrease" aria-label="<?= te('cart.decrease_qty') ?>">
                     <i class="fas fa-minus"></i>
                 </button>
-                <span class="quantity-display"><?= (int)$item['quantity'] ?></span>
+                <input type="number" class="quantity-display quantity-input" min="1" max="9999" step="1" inputmode="numeric" autocomplete="off"
+                       value="<?= (int)$item['quantity'] ?>" data-qty="<?= (int)$item['quantity'] ?>" data-key="<?= (int)$key ?>"
+                       aria-label="<?= te('cart.quantity') ?>">
                 <button type="button" class="update-qty" data-key="<?= (int)$key ?>" data-id="<?= (int)$key ?>" data-action="increase" aria-label="<?= te('cart.increase_qty') ?>">
                     <i class="fas fa-plus"></i>
                 </button>

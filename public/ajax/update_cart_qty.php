@@ -67,34 +67,46 @@ try {
         )->fetch(PDO::FETCH_ASSOC);
     }
 
-    $current_quantity = $cart_item['quantity'];
+    $current_quantity = (int)$cart_item['quantity'];
     $new_quantity = $current_quantity;
 
-    if ($action === 'increase') {
-        $new_quantity = $current_quantity + 1;
-        
-        // Check stock limit
-        $stock_limit = $variation ? $variation['stock'] : ($product['stock'] ?? null);
-        $reserved_others = 0;
-        foreach ($_SESSION['cart'] as $other_key => $other_item) {
-            if ((int)$other_key === (int)$cart_key) {
-                continue;
+    if ($action === 'increase' || $action === 'set') {
+        if ($action === 'increase') {
+            $new_quantity = $current_quantity + 1;
+        } else {
+            $requested = filter_var($_POST['quantity'] ?? null, FILTER_VALIDATE_INT);
+            if ($requested === false || $requested < 1) {
+                echo json_encode(['success' => false, 'message' => t('cart.min_quantity')]);
+                exit;
             }
-            $same_variation = (int)($other_item['variation_id'] ?? 0) === (int)($cart_item['variation_id'] ?? 0);
-            if ((int)$other_item['product_id'] === $product_id && $same_variation) {
-                $reserved_others += (int)$other_item['quantity'];
+            $new_quantity = min(9999, (int)$requested);
+        }
+
+        if ($new_quantity > $current_quantity) {
+            $stock_limit = $variation ? $variation['stock'] : ($product['stock'] ?? null);
+            $reserved_others = 0;
+            foreach ($_SESSION['cart'] as $other_key => $other_item) {
+                if ((int)$other_key === (int)$cart_key) {
+                    continue;
+                }
+                $same_variation = (int)($other_item['variation_id'] ?? 0) === (int)($cart_item['variation_id'] ?? 0);
+                if ((int)$other_item['product_id'] === $product_id && $same_variation) {
+                    $reserved_others += (int)$other_item['quantity'];
+                }
+            }
+            if ($stock_limit !== null && ($reserved_others + $new_quantity) > (int)$stock_limit) {
+                $available = max(0, (int)$stock_limit - $reserved_others);
+                echo json_encode([
+                    'success' => false,
+                    'message' => t('cart.stock_limit', ['stock' => $available]),
+                    'available' => $available
+                ]);
+                exit;
             }
         }
-        if ($stock_limit !== null && ($reserved_others + $new_quantity) > (int)$stock_limit) {
-            echo json_encode([
-                'success' => false, 
-                'message' => t('cart.stock_limit', ['stock' => $stock_limit])
-            ]);
-            exit;
-        }
-        
+
         $_SESSION['cart'][$cart_key]['quantity'] = $new_quantity;
-        
+
     } elseif ($action === 'decrease') {
         if ($current_quantity > 1) {
             $new_quantity = $current_quantity - 1;

@@ -48,7 +48,7 @@ $nav_has_currency = function_exists('currency_menu_groups') && function_exists('
 $activeCurrency = $nav_has_currency ? selected_store_currency() : null;
 ?>
 <link rel="stylesheet" href="<?= htmlspecialchars(store_url('assets/css/storefront.css')) ?>?v=20261008a">
-<link rel="stylesheet" href="<?= htmlspecialchars(store_url('assets/css/tanagra-theme.css')) ?>?v=20261014d">
+<link rel="stylesheet" href="<?= htmlspecialchars(store_url('assets/css/tanagra-theme.css')) ?>?v=20261016a">
 <script>window.AG_LANG=<?= json_encode($nav_lang) ?>;window.AG_I18N=<?= json_encode(function_exists('translation_js_strings') ? translation_js_strings() : new stdClass(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;window.agT=function(k,p){var s=(window.AG_I18N&&window.AG_I18N[k])||k;if(p){for(var n in p){s=s.split('{'+n+'}').join(p[n]);}}return s;};</script>
 <script>document.documentElement.lang=<?= json_encode($nav_lang_meta['html']) ?>;document.documentElement.dir=<?= json_encode($nav_lang_meta['dir']) ?>;</script>
 

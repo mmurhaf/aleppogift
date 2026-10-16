@@ -1060,10 +1060,36 @@ label {
     color: var(--tg-ink);
 }
 
-.cart-preview-qty span {
+.cart-preview-qty span,
+.cart-preview-qty input.quantity-input {
     min-width: 1.4rem;
     text-align: center;
     font-size: 13px;
+}
+
+.cart-preview-qty input.quantity-input {
+    width: 3.2rem;
+    height: 26px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--tg-ink);
+    font-weight: 500;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.cart-preview-qty input.quantity-input:focus {
+    outline: none;
+    background: #fff;
+}
+
+.cart-preview-qty input.quantity-input::-webkit-outer-spin-button,
+.cart-preview-qty input.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .cart-preview-side {

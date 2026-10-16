@@ -74,4 +74,4 @@
         </p>
     </div>
 </footer>
-<script src="<?= htmlspecialchars(store_url('assets/js/storefront.js')) ?>?v=20261014a"></script>
+<script src="<?= htmlspecialchars(store_url('assets/js/storefront.js')) ?>?v=20261016a"></script>

@@ -688,7 +688,7 @@ $robots_meta = $search !== '' ? 'noindex, follow' : 'index, follow';
         // Add to cart is handled by assets/js/storefront.js.
     </script>
     
-	<script defer src="<?= htmlspecialchars(store_url('assets/js/main.js')) ?>?v=20261012i18n"></script>
+	<script defer src="<?= htmlspecialchars(store_url('assets/js/main.js')) ?>?v=20261016qty"></script>
 	<script defer src="<?= htmlspecialchars(store_url('assets/js/enhanced-main.js')) ?>?v=20261012i18n"></script>
 	<script defer src="<?= htmlspecialchars(store_url('assets/js/enhanced-ui.js')) ?>?v=20261012i18n"></script>
     <!-- Index Page JavaScript -->
