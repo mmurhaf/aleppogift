@@ -4,7 +4,6 @@ require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/includes/Database.php');
 require_once($root_dir . '/includes/helpers/bundles.php');
-require_once($root_dir . '/public/admin/includes/security.php');
 require_admin_login();
 
 $db = new Database();
@@ -209,11 +208,61 @@ $page_title = 'Bundles';
 require_once __DIR__ . '/includes/header.php';
 ?>
 <style>
-    .bundle-card { background:#fff; border-radius:.35rem; box-shadow:0 .15rem 1.75rem rgba(58,59,69,.1); padding:1.25rem; margin-bottom:1.5rem; }
+    .bundle-card { background:#fff; border-radius:.35rem; box-shadow:0 .15rem 1.75rem rgba(58,59,69,.1); padding:1.25rem; margin-bottom:1.5rem; max-width:100%; }
+    .bundle-card .row { --bs-gutter-x: 1rem; margin-left:0; margin-right:0; }
     .bundle-table th { font-size:.75rem; text-transform:uppercase; color:#5a5c69; }
-    .bundle-item-row { display:grid; grid-template-columns:1.4fr .8fr 90px auto; gap:.5rem; align-items:center; margin-bottom:.5rem; }
+    .bundle-table-wrap { width:100%; overflow-x:auto; }
+    .bundle-item-row { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr) 90px auto; gap:.5rem; align-items:center; margin-bottom:.5rem; }
+    .bundle-checks { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:center; }
+    .bundle-empty { margin:0; color:#6c757d; }
     .search-results { border:1px solid #e3e6f0; border-radius:.35rem; max-height:220px; overflow:auto; background:#fff; }
     .search-results button { display:block; width:100%; text-align:left; background:#fff; border:0; border-bottom:1px solid #f1f1f1; padding:.55rem .75rem; }
+    @media (max-width: 767.98px) {
+        .bundle-card { padding:.9rem; }
+        .bundle-item-row { grid-template-columns:minmax(0,1fr) 88px; }
+        .bundle-item-name { grid-column:1 / -1; }
+        .bundle-item-remove { grid-column:1 / -1; }
+        .bundle-form-actions .btn { width:100%; }
+        .bundle-table-wrap { overflow:visible; }
+        .bundle-table thead { display:none; }
+        .bundle-table,
+        .bundle-table tbody,
+        .bundle-table tr,
+        .bundle-table td { display:block; width:100%; }
+        .bundle-table tr {
+            border:1px solid rgba(230,126,34,.16);
+            border-radius:14px;
+            background:#fffaf5;
+            padding:.85rem .9rem;
+            margin-bottom:.75rem;
+        }
+        .bundle-table td {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:.75rem;
+            padding:.4rem 0 !important;
+            border:0 !important;
+            background:transparent !important;
+            text-align:right;
+        }
+        .bundle-table td::before {
+            content:attr(data-label);
+            color:#7a4b16;
+            font-size:.72rem;
+            font-weight:800;
+            letter-spacing:.06em;
+            text-transform:uppercase;
+            text-align:left;
+        }
+        .bundle-table td.bundle-name { display:block; text-align:left; padding-bottom:.35rem !important; overflow-wrap:anywhere; }
+        .bundle-table td.bundle-name::before { display:none; }
+        .bundle-table td.bundle-actions { display:flex; gap:.5rem; padding-top:.65rem !important; }
+        .bundle-table td.bundle-actions::before { content:none; }
+        .bundle-table td.bundle-actions .btn,
+        .bundle-table td.bundle-actions form { flex:1 1 0; }
+        .bundle-table td.bundle-actions form .btn { width:100%; }
+    }
 </style>
 <div class="container-fluid py-3">
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
@@ -255,7 +304,7 @@ require_once __DIR__ . '/includes/header.php';
                     <label class="form-label">Image</label>
                     <input class="form-control" type="file" name="image" accept="image/*">
                 </div>
-                <div class="col-md-6 d-flex gap-4 align-items-end">
+                <div class="col-md-6 bundle-checks">
                     <label class="form-check">
                         <input class="form-check-input" type="checkbox" name="status" <?= !isset($editBundle) || !empty($editBundle['status']) ? 'checked' : '' ?>>
                         Active
@@ -273,13 +322,19 @@ require_once __DIR__ . '/includes/header.php';
             <div class="search-results d-none" id="search-results"></div>
             <div class="mt-3" id="bundle-items"></div>
             <p class="text-muted small">A bundle needs at least two products before it can be shown on the home page.</p>
-            <button class="btn btn-primary" type="submit">Save bundle</button>
-            <?php if ($editBundle): ?><a class="btn btn-link" href="bundles.php">Cancel</a><?php endif; ?>
+            <div class="bundle-form-actions d-grid gap-2 d-md-block">
+                <button class="btn btn-primary" type="submit">Save bundle</button>
+                <?php if ($editBundle): ?><a class="btn btn-link" href="bundles.php">Cancel</a><?php endif; ?>
+            </div>
         </form>
     </div>
 
     <div class="bundle-card">
-        <table class="table bundle-table align-middle">
+        <?php if (!$bundles): ?>
+            <p class="bundle-empty">No bundles yet.</p>
+        <?php else: ?>
+        <div class="bundle-table-wrap">
+        <table class="table bundle-table align-middle mb-0">
             <thead>
                 <tr>
                     <th>Bundle</th>
@@ -293,15 +348,15 @@ require_once __DIR__ . '/includes/header.php';
             <tbody>
             <?php foreach ($bundles as $bundle): ?>
                 <tr>
-                    <td>
+                    <td class="bundle-name" data-label="Bundle">
                         <strong><?= htmlspecialchars($bundle['name_en']) ?></strong>
                         <div dir="rtl"><?= htmlspecialchars($bundle['name_ar']) ?></div>
                     </td>
-                    <td><?= htmlspecialchars(rtrim(rtrim(number_format((float)$bundle['discount_percent'], 2, '.', ''), '0'), '.')) ?>%</td>
-                    <td><?= (int)$bundle['item_count'] ?></td>
-                    <td><?= !empty($bundle['show_on_home']) ? 'Yes' : 'No' ?></td>
-                    <td><?= !empty($bundle['status']) ? 'Active' : 'Disabled' ?></td>
-                    <td class="text-end">
+                    <td data-label="Discount"><?= htmlspecialchars(rtrim(rtrim(number_format((float)$bundle['discount_percent'], 2, '.', ''), '0'), '.')) ?>%</td>
+                    <td data-label="Items"><?= (int)$bundle['item_count'] ?></td>
+                    <td data-label="Home"><?= !empty($bundle['show_on_home']) ? 'Yes' : 'No' ?></td>
+                    <td data-label="Status"><?= !empty($bundle['status']) ? 'Active' : 'Disabled' ?></td>
+                    <td class="text-end bundle-actions" data-label="Actions">
                         <a class="btn btn-sm btn-outline-primary" href="bundles.php?edit=<?= (int)$bundle['id'] ?>">Edit</a>
                         <form method="post" class="d-inline" onsubmit="return confirm('Delete or disable this bundle?');">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
@@ -312,6 +367,8 @@ require_once __DIR__ . '/includes/header.php';
             <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 <script>
@@ -328,6 +385,12 @@ const items = initialItems.slice();
 const list = document.getElementById('bundle-items');
 const hidden = document.getElementById('items_json');
 
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function (char) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+    });
+}
+
 function writeItems() {
     hidden.value = JSON.stringify(items.map(item => ({
         product_id: item.product_id,
@@ -342,10 +405,10 @@ function syncItems() {
         const row = document.createElement('div');
         row.className = 'bundle-item-row';
         row.innerHTML =
-            '<div><strong>' + item.name_en + '</strong><div class="text-muted small">#' + item.product_id + '</div></div>' +
+            '<div class="bundle-item-name"><strong>' + escapeHtml(item.name_en) + '</strong><div class="text-muted small">#' + item.product_id + '</div></div>' +
             '<select class="form-select form-select-sm variation-select" data-index="' + index + '"></select>' +
-            '<input class="form-control form-control-sm" type="number" min="1" value="' + item.quantity + '" data-qty="' + index + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger" data-remove="' + index + '">Remove</button>';
+            '<input class="form-control form-control-sm bundle-item-qty" type="number" min="1" value="' + item.quantity + '" data-qty="' + index + '">' +
+            '<button type="button" class="btn btn-sm btn-outline-danger bundle-item-remove" data-remove="' + index + '">Remove</button>';
         list.appendChild(row);
         const select = row.querySelector('select');
         select.innerHTML = '<option value="0">No variation</option>';
