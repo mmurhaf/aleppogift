@@ -64,6 +64,7 @@ $same_category_products = $db->query("
         p.name_ru,
         p.name_sp,
         p.price,
+        p.sale_price,
         p.stock,
         p.category_id,
         p.brand_id,
@@ -117,6 +118,7 @@ if (!empty($product['brand_id'])) {
             p.name_ru,
             p.name_sp,
             p.price,
+            p.sale_price,
             p.stock,
             p.category_id,
             p.brand_id,
@@ -190,8 +192,9 @@ $base_public_url = "https://aleppogift.com";
 $products_url = $base_public_url . "/products.php";
 $product_url = $base_public_url . "/product.php?id=" . $product_id;
 $product_image = $main_image ? "https://aleppogift.com/" . $main_image : "https://aleppogift.com/assets/images/og-image.jpg";
-$price = $product['discount'] > 0 ? $product['price'] - ($product['price'] * $product['discount'] / 100) : $product['price'];
-$original_price = $product['price'];
+$original_price = (float)$product['price'];
+$price = product_effective_price($product);
+$on_sale = product_is_on_sale($product);
 $in_stock = $product['stock'] > 0 ? 'InStock' : 'OutOfStock';
 $category_name = htmlspecialchars($category_name_raw, ENT_QUOTES, 'UTF-8');
 $brand_name = htmlspecialchars($brand_name_raw, ENT_QUOTES, 'UTF-8');
@@ -223,7 +226,7 @@ $product_schema = [
     ]
 ];
 
-if ($product['discount'] > 0) {
+if ($on_sale) {
     $product_schema['offers']['priceValidUntil'] = date('Y-12-31');
 }
 if (!empty($reviewSummary['review_count'])) {
@@ -498,6 +501,25 @@ $jsonLdFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | 
             letter-spacing: -0.03em;
             background: transparent;
             padding: 0;
+        }
+
+        .product-page .price-old {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.12em;
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: #9a8f86;
+            text-decoration: line-through;
+            line-height: 1;
+        }
+
+        .product-page .sale-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9a3412;
         }
 
         .product-page .price-main .uae-symbol {
@@ -1049,8 +1071,12 @@ $jsonLdFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | 
                             </div>
 
                             <?php if ($show_prices): ?>
-                            <div class="product-price">
-                                <?= format_store_price_pair((float)$product['price'], 'price-main') ?>
+                            <div class="product-price<?= $on_sale ? ' is-offer' : '' ?>">
+                                <?php if ($on_sale): ?>
+                                    <span class="sale-tag"><?= te('sale') ?></span>
+                                    <?= format_store_price_pair($original_price, 'price-old', null, false) ?>
+                                <?php endif; ?>
+                                <?= format_store_price_pair((float)$price, 'price-main') ?>
                             </div>
                             <?php endif; ?>
 
@@ -1142,13 +1168,13 @@ $jsonLdFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | 
 
                                     <div class="secondary-actions">
                                         <a href="https://wa.me/971561125320?text=<?= urlencode(t('product.whatsapp_message', [
-                                           'name' => $product['name_en'], 'price' => number_format($product['price'], 0), 'url' => $product_url])) ?>" 
+                                           'name' => $product['name_en'], 'price' => number_format((float)$price, 0), 'url' => $product_url])) ?>" 
                                            target="_blank" class="btn btn-secondary whatsapp-btn">
                                             <i class="fab fa-whatsapp me-1"></i><?= te('product.whatsapp_inquiry') ?>
                                         </a>
                                         
                                         <button type="button" class="btn btn-secondary share-btn" 
-                                                onclick="shareProduct(<?php echo json_encode($product['name_en'] ?? '', $jsonLdFlags); ?>, <?php echo json_encode(number_format($product['price'], 2), $jsonLdFlags); ?>, <?php echo json_encode((string)$product['id'], $jsonLdFlags); ?>, <?php echo json_encode($product_url, $jsonLdFlags); ?>)">
+                                                onclick="shareProduct(<?php echo json_encode($product['name_en'] ?? '', $jsonLdFlags); ?>, <?php echo json_encode(number_format((float)$price, 2), $jsonLdFlags); ?>, <?php echo json_encode((string)$product['id'], $jsonLdFlags); ?>, <?php echo json_encode($product_url, $jsonLdFlags); ?>)">
                                             <i class="fas fa-share-alt me-1"></i><?= te('product.share') ?>
                                         </button>
                                         
@@ -1258,7 +1284,7 @@ $jsonLdFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | 
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/main.js?v=20261012i18n"></script>
+    <script src="assets/js/main.js?v=20261016qty"></script>
     <script src="assets/js/enhanced-main.js?v=20261012i18n"></script>
     
     <script>

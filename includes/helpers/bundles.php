@@ -217,7 +217,7 @@ function priceCart($db, array $cart): array {
         }
         try {
             $product = $db->query(
-                "SELECT id, name_en, name_ar, price, weight, stock, status FROM products WHERE id = :id",
+                "SELECT id, name_en, name_ar, price, sale_price, weight, stock, status FROM products WHERE id = :id",
                 ['id' => $productId]
             )->fetch(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -240,19 +240,23 @@ function priceCart($db, array $cart): array {
         }
     }
 
-    $unitPrice = function (int $productId, $variationId) use ($catalog): ?float {
+    $unitPrice = function (int $productId, $variationId) use ($catalog): ?array {
         if (!isset($catalog[$productId])) {
             return null;
         }
-        $price = (float)$catalog[$productId]['product']['price'];
+        $product = $catalog[$productId]['product'];
+        $list = (float)$product['price'];
+        $charge = function_exists('product_effective_price') ? product_effective_price($product) : $list;
         $variationId = (int)($variationId ?? 0);
         if ($variationId > 0) {
             if (!isset($catalog[$productId]['variations'][$variationId])) {
                 return null;
             }
-            $price += (float)$catalog[$productId]['variations'][$variationId]['additional_price'];
+            $extra = (float)$catalog[$productId]['variations'][$variationId]['additional_price'];
+            $list += $extra;
+            $charge += $extra;
         }
-        return $price;
+        return ['charge' => $charge, 'list' => $list];
     };
 
     $instances = [];
@@ -263,7 +267,9 @@ function priceCart($db, array $cart): array {
         $variationId = cartLineVariationId($item);
         $quantity = max(0, (int)$item['quantity']);
         $role = $item['line_role'] ?? 'standalone';
-        $unit = $unitPrice($productId, $variationId);
+        $units = $unitPrice($productId, $variationId);
+        $unit = is_array($units) ? $units['charge'] : null;
+        $listUnit = is_array($units) ? $units['list'] : null;
         $weightEach = (float)($catalog[$productId]['product']['weight'] ?? 1);
         $active = isset($catalog[$productId]) && (int)$catalog[$productId]['product']['status'] === 1 && $unit !== null;
 
@@ -278,6 +284,7 @@ function priceCart($db, array $cart): array {
             'required_quantity' => (int)($item['required_quantity'] ?? $quantity),
             'added_at' => (int)($item['added_at'] ?? 0),
             'catalog_unit' => $active ? $unit : 0.0,
+            'list_unit' => $active ? $listUnit : 0.0,
             'weight' => $active ? $weightEach * $quantity : 0.0,
             'active' => $active,
             'catalog_line_total' => $active ? round($unit * $quantity, 2) : 0.0,
@@ -372,7 +379,8 @@ function priceCart($db, array $cart): array {
             $required = max(0, (int)$part['required_quantity']);
             $partKey = bundleLineKey($productId, $variationId);
             $seen[$partKey] = true;
-            $unit = $unitPrice($productId, $variationId) ?? 0.0;
+            $units = $unitPrice($productId, $variationId);
+            $unit = is_array($units) ? $units['charge'] : 0.0;
             $current = 0;
             if (isset($instance['present'][$partKey]) && !empty($lineMeta[$instance['present'][$partKey]]['active'])) {
                 $current = (int)$lineMeta[$instance['present'][$partKey]]['quantity'];
@@ -604,7 +612,7 @@ function loadHomeBundles($db): array {
         }
         $items = $db->query(
             "SELECT bi.product_id, bi.variation_id, bi.quantity,
-                    p.name_en, p.name_ar, p.price, p.stock, p.status,
+                    p.name_en, p.name_ar, p.price, p.sale_price, p.stock, p.status,
                     pv.additional_price, pv.stock AS variation_stock, pv.size, pv.color,
                     (SELECT image_path FROM product_images
                      WHERE product_id = p.id AND is_main = 1 LIMIT 1) AS image_path
@@ -619,7 +627,7 @@ function loadHomeBundles($db): array {
         $catalog = 0.0;
         $unavailable = [];
         foreach ($items as &$item) {
-            $unit = (float)$item['price'];
+            $unit = function_exists('product_effective_price') ? product_effective_price($item) : (float)$item['price'];
             if (!empty($item['variation_id'])) {
                 $unit += (float)($item['additional_price'] ?? 0);
             }

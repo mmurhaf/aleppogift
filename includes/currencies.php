@@ -243,7 +243,7 @@ function format_store_money($amountAed, bool $withReference = false): string {
     return $text . ' (AED ' . number_format($amountAed, 2) . ')';
 }
 
-function format_store_price_pair($amountAed, string $mainClass = 'price-current', ?int $places = null): string {
+function format_store_price_pair($amountAed, string $mainClass = 'price-current', ?int $places = null, bool $withAlt = true): string {
     $amountAed = (float)$amountAed;
     $currency = selected_store_currency();
     if ($places === null) {
@@ -263,9 +263,12 @@ function format_store_price_pair($amountAed, string $mainClass = 'price-current'
         $alt = 'AED ' . number_format($amountAed, 0);
     }
 
-    return '<span class="' . htmlspecialchars($mainClass, ENT_QUOTES, 'UTF-8') . '" data-price-aed="'
-        . htmlspecialchars((string)$amountAed, ENT_QUOTES, 'UTF-8') . '">' . $main . '</span>'
-        . '<span class="price-usd">' . $alt . '</span>';
+    $html = '<span class="' . htmlspecialchars($mainClass, ENT_QUOTES, 'UTF-8') . '" data-price-aed="'
+        . htmlspecialchars((string)$amountAed, ENT_QUOTES, 'UTF-8') . '">' . $main . '</span>';
+    if ($withAlt) {
+        $html .= '<span class="price-usd">' . $alt . '</span>';
+    }
+    return $html;
 }
 
 function currency_switch_url(string $code): string {

@@ -1,7 +1,8 @@
 DirectoryIndex index.php login.php
 Options -Indexes
 
-# If request is for the directory itself, serve index.php
+# Directory requests should stay in this folder.
+# RewriteBase /admin/ sent /public/ to the site-root /admin/index.php and 404'd
+# when the store is not the Apache document root.
 RewriteEngine On
-RewriteBase /admin/
 RewriteRule ^$ index.php [L,QSA]

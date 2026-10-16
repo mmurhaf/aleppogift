@@ -3,6 +3,7 @@ $root_dir = dirname(dirname(__DIR__));
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/includes/Database.php');
+require_once($root_dir . '/includes/functions.php');
 require_once($root_dir . '/includes/helpers/bundles.php');
 require_admin_login();
 
@@ -187,7 +188,7 @@ if (isset($_GET['edit'])) {
     )->fetch(PDO::FETCH_ASSOC);
     if ($editBundle) {
         $editItems = $db->query(
-            "SELECT bi.product_id, bi.variation_id, bi.quantity, p.name_en, p.price
+            "SELECT bi.product_id, bi.variation_id, bi.quantity, p.name_en, p.price, p.sale_price
              FROM bundle_items bi
              JOIN products p ON p.id = bi.product_id
              WHERE bi.bundle_id = :id
@@ -378,7 +379,7 @@ const initialItems = <?= json_encode(array_map(function ($item) {
         'variation_id' => (int)($item['variation_id'] ?? 0),
         'quantity' => (int)$item['quantity'],
         'name_en' => $item['name_en'],
-        'price' => $item['price'],
+        'price' => product_effective_price($item),
     ];
 }, $editItems), JSON_UNESCAPED_UNICODE) ?>;
 const items = initialItems.slice();

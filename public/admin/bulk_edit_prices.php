@@ -4,11 +4,13 @@ $root_dir = dirname(dirname(__DIR__));
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
+require_once($root_dir . '/includes/functions.php');
 
 require_admin_login();
 
 $db = new Database();
 $has_cost_price = false;
+$has_sale_price = false;
 
 // Add cost_price column if it doesn't exist
 try {
@@ -22,6 +24,13 @@ try {
 } catch (Exception $e) {
     error_log("Error adding cost_price column: " . $e->getMessage());
     $has_cost_price = false;
+}
+
+try {
+    $has_sale_price = (bool) $db->query("SHOW COLUMNS FROM products LIKE 'sale_price'")->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    error_log("Error checking sale_price column: " . $e->getMessage());
+    $has_sale_price = false;
 }
 
 // Handle bulk update request
@@ -48,6 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['bulk_update']) || is
             if (isset($data['price']) && $data['price'] !== '') {
                 $updates[] = "price = :price";
                 $params['price'] = floatval($data['price']);
+            }
+            if ($has_sale_price && array_key_exists('sale_price', $data)) {
+                $regular = isset($data['price']) && $data['price'] !== '' ? floatval($data['price']) : 0;
+                $saleInput = product_sale_price_from_input($data['sale_price'], $regular);
+                if ($saleInput['error']) {
+                    throw new Exception($saleInput['error']);
+                }
+                $updates[] = "sale_price = :sale_price";
+                $params['sale_price'] = $saleInput['value'];
             }
             if ($has_cost_price && isset($data['cost_price']) && $data['cost_price'] !== '') {
                 $updates[] = "cost_price = :cost_price";
@@ -191,12 +209,13 @@ $params['limit'] = $products_per_page;
 $params['offset'] = $offset;
 
 $cost_price_select = $has_cost_price ? 'p.cost_price' : 'NULL as cost_price';
+$sale_price_select = $has_sale_price ? 'p.sale_price' : 'NULL as sale_price';
 
 // Get products for current page
 $products = [];
 try {
     $products = $db->query("
-        SELECT p.id, p.sku, p.name_en, p.name_ar, p.price, " . $cost_price_select . ", p.stock, p.status,
+        SELECT p.id, p.sku, p.name_en, p.name_ar, p.price, " . $sale_price_select . ", " . $cost_price_select . ", p.stock, p.status,
                p.category_id, p.brand_id,
                c.name_en as category_name,
                b.name_en as brand_name,
@@ -629,6 +648,9 @@ require_once __DIR__ . '/includes/header.php';
                                         <i class="fas fa-dollar-sign me-1"></i>Price (AED)
                                     </th>
                                     <th width="120px" class="editable-cluster">
+                                        <i class="fas fa-tag me-1"></i>Sale Price (AED)
+                                    </th>
+                                    <th width="120px" class="editable-cluster">
                                         <i class="fas fa-coins me-1"></i>Cost Price (AED)
                                     </th>
                                     <th width="100px">Margin</th>
@@ -741,6 +763,23 @@ require_once __DIR__ . '/includes/header.php';
                                                data-original="<?php echo number_format($product['price'], 2, '.', ''); ?>"
                                                onchange="markChanged(this)">
                                     </td>
+                                    <td class="editable-cluster" data-label="Sale Price">
+                                        <?php
+                                        $sale_value = (isset($product['sale_price']) && (float)$product['sale_price'] > 0)
+                                            ? number_format((float)$product['sale_price'], 2, '.', '')
+                                            : '';
+                                        ?>
+                                        <input type="number"
+                                               name="products[<?php echo $product['id']; ?>][sale_price]"
+                                               class="form-control price-input sale-price-field"
+                                               step="0.01"
+                                               min="0"
+                                               <?php echo !$has_sale_price ? 'disabled' : ''; ?>
+                                               value="<?php echo $sale_value; ?>"
+                                               data-original="<?php echo $sale_value; ?>"
+                                               placeholder="None"
+                                               onchange="markChanged(this)">
+                                    </td>
                                     <td class="editable-cluster" data-label="Cost Price">
                                         <input type="number" 
                                                name="products[<?php echo $product['id']; ?>][cost_price]" 
@@ -754,8 +793,9 @@ require_once __DIR__ . '/includes/header.php';
                                     </td>
                                     <td class="margin-cell" data-label="Margin">
                                         <?php 
-                                        if ($product['price'] && $product['cost_price']) {
-                                            $margin = (($product['price'] - $product['cost_price']) / $product['price']) * 100;
+                                        $selling_price = product_effective_price($product);
+                                        if ($selling_price && $product['cost_price']) {
+                                            $margin = (($selling_price - $product['cost_price']) / $selling_price) * 100;
                                             $margin_class = $margin > 0 ? 'profit-positive' : 'profit-negative';
                                             echo '<span class="profit-margin ' . $margin_class . '">' . number_format($margin, 1) . '%</span>';
                                         } else {
@@ -872,7 +912,7 @@ require_once __DIR__ . '/includes/header.php';
                 changedRows.add(row.dataset.productId);
             } else {
                 // Check if any other input in this row is changed
-                const inputs = row.querySelectorAll('.price-field, .cost-price-field, .stock-field, .text-editable, .select-editable');
+                const inputs = row.querySelectorAll('.price-field, .sale-price-field, .cost-price-field, .stock-field, .text-editable, .select-editable');
                 let hasChanges = false;
                 inputs.forEach(inp => {
                     if (inp.value !== inp.dataset.original) {
@@ -892,10 +932,13 @@ require_once __DIR__ . '/includes/header.php';
 
         function calculateMargin(row) {
             const priceInput = row.querySelector('.price-field');
+            const saleInput = row.querySelector('.sale-price-field');
             const costInput = row.querySelector('.cost-price-field');
             const marginCell = row.querySelector('.margin-cell');
             
-            const price = parseFloat(priceInput.value) || 0;
+            const regular = parseFloat(priceInput.value) || 0;
+            const sale = saleInput ? parseFloat(saleInput.value) : 0;
+            const price = (sale > 0 && sale < regular) ? sale : regular;
             const cost = parseFloat(costInput.value) || 0;
             
             if (price > 0 && cost > 0) {
@@ -916,7 +959,7 @@ require_once __DIR__ . '/includes/header.php';
                 return;
             }
             
-            const inputs = document.querySelectorAll('.price-field, .cost-price-field, .stock-field, .text-editable, .select-editable');
+            const inputs = document.querySelectorAll('.price-field, .sale-price-field, .cost-price-field, .stock-field, .text-editable, .select-editable');
             inputs.forEach(input => {
                 input.value = input.dataset.original;
                 const row = input.closest('tr');

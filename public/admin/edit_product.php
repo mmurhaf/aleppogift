@@ -35,6 +35,7 @@ try {
     $image_warnings = [];
     $success_message = '';
     $has_cost_price = false;
+    $has_sale_price = false;
 
     if (!empty($_SESSION['edit_product_flash']) && is_array($_SESSION['edit_product_flash'])) {
         $flash = $_SESSION['edit_product_flash'];
@@ -45,8 +46,10 @@ try {
 
     try {
         $has_cost_price = (bool) $db->query("SHOW COLUMNS FROM products LIKE 'cost_price'")->fetch(PDO::FETCH_ASSOC);
+        $has_sale_price = (bool) $db->query("SHOW COLUMNS FROM products LIKE 'sale_price'")->fetch(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         $has_cost_price = false;
+        $has_sale_price = false;
     }
 
     // Get product ID
@@ -168,6 +171,8 @@ try {
         $description_en = trim($_POST['description_en'] ?? '');
         $description_ar = trim($_POST['description_ar'] ?? '');
         $price = floatval($_POST['price'] ?? 0);
+        $sale_input = product_sale_price_from_input($_POST['sale_price'] ?? '', $price);
+        $sale_price = $sale_input['value'];
         $cost_price_input = trim($_POST['cost_price'] ?? '');
         $cost_price = ($cost_price_input === '') ? null : floatval($cost_price_input);
         $stock = intval($_POST['stock'] ?? 0);
@@ -181,6 +186,7 @@ try {
         if (empty($name_en)) $errors[] = "English name is required";
         if (empty($name_ar)) $errors[] = "Arabic name is required";
         if ($price <= 0) $errors[] = "Price must be greater than 0";
+        if ($has_sale_price && $sale_input['error']) $errors[] = $sale_input['error'];
         if (!is_null($cost_price) && $cost_price < 0) $errors[] = "Cost price cannot be negative";
         if ($stock < 0) $errors[] = "Stock cannot be negative";
         if ($weight < 0) $errors[] = "Weight cannot be negative";
@@ -193,6 +199,7 @@ try {
             $product['description_en'] = $description_en;
             $product['description_ar'] = $description_ar;
             $product['price'] = $price;
+            $product['sale_price'] = $sale_price;
             $product['cost_price'] = $cost_price;
             $product['stock'] = $stock;
             $product['weight'] = $weight;
@@ -253,6 +260,11 @@ try {
                     $update_params['availability'] = trim((string)($_POST['availability'] ?? ''));
                     $update_params['listing_status'] = ($_POST['listing_status'] ?? '') === 'draft' ? 'draft' : 'published';
                     $update_params['import_notes'] = trim((string)($_POST['import_notes'] ?? ''));
+                }
+
+                if ($has_sale_price) {
+                    $update_fields[] = 'sale_price = :sale_price';
+                    $update_params['sale_price'] = $sale_price;
                 }
 
                 if ($has_cost_price) {
@@ -748,6 +760,15 @@ require_once __DIR__ . '/includes/header.php';
                                 <input type="number" class="form-control" id="price" name="price" 
                                        value="<?php echo $product['price']; ?>" step="0.01" min="0" required>
                             </div>
+                            <?php if ($has_sale_price): ?>
+                            <div class="col-md-4 mb-3">
+                                <label for="sale_price" class="form-label">Sale Price (AED) <small class="text-muted">(Optional)</small></label>
+                                <input type="number" class="form-control" id="sale_price" name="sale_price"
+                                       value="<?php echo (isset($product['sale_price']) && (float)$product['sale_price'] > 0) ? htmlspecialchars((string)$product['sale_price']) : ''; ?>"
+                                       step="0.01" min="0" placeholder="Offer price">
+                                <div class="form-text">Leave empty for no offer. Customers pay this price when it is lower than the regular price.</div>
+                            </div>
+                            <?php endif; ?>
                             <?php if ($has_cost_price): ?>
                             <div class="col-md-4 mb-3">
                                 <label for="cost_price" class="form-label">Cost Price (AED) <small class="text-muted">(Optional)</small></label>

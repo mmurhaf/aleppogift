@@ -9,6 +9,7 @@ $root_dir = dirname(dirname(dirname(__DIR__)));
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
+require_once($root_dir . '/includes/functions.php');
 require_once($root_dir . '/includes/helpers/cart.php');
 require_once($root_dir . '/includes/shipping.php');
 
@@ -34,11 +35,17 @@ try {
         case 'get_products':
             // Get all active products
             $products = $db->query(
-                "SELECT id, name_en, price, stock, weight 
+                "SELECT id, name_en, price, sale_price, stock, weight 
                  FROM products 
                  WHERE status = 1 
                  ORDER BY name_en ASC"
             )->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($products as &$product) {
+                $product['regular_price'] = $product['price'];
+                $product['price'] = product_effective_price($product);
+            }
+            unset($product);
             
             echo json_encode([
                 'success' => true,
@@ -57,7 +64,7 @@ try {
             
             // Check if product exists and is active
             $product = $db->query(
-                "SELECT id, name_en, price, stock, weight FROM products WHERE id = ? AND status = 1",
+                "SELECT id, name_en, price, sale_price, stock, weight FROM products WHERE id = ? AND status = 1",
                 [$product_id]
             )->fetch(PDO::FETCH_ASSOC);
             
@@ -93,7 +100,7 @@ try {
                 // Insert new item
                 $db->query(
                     "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
-                    [$order_id, $product_id, $quantity, $product['price']]
+                    [$order_id, $product_id, $quantity, product_effective_price($product)]
                 );
                 $item_id = $db->lastInsertId();
             }

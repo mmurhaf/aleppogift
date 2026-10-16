@@ -56,12 +56,13 @@ if ($search !== '') {
         $params['search_sku'] = "%$search%";
     }
 }
+$sellingPriceSql = product_effective_price_sql('p');
 if (isset($_GET['min_price']) && $_GET['min_price'] !== '') {
-    $where[] = 'p.price >= :min_price';
+    $where[] = $sellingPriceSql . ' >= :min_price';
     $params['min_price'] = (float)$_GET['min_price'];
 }
 if (isset($_GET['max_price']) && $_GET['max_price'] !== '') {
-    $where[] = 'p.price <= :max_price';
+    $where[] = $sellingPriceSql . ' <= :max_price';
     $params['max_price'] = (float)$_GET['max_price'];
 }
 
@@ -323,7 +324,7 @@ $robots_meta = $search !== '' ? 'noindex, follow' : 'index, follow';
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.plugin.arabic.min.js"></script>
     <script src="assets/js/catalog-pdf.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-	<script src="assets/js/main.js?v=20261012i18n"></script>
+	<script src="assets/js/main.js?v=20261016qty"></script>
 	<script src="assets/js/enhanced-main.js?v=20261012i18n"></script>
     <script>
         const CATALOG_I18N = <?= json_encode([

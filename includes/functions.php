@@ -49,6 +49,73 @@ function formatPriceDisplay($price, $includeSymbol = true) {
 }
 
 /**
+ * Regular catalog price stored on the product.
+ */
+function product_regular_price(array $product): float
+{
+    return (float)($product['price'] ?? 0);
+}
+
+/**
+ * Offer price only when it is above zero and below the regular price.
+ * Zero is the default and means there is no offer.
+ */
+function product_sale_price(array $product): ?float
+{
+    if (!array_key_exists('sale_price', $product) || $product['sale_price'] === null || $product['sale_price'] === '') {
+        return null;
+    }
+    $sale = (float)$product['sale_price'];
+    $regular = product_regular_price($product);
+    if ($sale > 0 && $regular > 0 && $sale < $regular) {
+        return $sale;
+    }
+    return null;
+}
+
+function product_is_on_sale(array $product): bool
+{
+    return product_sale_price($product) !== null;
+}
+
+/**
+ * Price the customer pays: sale price when an offer is active, otherwise the regular price.
+ */
+function product_effective_price(array $product): float
+{
+    return product_sale_price($product) ?? product_regular_price($product);
+}
+
+/**
+ * SQL expression for the price used in filters and sorting.
+ */
+function product_effective_price_sql(string $alias = 'p'): string
+{
+    return "CASE WHEN {$alias}.sale_price > 0 AND {$alias}.sale_price < {$alias}.price THEN {$alias}.sale_price ELSE {$alias}.price END";
+}
+
+/**
+ * Parse an admin sale-price field. Empty or zero means no offer.
+ *
+ * @return array{value: float, error: ?string}
+ */
+function product_sale_price_from_input($raw, float $regularPrice): array
+{
+    $raw = trim((string)$raw);
+    if ($raw === '' || (is_numeric($raw) && (float)$raw == 0.0)) {
+        return ['value' => 0.0, 'error' => null];
+    }
+    if (!is_numeric($raw) || (float)$raw < 0) {
+        return ['value' => 0.0, 'error' => 'Sale price cannot be negative.'];
+    }
+    $sale = round((float)$raw, 2);
+    if ($regularPrice > 0 && $sale >= $regularPrice) {
+        return ['value' => 0.0, 'error' => 'Sale price must be less than the regular price.'];
+    }
+    return ['value' => $sale, 'error' => null];
+}
+
+/**
  * Get AED to USD conversion rate used for display.
  * @return float
  */

@@ -610,6 +610,17 @@ require_once __DIR__ . '/includes/header.php';
             font-weight: 800;
             color: #0f172a;
         }
+        .price-was {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            text-decoration: line-through;
+        }
+        .price-sale {
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            color: #9a3412;
+        }
         .stock-stack {
             display: flex;
             flex-direction: column;
@@ -1035,8 +1046,14 @@ require_once __DIR__ . '/includes/header.php';
                                 </td>
                                 <td class="col-num">
                                     <div class="price-cell">
+                                        <?php if (product_is_on_sale($p)): ?>
+                                        <span class="price-sale">SALE</span>
+                                        <span class="price-value"><?php echo number_format(product_effective_price($p), 2); ?></span>
+                                        <span class="price-was">AED <?php echo number_format($p['price'], 2); ?></span>
+                                        <?php else: ?>
                                         <span class="price-currency">AED</span>
                                         <span class="price-value"><?php echo number_format($p['price'], 2); ?></span>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                                 <td class="col-num">

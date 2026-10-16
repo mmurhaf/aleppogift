@@ -9,6 +9,7 @@ $root_dir = dirname(dirname(dirname(__DIR__)));
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/Database.php');
+require_once($root_dir . '/includes/functions.php');
 
 start_session_safely();
 header('Content-Type: application/json');
@@ -51,6 +52,7 @@ try {
             p.name_ar,
             p.sku,
             p.price,
+            p.sale_price,
             p.stock,
             p.weight,
             (SELECT pi.image_path 
@@ -67,6 +69,12 @@ try {
         ORDER BY p.name_en ASC
         LIMIT 20
     ", $params)->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($products as &$product) {
+        $product['regular_price'] = $product['price'];
+        $product['price'] = product_effective_price($product);
+    }
+    unset($product);
 
     echo json_encode([
         'success' => true,

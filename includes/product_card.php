@@ -16,6 +16,9 @@ $cardWhatsapp = 'https://wa.me/971561125320?text=' . rawurlencode(
     t('catalog.whatsapp_interest', ['name' => $p['name_en'], 'url' => 'https://aleppogift.com/' . $cardUrl])
 );
 $cardInStock = !array_key_exists('stock', $p) || (int)$p['stock'] > 0;
+$cardOnSale = product_is_on_sale($p);
+$cardPrice = product_effective_price($p);
+$cardPricePlaces = selected_store_currency()['code'] === 'AED' ? 0 : 1;
 ?>
 <article class="product-card modern-product-card tg-card">
     <div class="product-image">
@@ -65,7 +68,7 @@ $cardInStock = !array_key_exists('stock', $p) || (int)$p['stock'] > 0;
                     class="card-float-btn card-float-share"
                     title="<?= te('catalog.share') ?>"
                     aria-label="<?= te('catalog.share_item', ['name' => $cardName]) ?>"
-                    onclick="shareProduct(<?= htmlspecialchars(json_encode($p['name_en']), ENT_QUOTES, 'UTF-8') ?>, <?= htmlspecialchars(json_encode(number_format((float)$p['price'], 0)), ENT_QUOTES, 'UTF-8') ?>, <?= $cardId ?>, <?= htmlspecialchars(json_encode($cardShareUrl), ENT_QUOTES, 'UTF-8') ?>)">
+                    onclick="shareProduct(<?= htmlspecialchars(json_encode($p['name_en']), ENT_QUOTES, 'UTF-8') ?>, <?= htmlspecialchars(json_encode(number_format($cardPrice, 0)), ENT_QUOTES, 'UTF-8') ?>, <?= $cardId ?>, <?= htmlspecialchars(json_encode($cardShareUrl), ENT_QUOTES, 'UTF-8') ?>)">
                 <i class="fas fa-share-alt" aria-hidden="true"></i>
             </button>
         </div>
@@ -84,8 +87,11 @@ $cardInStock = !array_key_exists('stock', $p) || (int)$p['stock'] > 0;
             <p class="product-name-ar" dir="rtl"><?= htmlspecialchars($p['name_ar']) ?></p>
         <?php endif; ?>
         <?php if ($show_prices): ?>
-            <div class="product-price">
-                <?= format_store_price_pair((float)$p['price'], 'price-current', selected_store_currency()['code'] === 'AED' ? 0 : 1) ?>
+            <div class="product-price<?= $cardOnSale ? ' is-offer' : '' ?>">
+                <?php if ($cardOnSale): ?>
+                    <?= format_store_price_pair((float)$p['price'], 'price-old', $cardPricePlaces, false) ?>
+                <?php endif; ?>
+                <?= format_store_price_pair($cardPrice, 'price-current', $cardPricePlaces) ?>
             </div>
         <?php endif; ?>
     </div>

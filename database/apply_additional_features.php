@@ -143,6 +143,10 @@ function apply_additional_features(): array
     ag_add_column($pdo, 'admin', 'active', 'TINYINT(1) NOT NULL DEFAULT 1');
     $pdo->exec("UPDATE admin SET role = 'super_admin' WHERE role IS NULL OR role = ''");
 
+    ag_add_column($pdo, 'products', 'sale_price', 'DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER price');
+    $pdo->exec('UPDATE products SET sale_price = 0 WHERE sale_price IS NULL');
+    $pdo->exec('ALTER TABLE products MODIFY COLUMN sale_price DECIMAL(10,2) NOT NULL DEFAULT 0');
+    $log[] = 'products.sale_price defaults to 0';
     ag_add_column($pdo, 'products', 'supplier_name', 'VARCHAR(150) NULL');
     ag_add_column($pdo, 'products', 'supplier_url', 'VARCHAR(500) NULL');
     ag_add_column($pdo, 'products', 'supplier_sku', 'VARCHAR(80) NULL');

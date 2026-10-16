@@ -1816,6 +1816,26 @@ main.container {
     font-weight: 400 !important;
 }
 
+.price-old,
+.store-home .price-old,
+.catalog-page .price-old,
+.product-page .price-old {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.15rem;
+    padding: 0 !important;
+    background: transparent !important;
+    color: var(--tg-muted) !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    text-decoration: line-through;
+}
+
+.product-price.is-offer .price-current,
+.product-page .product-price.is-offer .price-main {
+    color: #9a3412 !important;
+}
+
 .price-usd,
 .store-home .price-usd,
 .catalog-page .price-usd {

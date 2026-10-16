@@ -306,7 +306,7 @@ function apply_order_stock_for_status($db, int $orderId, string $status): ?strin
 function product_card_badges(array $product): string
 {
     $html = '';
-    if ((float)($product['discount'] ?? 0) > 0 || !empty($product['on_sale'])) {
+    if ((function_exists('product_is_on_sale') && product_is_on_sale($product)) || (float)($product['discount'] ?? 0) > 0 || !empty($product['on_sale'])) {
         $html .= '<span class="product-badge">' . htmlspecialchars(t('sale')) . '</span>';
     }
     if ((int)($product['stock'] ?? 0) <= 0) {
@@ -331,9 +331,9 @@ function catalog_order_sql(string $sort, string $alias = 'p'): string
         case 'newest':
             return "$alias.created_at DESC, $alias.id DESC";
         case 'price_asc':
-            return "$alias.price ASC, $alias.id DESC";
+            return product_effective_price_sql($alias) . " ASC, $alias.id DESC";
         case 'price_desc':
-            return "$alias.price DESC, $alias.id DESC";
+            return product_effective_price_sql($alias) . " DESC, $alias.id DESC";
         case 'rating':
             return "avg_rating DESC, $alias.id DESC";
         case 'bestseller':

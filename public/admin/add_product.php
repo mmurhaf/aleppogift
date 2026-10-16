@@ -4,6 +4,7 @@ $root_dir = dirname(dirname(__DIR__));
 require_once($root_dir . '/config/config.php');
 require_once($root_dir . '/includes/session_helper.php');
 require_once($root_dir . '/includes/Database.php');
+require_once($root_dir . '/includes/functions.php');
 
 require_admin_login();
 
@@ -11,12 +12,14 @@ $db = new Database();
 $error_message = '';
 $success_message = '';
 $has_cost_price = false;
+$has_sale_price = false;
 
 // Load categories and brands for form
 try {
     $categories = $db->query("SELECT id, name_en, name_ar FROM categories WHERE status = 1 ORDER BY name_en ASC")->fetchAll();
     $brands = $db->query("SELECT id, name_en, name_ar FROM brands WHERE status = 1 ORDER BY name_en ASC")->fetchAll();
     $has_cost_price = (bool) $db->query("SHOW COLUMNS FROM products LIKE 'cost_price'")->fetch(PDO::FETCH_ASSOC);
+    $has_sale_price = (bool) $db->query("SHOW COLUMNS FROM products LIKE 'sale_price'")->fetch(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
     $categories = [];
@@ -34,6 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description_en = trim($_POST['description_en']);
         $description_ar = trim($_POST['description_ar']);
         $price = $_POST['price'];
+        $sale_input = product_sale_price_from_input($_POST['sale_price'] ?? '', (float)$price);
+        $sale_price = $sale_input['value'];
         $cost_price_input = trim($_POST['cost_price'] ?? '');
         $cost_price = ($cost_price_input === '') ? null : $cost_price_input;
         $weight_input = trim($_POST['weight'] ?? '');
@@ -51,6 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!is_numeric($price) || $price <= 0) {
             throw new Exception("Price must be a positive number.");
+        }
+
+        if ($has_sale_price && $sale_input['error']) {
+            throw new Exception($sale_input['error']);
         }
 
         if (!is_null($cost_price) && (!is_numeric($cost_price) || $cost_price < 0)) {
@@ -87,6 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'featured' => $featured,
             'status' => $status
         ];
+
+        if ($has_sale_price) {
+            $insert_fields[] = 'sale_price';
+            $insert_placeholders[] = ':sale_price';
+            $insert_params['sale_price'] = $sale_price;
+        }
 
         if ($has_cost_price) {
             $insert_fields[] = 'cost_price';
@@ -341,6 +356,13 @@ require_once __DIR__ . '/includes/header.php';
                             <input type="number" step="0.01" class="form-control" id="price" name="price" required>
                         </div>
                     </div>
+                    <?php if ($has_sale_price): ?>
+                    <div class="col-md-6">
+                        <label for="sale_price" class="form-label">Sale Price (AED) <small class="text-muted">(Optional)</small></label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="sale_price" name="sale_price" placeholder="Offer price, leave empty for none">
+                        <div class="form-text">When set, customers pay this price and the regular price is shown crossed out.</div>
+                    </div>
+                    <?php endif; ?>
                     <?php if ($has_cost_price): ?>
                     <div class="col-md-6">
                         <label for="cost_price" class="form-label">Cost Price ($) <small class="text-muted">(Optional)</small></label>
@@ -540,6 +562,8 @@ require_once __DIR__ . '/includes/header.php';
             const nameAr = document.getElementById('name_ar').value.trim();
             const categoryId = document.getElementById('category_id').value;
             const price = document.getElementById('price').value;
+            const salePriceField = document.getElementById('sale_price');
+            const salePrice = salePriceField ? salePriceField.value.trim() : '';
             const costPriceField = document.getElementById('cost_price');
             const costPrice = costPriceField ? costPriceField.value.trim() : '';
             const weight = document.getElementById('weight').value.trim();
@@ -551,6 +575,7 @@ require_once __DIR__ . '/includes/header.php';
             if (!nameAr) errors.push('Arabic product name is required');
             if (!categoryId) errors.push('Category selection is required');
             if (!price || parseFloat(price) <= 0) errors.push('Valid price is required');
+            if (salePrice !== '' && parseFloat(salePrice) !== 0 && (isNaN(parseFloat(salePrice)) || parseFloat(salePrice) < 0 || parseFloat(salePrice) >= parseFloat(price))) errors.push('Sale price must be greater than 0 and less than the regular price');
             if (costPrice && (isNaN(parseFloat(costPrice)) || parseFloat(costPrice) < 0)) errors.push('Cost price must be 0 or more when provided');
             if (weight && parseFloat(weight) <= 0) errors.push('Weight must be greater than 0 when provided');
             if (stock && parseInt(stock) < 0) errors.push('Stock cannot be negative when provided');
