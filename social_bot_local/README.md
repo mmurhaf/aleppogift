@@ -26,15 +26,11 @@ A production-ready Python application for automated social media content creatio
     ```
 
 ### 3. Running the Application
-**Start User Interface:**
-```bash
-streamlit run app.py
-```
+Double-click **`Social Bot.bat`**. The first launch creates a local Python environment, then opens Social Bot in its own window. Close that window to quit.
 
-**Start Background Scheduler:**
-```bash
-python scheduler_daemon.py
-```
+The scheduler starts with the window. The browser control panel in `dashboard/` can still start and stop the same services.
+
+Open `USER_MANUAL.html` for the illustrated user manual.
 
 ## Features
 - **Video Generation**: Creates 9:16 videos from product images with Ken Burns effects.

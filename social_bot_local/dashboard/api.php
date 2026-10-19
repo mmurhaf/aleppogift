@@ -3,26 +3,43 @@ header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? '';
 $baseDir = dirname(__DIR__); // social_bot_local
-$pythonPath = "C:/xampp/htdocs/aleppogift/.venv/Scripts/python.exe";
 $logDir = "$baseDir/output/logs";
+$runDir = "$baseDir/output/run";
 
 if (!file_exists($logDir)) {
     mkdir($logDir, 0777, true);
 }
 
+function pidIsAlive($pid) {
+    $pid = (int) $pid;
+    if ($pid <= 0) {
+        return false;
+    }
+    $output = shell_exec('tasklist /FI "PID eq ' . $pid . '" /NH');
+    return is_string($output) && strpos($output, (string) $pid) !== false;
+}
+
+function readPidFile($path) {
+    if (!is_file($path)) {
+        return null;
+    }
+    $pid = trim((string) file_get_contents($path));
+    return pidIsAlive($pid) ? $pid : null;
+}
+
 function getProcessId($scriptName) {
-    // Escape backslashes for WQL
-    $search = str_replace("\\", "\\\\", $scriptName);
-    // On Windows, use wmic to find python processes containing the script name
-    $cmd = 'wmic process where "name=\'python.exe\' and commandline like \'%' . $search . '%\'" get processid';
-    $output = shell_exec($cmd);
-    
-    // Parse output
-    $lines = explode("\n", trim($output));
-    foreach ($lines as $line) {
-        if (preg_match('/^\d+$/', trim($line))) {
-            return trim($line);
-        }
+    global $runDir;
+    $pidFile = $scriptName === 'scheduler_daemon.py' ? "$runDir/scheduler.pid" : "$runDir/ui.pid";
+    $fromFile = readPidFile($pidFile);
+    if ($fromFile) {
+        return $fromFile;
+    }
+
+    $needle = str_replace("'", "''", $scriptName);
+    $cmd = "powershell -NoProfile -Command \"Get-CimInstance Win32_Process | Where-Object { \$_.CommandLine -like '*$needle*' } | Select-Object -ExpandProperty ProcessId -First 1\"";
+    $output = trim((string) shell_exec($cmd));
+    if (preg_match('/^\d+$/', $output) && pidIsAlive($output)) {
+        return $output;
     }
     return null;
 }
@@ -36,7 +53,7 @@ function isRunning($pid) {
 
 function killProcess($pid) {
     if ($pid) {
-        shell_exec("taskkill /F /PID $pid");
+        shell_exec("taskkill /F /T /PID $pid");
         return true;
     }
     return false;

@@ -93,6 +93,8 @@ config/config_*.php
 # Python
 __pycache__/
 *.pyc
+.venv/
+venv/
 
 # Scratch / backup copies
 .htaccess_*

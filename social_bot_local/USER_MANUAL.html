@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aleppo Gift Social Bot — User Manual</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 42px 40px;
+        }
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; }
+        .header p { font-size: 1.1em; opacity: 0.95; }
+        .content { padding: 36px 40px 48px; }
+        h2 {
+            color: #667eea;
+            margin: 36px 0 14px;
+            font-size: 1.7em;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #667eea;
+        }
+        h3 { color: #764ba2; margin: 22px 0 10px; font-size: 1.25em; }
+        p, li { margin-bottom: 10px; }
+        ol, ul { margin-left: 24px; margin-bottom: 14px; }
+        figure {
+            margin: 16px 0 22px;
+            background: #f7f8fc;
+            border: 1px solid #e4e7ef;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        figure img { width: 100%; height: auto; border-radius: 6px; display: block; }
+        figcaption { color: #555; font-size: 0.92em; margin-top: 8px; padding: 0 6px; }
+        .note {
+            background: #f4f6ff;
+            border-left: 4px solid #667eea;
+            padding: 12px 16px;
+            margin: 14px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .toc a { color: #4c51bf; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Aleppo Gift Social Bot</h1>
+        <p>User manual for creating reels and scheduling them to TikTok, Instagram, and Facebook.</p>
+    </div>
+    <div class="content">
+        <h2>Contents</h2>
+        <ol class="toc">
+            <li><a href="#open">Open the app</a></li>
+            <li><a href="#create">Choose products</a></li>
+            <li><a href="#upload">Upload your own photos</a></li>
+            <li><a href="#customize">Choose the format</a></li>
+            <li><a href="#generate">Create the reel</a></li>
+            <li><a href="#publish">Publish or schedule</a></li>
+            <li><a href="#scheduler">Check the queue</a></li>
+            <li><a href="#products">Sync the catalog</a></li>
+            <li><a href="#settings">Connect the platforms</a></li>
+            <li><a href="#analytics">Analytics</a></li>
+        </ol>
+
+        <h2 id="open">1. Open the app</h2>
+        <p>Double-click <code>Social Bot.bat</code> in the <code>social_bot_local</code> folder. The first time, it sets up its own Python environment. After that, Social Bot opens in its own window and the posting scheduler starts with it.</p>
+        <p>Close that window when you are finished. Closing it also stops the scheduler that was started with it.</p>
+        <div class="note">FFmpeg has to be available on the PC. The app looks for it on the system PATH, in the <code>FFMPEG_PATH</code> setting, or in a local WinGet or temp install. Without FFmpeg, reel rendering stops and the screen explains that.</div>
+
+        <h2 id="create">2. Choose products</h2>
+        <p>The app opens on <strong>Create Content</strong>. Leave <strong>From Product Database</strong> selected to build a reel from the Aleppo Gift catalog.</p>
+        <figure>
+            <img src="manual/01-create-catalog.png" alt="Create Content page showing the product catalog">
+            <figcaption>Create Content lists the newest catalog products. Use the sidebar to move between sections.</figcaption>
+        </figure>
+        <p>Search by name, then press Enter. The price filter is in AED. Tick <strong>Select for Content</strong> on every product that should appear in the reel. Each selected photo becomes its own full-screen scene.</p>
+        <figure>
+            <img src="manual/02-search-products.png" alt="Search results for Arabic coffee with prices in AED">
+            <figcaption>Search narrows the grid. Prices are shown in AED, and each card has a Select for Content checkbox.</figcaption>
+        </figure>
+        <p><strong>Clear All</strong> removes the current selection.</p>
+
+        <h2 id="upload">3. Upload your own photos</h2>
+        <p>Choose <strong>Custom Upload</strong> when the photo is not in the catalog. You can add up to 10 JPG, PNG, or WEBP files. The filename is used as the on-screen title, and no price is shown.</p>
+        <figure>
+            <img src="manual/11-custom-upload.png" alt="Custom upload area">
+            <figcaption>Custom Upload accepts up to 10 images. Each file becomes one scene.</figcaption>
+        </figure>
+
+        <h2 id="customize">4. Choose the format</h2>
+        <p>After at least one photo is selected, step 2 appears.</p>
+        <figure>
+            <img src="manual/03-customize.png" alt="Content format and marketing hook">
+            <figcaption>Pick a reel, a story, or a static post, then choose the marketing hook used in the caption.</figcaption>
+        </figure>
+        <ul>
+            <li><strong>Reel / TikTok</strong> is a 9:16 video. Two or more photos also get a short closing card.</li>
+            <li><strong>Story</strong> is the same 9:16 video with a shorter default length and no closing card.</li>
+            <li><strong>Post</strong> keeps the photo as a still image.</li>
+        </ul>
+        <p>Open <strong>Advanced Settings</strong> to change quality, music, and length.</p>
+        <figure>
+            <img src="manual/04-advanced-settings.png" alt="Quality, music, and length settings">
+            <figcaption>Medium quality is the usual choice. The line under the length slider shows how long the finished reel will be.</figcaption>
+        </figure>
+        <p><strong>Add Background Music</strong> uses the first audio file in <code>social_bot_local/assets/audio</code> (<code>.mp3</code>, <code>.m4a</code>, or <code>.wav</code>). If that folder is empty, the reel is silent, which the platforms still accept. Higher quality takes longer to render. Low is 720p. Medium and high are 1080p.</p>
+
+        <h2 id="generate">5. Create the reel</h2>
+        <p>Click <strong>Create Content</strong> and wait. A 1080p reel usually takes well under a minute. The player appears under a green success message. Play it before you schedule it.</p>
+        <p>On the video you should see the Aleppo Gift name, the product filling the frame, the product name, and the AED price. Several products fade through black from one scene to the next, then end on “Shop the collection.”</p>
+        <figure>
+            <img src="manual/05-generated-reel.png" alt="Success message after the reel is rendered">
+            <figcaption>When rendering finishes, the app confirms it and places the player under Create Content.</figcaption>
+        </figure>
+        <figure>
+            <img src="manual/06-publish.png" alt="Finished reel player and the publish form">
+            <figcaption>The player shows the reel. In this example the scene reads the product name, AED 99, and Shop now.</figcaption>
+        </figure>
+
+        <h2 id="publish">6. Publish or schedule</h2>
+        <p>Step 4 sits under the player.</p>
+        <ol>
+            <li>Choose TikTok, Instagram, Facebook, or any combination.</li>
+            <li>Read the caption. It is filled from the marketing hook, the product name, the price, and hashtags. Edit it before you confirm.</li>
+            <li>Choose <strong>Post Now</strong> or <strong>Schedule for Later</strong> and set the date and time.</li>
+            <li>Click <strong>Confirm &amp; Schedule</strong>.</li>
+        </ol>
+        <p>Post Now still waits about a minute so the scheduler can pick the job up. The scheduler has to be running. It is running while the Social Bot window from <code>Social Bot.bat</code> is open. The posts are stored locally until that scheduler sends them.</p>
+        <div class="note">Nothing is delivered to TikTok, Instagram, or Facebook until the keys in Settings are saved and the platform accepts them. Until then, a queued post can fail and show up under Failed.</div>
+
+        <h2 id="scheduler">7. Check the queue</h2>
+        <p>Open <strong>Scheduler</strong> in the sidebar.</p>
+        <figure>
+            <img src="manual/07-scheduler.png" alt="Queued posts for TikTok, Instagram, and Facebook">
+            <figcaption>Queued lists upcoming posts. Open a row to read the caption, preview the file, or cancel it.</figcaption>
+        </figure>
+        <ul>
+            <li><strong>Queued</strong> — waiting for the scheduled time. Cancel removes that post.</li>
+            <li><strong>History (Posted)</strong> — posts the scheduler marked as sent.</li>
+            <li><strong>Failed</strong> — posts that returned an error. <strong>Retry All Failed</strong> puts them back in the queue.</li>
+        </ul>
+
+        <h2 id="products">8. Sync the catalog</h2>
+        <p><strong>Products</strong> shows the local copy of the catalog. <strong>Sync from MySQL</strong> pulls active products from the store database and adds ones that are not already stored. Create Content uses this local list, so run a sync when new products are missing from the grid.</p>
+        <figure>
+            <img src="manual/08-products.png" alt="Product catalog table and Sync from MySQL button">
+            <figcaption>The catalog table is the local copy. Sync from MySQL adds products that are not already there.</figcaption>
+        </figure>
+        <p>The store database connection comes from <code>.env</code> (<code>MYSQL_HOST</code>, <code>MYSQL_USER</code>, <code>MYSQL_PASSWORD</code>, <code>MYSQL_DATABASE</code>). Copy <code>.env.example</code> to <code>.env</code> if that file is not there yet.</p>
+
+        <h2 id="settings">9. Connect the platforms</h2>
+        <p>Open <strong>Settings</strong> and save each key with its own button. Values stay in the local Social Bot database.</p>
+        <figure>
+            <img src="manual/10-settings.png" alt="Settings page for TikTok and Meta keys">
+            <figcaption>TikTok, Instagram, and Facebook keys are entered here. Each Save button stores that group.</figcaption>
+        </figure>
+        <p>The <strong>Need help getting API keys?</strong> section opens <code>SOCIAL_MEDIA_API_SETUP_GUIDE.html</code>, which walks through the TikTok, Instagram, and Facebook setup. You can also save an ngrok token here if Instagram needs a temporary public link for the video file. <strong>Re-Initialize Database</strong> checks that the local tables exist. It does not delete the catalog.</p>
+
+        <h2 id="analytics">10. Analytics</h2>
+        <p><strong>Analytics</strong> currently shows sample charts so you can see where live results will go. It does not yet read real view counts from the platforms.</p>
+        <figure>
+            <img src="manual/09-analytics.png" alt="Analytics page with sample engagement charts">
+            <figcaption>The charts on this screen are sample data until platform analytics are connected.</figcaption>
+        </figure>
+
+        <h2>What a reel contains</h2>
+        <ul>
+            <li>Vertical video, 1080×1920 at medium or high quality, 30 frames per second.</li>
+            <li>The store name at the top, the product name, and the price in AED.</li>
+            <li>One scene per photo, with a short move and a fade through black between scenes.</li>
+            <li>A closing card on reels that contain two or more products.</li>
+            <li>An audio track, either your music or silence.</li>
+        </ul>
+        <p>Finished files are saved under <code>social_bot_local/output/videos</code>.</p>
+    </div>
+</div>
+</body>
+</html>

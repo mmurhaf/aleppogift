@@ -173,22 +173,25 @@
             $(btnId).html('<i class="fas fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
 
             $.get('api.php?action=' + action, function(data) {
-                // Wait a sec for process to spin up/down
                 setTimeout(function() {
+                    $(btnId).html(originalText);
                     updateStatus();
                     refreshLogs();
-                    alert(data.message);
+                    if (data && data.message) {
+                        alert(data.message);
+                    }
+                }, 1500);
+            }, 'json').fail(function() {
+                $(btnId).html(originalText);
+                alert('Request failed');
+                updateStatus();
+            });
+        }
 
         function loadReadme() {
             $.get('api.php?action=get_readme', function(data) {
-                $('#readme-content').text(data.content);
+                $('#readme-content').text(data.content || 'README.md not found.');
             }, 'json');
-        }
-                }, 2000);
-            }).fail(function() {
-                alert('Request failed');
-                updateStatus(); // Reset buttons
-            });
         }
 
         // Initial Load

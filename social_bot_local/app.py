@@ -10,6 +10,45 @@ from modules.oauth_handler import OAuthHandler
 from database import execute_query, get_db_connection
 from config import set_setting, get_setting
 
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+STORE_ROOT = os.path.abspath(os.path.join(APP_DIR, ".."))
+
+
+def resolve_product_image(image_url):
+    """Local catalog file, remote URL, or None. Catalog paths are relative to the store root."""
+    if not image_url:
+        return None
+    url = str(image_url).strip()
+    if url.startswith(("http://", "https://")):
+        return url
+    rel = url.replace("\\", "/").lstrip("/")
+    candidates = [
+        os.path.join(STORE_ROOT, *rel.split("/")),
+        os.path.join(STORE_ROOT, "public", *rel.split("/")),
+        os.path.join(STORE_ROOT, "uploads", os.path.basename(rel)),
+        os.path.join(r"c:\xampp\htdocs\aleppogift", *rel.split("/")),
+    ]
+    for candidate in candidates:
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def pretty_filename(path):
+    stem = os.path.splitext(os.path.basename(path))[0]
+    stem = stem.replace("_", " ").replace("-", " ")
+    return " ".join(stem.split())[:60]
+
+
+def format_aed(price):
+    try:
+        value = float(price)
+    except (TypeError, ValueError):
+        return ""
+    if abs(value - round(value)) < 0.001:
+        return f"AED {int(round(value))}"
+    return f"AED {value:.2f}"
+
 # Page Config
 st.set_page_config(page_title="SocialMediaAutoBot Pro", layout="wide", page_icon="🤖")
 
@@ -155,6 +194,7 @@ if nav_selection == "Create Content":
     
     selected_image_path = None
     selected_product = None
+    scenes = []
     
     if source_type == "From Product":
         # Search/Select Product(s)
@@ -171,10 +211,13 @@ if nav_selection == "Create Content":
             with search_col:
                 search_query = st.text_input("🔍 Search Products", placeholder="Search by name, price, or category...", key="product_search")
             with filter_col:
-                price_filter = st.selectbox("💰 Price Range", ["All Prices", "Under $50", "$50-$100", "Over $100"])
+                price_filter = st.selectbox("💰 Price Range", ["All Prices", "Under 50 AED", "50–100 AED", "Over 100 AED"])
             with action_col:
                 if st.button("🗑️ Clear All", type="secondary"):
                     st.session_state.selected_product_ids = set()
+                    for key in list(st.session_state.keys()):
+                        if str(key).startswith("prod_select_"):
+                            st.session_state[key] = False
                     st.rerun()
 
             # Filter products
@@ -184,11 +227,11 @@ if nav_selection == "Create Content":
             
             # Apply price filter
             if price_filter != "All Prices":
-                if price_filter == "Under $50":
+                if price_filter == "Under 50 AED":
                     filtered_products = [p for p in filtered_products if float(p['price']) < 50]
-                elif price_filter == "$50-$100":
+                elif price_filter == "50–100 AED":
                     filtered_products = [p for p in filtered_products if 50 <= float(p['price']) <= 100]
-                elif price_filter == "Over $100":
+                elif price_filter == "Over 100 AED":
                     filtered_products = [p for p in filtered_products if float(p['price']) > 100]
             
             # Limit for performance
@@ -222,26 +265,7 @@ if nav_selection == "Create Content":
                         is_selected = product['id'] in st.session_state.selected_product_ids
                         card_class = "product-card selected" if is_selected else "product-card"
                         
-                        # Resolve Image with better error handling
-                        image_url = product['image_url']
-                        display_image = "https://via.placeholder.com/200x200/667eea/ffffff?text=No+Image"
-                        
-                        if image_url:
-                            if image_url.startswith('http'):
-                                display_image = image_url
-                            else:
-                                # Normalize slashes and try multiple paths
-                                clean_url = image_url.replace('/', '\\')
-                                possible_paths = [
-                                    os.path.join('c:\\xampp\\htdocs\\aleppogift', clean_url),
-                                    os.path.join('c:\\xampp\\htdocs\\aleppogift\\public', clean_url),
-                                    os.path.join('c:\\xampp\\htdocs\\aleppogift', image_url),
-                                    os.path.join('c:\\xampp\\htdocs\\aleppogift\\images', clean_url)
-                                ]
-                                for p in possible_paths:
-                                    if os.path.exists(p):
-                                        display_image = p
-                                        break
+                        display_image = resolve_product_image(product['image_url']) or "https://via.placeholder.com/200x200/667eea/ffffff?text=No+Image"
                         
                         # Create enhanced product card
                         with st.container():
@@ -263,15 +287,15 @@ if nav_selection == "Create Content":
                             # Price with styling
                             st.markdown(f"""
                             <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0;">
-                                <span style="font-size: 1.2rem; font-weight: bold; color: #667eea;">${product['price']}</span>
+                                <span style="font-size: 1.2rem; font-weight: bold; color: #667eea;">{format_aed(product['price'])}</span>
                                 <span style="font-size: 0.9rem; color: #666;">ID: {product['id']}</span>
                             </div>
                             """, unsafe_allow_html=True)
                             
                             # Selection Toggle with enhanced styling
                             select_key = f"prod_select_{product['id']}"
-                            if st.checkbox("✅ Select for Content" if is_selected else "⬜ Select for Content", 
-                                         key=select_key, value=is_selected):
+                            checked = st.checkbox("Select for Content", key=select_key)
+                            if checked:
                                 st.session_state.selected_product_ids.add(product['id'])
                             else:
                                 st.session_state.selected_product_ids.discard(product['id'])
@@ -286,24 +310,18 @@ if nav_selection == "Create Content":
                 if selected_products:
                     selected_product = selected_products[0] # Metadata from first product
                     
-                    # Collect images
-                    image_paths = []
                     for prod in selected_products:
-                        i_url = prod['image_url']
-                        if i_url:
-                             if not i_url.startswith('http'):
-                                 clean_url = i_url.replace('/', '\\')
-                                 possible_paths = [
-                                    os.path.join('c:\\xampp\\htdocs\\aleppogift', clean_url),
-                                    os.path.join('c:\\xampp\\htdocs\\aleppogift\\public', clean_url),
-                                    os.path.join('c:\\xampp\\htdocs\\aleppogift', i_url)
-                                 ]
-                                 for p in possible_paths:
-                                     if os.path.exists(p):
-                                         image_paths.append(p)
-                                         break
-                    
-                    if image_paths:
+                        image = resolve_product_image(prod["image_url"])
+                        if not image:
+                            continue
+                        scenes.append({
+                            "image": image,
+                            "title": prod["name"] or "",
+                            "price": prod["price"],
+                        })
+
+                    if scenes:
+                        image_paths = [scene["image"] for scene in scenes]
                         selected_image_path = image_paths if len(image_paths) > 1 else image_paths[0]
 
     else:  # Custom Upload
@@ -314,8 +332,8 @@ if nav_selection == "Create Content":
         </div>
         """, unsafe_allow_html=True)
         
-        uploaded_files = st.file_uploader("Upload Images (up to 10, will be paired side-by-side)", 
-                                         type=['jpg', 'png', 'jpeg'], 
+        uploaded_files = st.file_uploader("Upload images (up to 10). Each photo becomes its own full-screen scene.",
+                                         type=['jpg', 'png', 'jpeg', 'webp'],
                                          accept_multiple_files=True,
                                          label_visibility="collapsed")
         if uploaded_files:
@@ -351,12 +369,15 @@ if nav_selection == "Create Content":
                         st.markdown(f"<small>{os.path.basename(img_path)}</small>", unsafe_allow_html=True)
                         st.markdown('</div>', unsafe_allow_html=True)
             
-            selected_image_path = image_paths  # Now it's a list
-            
-            # Create a mock product object for custom uploads
+            selected_image_path = image_paths
+            scenes = [
+                {"image": path, "title": pretty_filename(path), "price": None}
+                for path in image_paths
+            ]
+
             selected_product = {
                 'id': 0,
-                'name': 'Multi-Image Upload',
+                'name': scenes[0]['title'] or 'Custom upload',
                 'price': 0,
                 'category': 'Custom',
                 'description': f'{len(image_paths)} images'
@@ -382,6 +403,8 @@ if nav_selection == "Create Content":
             with c2:
                 caption_theme = st.selectbox("Marketing Hook", ["new_arrival", "product_spotlight", "limited_offer"], format_func=lambda x: x.replace('_', ' ').title())
 
+            content_format = "story" if content_type.startswith("Story") else "reel"
+
             # Advanced settings in expander to reduce clutter
             with st.expander("🛠️ Advanced Settings (Audio & Quality)"):
                 col1, col2 = st.columns(2)
@@ -389,6 +412,13 @@ if nav_selection == "Create Content":
                     quality = st.select_slider("Video Quality (Rendering Speed)", options=["low", "medium", "high"], value="medium")
                 with col2:
                     add_audio = st.checkbox("Add Background Music", value=True)
+                default_length = 8 if content_format == "story" else 12
+                target_length = st.slider("Target length (seconds)", min_value=6, max_value=30, value=default_length)
+                if content_type != "Post (Static Image)" and scenes:
+                    plan = VideoGenerator(quality=quality).plan(len(scenes), target_length, content_format)
+                    scene_word = "scene" if len(scenes) == 1 else "scenes"
+                    closing = " · closing card" if plan["end_card"] else ""
+                    st.caption(f"About {plan['total']:.0f}s · {len(scenes)} full-screen {scene_word}{closing}. Each photo keeps its own frame.")
             
             st.markdown('</div>', unsafe_allow_html=True)
         
@@ -412,32 +442,33 @@ if nav_selection == "Create Content":
                 st.session_state['generated_file'] = selected_image_path
                 st.session_state['generated_type'] = 'image'
             else:
-                 with st.spinner("🎬 Rendering video... This might take a moment."):
-                    # Check FFmpeg availability first
+                 with st.spinner("🎬 Rendering reel... each photo is its own scene."):
                     from modules.video_engine import FFMPEG_PATH
                     if not FFMPEG_PATH:
-                        st.error("❌ FFmpeg not detected!")
-                        st.code(r"Expected location: C:\Users\DeLL\AppData\Local\Microsoft\WinGet\Packages\...\ffmpeg.exe")
-                        st.info("FFmpeg was installed but requires restarting the application. Click 'Restart' in the PHP dashboard.")
+                        st.error("FFmpeg was not found.")
+                        st.info("Install FFmpeg and add it to PATH, or set the FFMPEG_PATH environment variable, then restart the app.")
                         st.stop()
                     
                     generator = VideoGenerator(quality=quality)
-                    # Use timestamp to avoid cache issues
                     output_filename = f"video_{selected_product['id']}_{int(time.time())}.mp4"
                     output_path = os.path.join("output/videos", output_filename)
                     
-                    # Mock finding audio
                     audio_path = None
                     if add_audio:
                         audio_dir = os.path.join(os.path.dirname(__file__), "assets", "audio")
                         if os.path.exists(audio_dir):
-                            audio_files = [f for f in os.listdir(audio_dir) if f.endswith(".mp3")]
+                            audio_files = [f for f in os.listdir(audio_dir) if f.endswith((".mp3", ".m4a", ".wav"))]
                             if audio_files:
                                 audio_path = os.path.join(audio_dir, audio_files[0])
                     
-                    # Handle both single image and multiple images
-                    image_input = selected_image_path if isinstance(selected_image_path, list) else [selected_image_path]
-                    final_video = generator.create_video(image_input, output_path, audio_path=audio_path)
+                    final_video = generator.create_video(
+                        selected_image_path,
+                        output_path,
+                        duration=target_length,
+                        audio_path=audio_path,
+                        scenes=scenes,
+                        content_format=content_format,
+                    )
                     
                     if final_video and os.path.exists(final_video):
                         st.success("✅ Video Generated Successfully!")
@@ -462,7 +493,7 @@ if nav_selection == "Create Content":
                 
                 caption_gen = CaptionGenerator()
                 product_for_caption = st.session_state.get('current_product', selected_product) or selected_product
-                default_caption = caption_gen.generate(product_for_caption, 'tiktok')
+                default_caption = caption_gen.generate(product_for_caption, platforms[0] if platforms else 'tiktok', theme=caption_theme)
                 final_caption = st.text_area("Caption", value=default_caption, height=120)
                 
             with sc_col2:
@@ -513,7 +544,7 @@ elif nav_selection == "Scheduler":
                         col_a.image(item['video_path'])
                     if col_b.button("Cancel", key=f"cancel_{item['id']}"):
                         execute_query("DELETE FROM posts WHERE id=?", (item['id'],), commit=True)
-                        st.experimental_rerun()
+                        st.rerun()
         else:
             st.info("No queued posts.")
 
